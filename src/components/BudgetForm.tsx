@@ -91,19 +91,8 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({ onSuccess, onCancel }) =
 
       if (error) throw error;
 
-      alert('Budget berhasil disimpan!');
-      setFormData({ entity: '', department: '', totalBudget: 0, period: '', description: '' });
-      setCategories(
-        predefinedCategories.map((cat) => ({
-          id: Math.random().toString(),
-          name: cat.name,
-          percentage: cat.defaultPercentage,
-          estimatedAmount: 0,
-        }))
-      );
       onSuccess();
     } catch (error) {
-      console.error('Error saving budget:', error);
       alert('Gagal menyimpan budget');
     } finally {
       setLoading(false);
@@ -114,17 +103,18 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({ onSuccess, onCancel }) =
   const isValidPercentage = Math.abs(totalPercentage - 100) < 0.01;
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-8">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">Tambah Budget Baru</h2>
+    <form className="budget-form" onSubmit={handleSubmit}>
+      <h2 className="budget-form-title">Tambah Budget Baru</h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">Entitas</label>
+      {/* GRID UTAMA */}
+      <div className="form-grid">
+        <div className="form-group">
+          <label className="form-label">Entitas</label>
           <select
             name="entity"
             value={formData.entity}
             onChange={(e) => setFormData({ ...formData, entity: e.target.value })}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="form-select"
           >
             <option value="">Pilih Entitas</option>
             <option value="PT Maju Jaya">PT Maju Jaya</option>
@@ -132,110 +122,107 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({ onSuccess, onCancel }) =
             <option value="PT Digital Indonesia">PT Digital Indonesia</option>
           </select>
         </div>
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">Department</label>
+
+        <div className="form-group">
+          <label className="form-label">Department</label>
           <input
             type="text"
             name="department"
             placeholder="Contoh: IT, Marketing, HR"
             value={formData.department}
             onChange={handleFormChange}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="form-input"
           />
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">Total Budget (IDR)</label>
+        <div className="form-group">
+          <label className="form-label">Total Budget (IDR)</label>
           <input
             type="number"
             name="totalBudget"
-            placeholder="0"
             value={formData.totalBudget || ''}
             onChange={handleFormChange}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="form-input"
           />
         </div>
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">Periode</label>
+
+        <div className="form-group">
+          <label className="form-label">Periode</label>
           <input
             type="text"
             name="period"
             placeholder="Contoh: 2024-01"
             value={formData.period}
             onChange={handleFormChange}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="form-input"
           />
         </div>
       </div>
 
-      <div className="mb-6">
-        <label className="block text-sm font-semibold text-gray-700 mb-2">Deskripsi</label>
+      {/* DESKRIPSI */}
+      <div className="form-group mt-3">
+        <label className="form-label">Deskripsi</label>
         <textarea
           name="description"
-          placeholder="Deskripsi budget (opsional)"
           value={formData.description}
           onChange={handleFormChange}
-          rows={3}
-          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="form-textarea"
+          placeholder="Deskripsi budget (opsional)"
         />
       </div>
 
-      <div className="mb-8 bg-gray-50 p-6 rounded-lg">
-        <h3 className="text-lg font-bold text-gray-800 mb-4">Alokasi Kategori</h3>
-        <div className="space-y-4">
-          {categories.map((cat) => (
-            <div key={cat.id} className="flex items-end gap-4">
-              <div className="flex-1">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">{cat.name}</label>
-                <div className="flex gap-2">
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.1"
-                    value={cat.percentage}
-                    onChange={(e) => handleCategoryChange(cat.id, parseFloat(e.target.value) || 0)}
-                    className="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
-                  <span className="text-sm font-semibold text-gray-700 w-8">%</span>
-                </div>
-              </div>
-              <div className="flex-1">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Estimasi</label>
-                <div className="p-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-700">
-                  Rp {(cat.percentage / 100 * formData.totalBudget).toLocaleString('id-ID')}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="mt-4 pt-4 border-t border-gray-300">
-          <div className="flex justify-between items-center">
-            <span className="font-semibold text-gray-800">Total Persentase:</span>
-            <span className={`font-bold text-lg ${isValidPercentage ? 'text-green-600' : 'text-red-600'}`}>
-              {totalPercentage.toFixed(1)}%
+      {/* ALOKASI KATEGORI */}
+      <div className="category-section">
+        <h3>Alokasi Kategori</h3>
+
+        {categories.map((cat) => (
+          <div key={cat.id} className="category-row">
+            <strong>{cat.name}</strong>
+
+            <input
+              type="number"
+              min="0"
+              max="100"
+              step="0.1"
+              value={cat.percentage}
+              onChange={(e) =>
+                handleCategoryChange(cat.id, parseFloat(e.target.value) || 0)
+              }
+              className="form-input"
+            />
+
+            <span>
+              Rp {(cat.percentage / 100 * formData.totalBudget).toLocaleString('id-ID')}
             </span>
           </div>
-        </div>
+        ))}
+
+        <p className="mt-2">
+          <strong>Total Persentase:</strong>{' '}
+          <span style={{ color: isValidPercentage ? 'green' : 'red' }}>
+            {totalPercentage.toFixed(1)}%
+          </span>
+        </p>
       </div>
 
-      <div className="flex gap-4">
+      {/* ACTION */}
+      <div className="form-actions">
         <button
+          type="button"
+          className="btn btn-outline"
           onClick={onCancel}
-          className="flex-1 px-6 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition font-semibold"
         >
           Batal
         </button>
+
         <button
-          onClick={handleSubmit}
+          type="submit"
+          className="btn btn-primary"
           disabled={!isValidPercentage || loading}
-          className="flex-1 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
         >
           {loading ? 'Menyimpan...' : 'Simpan Budget'}
         </button>
       </div>
-    </div>
+    </form>
   );
 };

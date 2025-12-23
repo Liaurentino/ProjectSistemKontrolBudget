@@ -72,7 +72,6 @@ export const RealisasiTable: React.FC<RealisasiTableProps> = ({ budgetId, catego
       setShowForm(false);
       await fetchRealisasi();
     } catch (error) {
-      console.error('Error adding realisasi:', error);
       alert('Gagal menambah realisasi');
     } finally {
       setLoading(false);
@@ -81,13 +80,11 @@ export const RealisasiTable: React.FC<RealisasiTableProps> = ({ budgetId, catego
 
   const handleDelete = async (id: string) => {
     if (!confirm('Yakin ingin menghapus realisasi ini?')) return;
-
     try {
       const { error } = await deleteRealisasi(id);
       if (error) throw error;
       await fetchRealisasi();
     } catch (error) {
-      console.error('Error deleting realisasi:', error);
       alert('Gagal menghapus realisasi');
     }
   };
@@ -96,160 +93,159 @@ export const RealisasiTable: React.FC<RealisasiTableProps> = ({ budgetId, catego
   const sisaBudget = totalBudget - totalRealisasi;
   const percentageUsed = (totalRealisasi / totalBudget) * 100;
 
-  return (
-    <div className="bg-white rounded-lg shadow-lg p-6">
-      <h3 className="text-xl font-bold text-gray-800 mb-4">Realisasi Pengeluaran</h3>
+  // Tentukan warna progress bar
+  const getProgressClass = () => {
+    if (percentageUsed >= 100) return 'danger';
+    if (percentageUsed >= 80) return 'warning';
+    return '';
+  };
 
-      {/* Progress Bar */}
-      <div className="mb-6">
-        <div className="flex justify-between mb-2">
-          <span className="text-sm font-semibold text-gray-700">Progress Pengeluaran</span>
-          <span className="text-sm font-semibold text-gray-700">{percentageUsed.toFixed(1)}%</span>
+  return (
+    <div className="card fade-in">
+      <div className="card-header">
+        <h3 className="card-title">Realisasi Pengeluaran</h3>
+      </div>
+
+      {/* Progress Bar Section */}
+      <div className="mb-4">
+        <div className="flex-between mb-1">
+          <span className="stat-label">Progress Penggunaan Budget</span>
+          <span style={{ fontWeight: 700, color: percentageUsed > 100 ? 'var(--danger-color)' : 'var(--primary-color)' }}>
+            {percentageUsed.toFixed(1)}%
+          </span>
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-3">
+        <div className="progress-bar">
           <div
-            className={`h-3 rounded-full transition-all ${percentageUsed > 100 ? 'bg-red-500' : 'bg-green-500'}`}
+            className={`progress-fill ${getProgressClass()}`}
             style={{ width: `${Math.min(percentageUsed, 100)}%` }}
           />
         </div>
-        <div className="grid grid-cols-3 gap-4 mt-4">
-          <div className="bg-blue-50 p-3 rounded">
-            <p className="text-xs text-gray-600">Total Budget</p>
-            <p className="text-lg font-bold text-blue-600">Rp {totalBudget.toLocaleString('id-ID')}</p>
+
+        <div className="stats-grid mt-3">
+          <div className="stat-card">
+            <div className="stat-label">Total Budget</div>
+            <div className="stat-value" style={{ color: 'var(--primary-color)', fontSize: '1.25rem' }}>
+              Rp {totalBudget.toLocaleString('id-ID')}
+            </div>
           </div>
-          <div className="bg-orange-50 p-3 rounded">
-            <p className="text-xs text-gray-600">Total Realisasi</p>
-            <p className="text-lg font-bold text-orange-600">Rp {totalRealisasi.toLocaleString('id-ID')}</p>
+          <div className="stat-card warning">
+            <div className="stat-label">Terpakai</div>
+            <div className="stat-value" style={{ color: 'var(--warning-color)', fontSize: '1.25rem' }}>
+              Rp {totalRealisasi.toLocaleString('id-ID')}
+            </div>
           </div>
-          <div className={`p-3 rounded ${sisaBudget >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
-            <p className="text-xs text-gray-600">Sisa Budget</p>
-            <p className={`text-lg font-bold ${sisaBudget >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+          <div className={`stat-card ${sisaBudget >= 0 ? 'success' : 'danger'}`}>
+            <div className="stat-label">Sisa</div>
+            <div className="stat-value" style={{ fontSize: '1.25rem' }}>
               Rp {sisaBudget.toLocaleString('id-ID')}
-            </p>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Add Realisasi Form */}
+      {/* Button Toggle Form */}
       {!showForm && (
-        <button
-          onClick={() => setShowForm(true)}
-          className="mb-6 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold text-sm"
-        >
+        <button onClick={() => setShowForm(true)} className="btn btn-primary mb-3">
           + Tambah Realisasi
         </button>
       )}
 
+      {/* Add Realisasi Form */}
       {showForm && (
-        <div className="mb-6 bg-gray-50 p-4 rounded-lg">
-          <h4 className="text-sm font-bold text-gray-800 mb-4">Tambah Realisasi Baru</h4>
-          <div className="space-y-3">
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Kategori (Opsional)</label>
+        <div className="card mb-4 fade-in" style={{ background: 'var(--background)', border: '1px solid var(--border-color)' }}>
+          <h4 className="mb-3">Tambah Realisasi Baru</h4>
+          <div className="stats-grid">
+            <div className="form-group">
+              <label className="form-label">Kategori (Opsional)</label>
               <select
+                className="form-select"
                 value={formData.category_id}
                 onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
-                className="w-full p-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Pilih Kategori</option>
                 {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </option>
+                  <option key={cat.id} value={cat.id}>{cat.name}</option>
                 ))}
               </select>
             </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Jumlah (IDR)</label>
+            <div className="form-group">
+              <label className="form-label">Jumlah (IDR)</label>
               <input
                 type="number"
-                min="0"
-                step="1000"
+                className="form-input"
                 value={formData.amount || ''}
                 onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
-                className="w-full p-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500"
                 placeholder="0"
               />
             </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Tanggal</label>
+          </div>
+
+          <div className="stats-grid">
+            <div className="form-group">
+              <label className="form-label">Tanggal</label>
               <input
                 type="date"
+                className="form-input"
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                className="w-full p-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500"
               />
             </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Deskripsi (Opsional)</label>
+            <div className="form-group">
+              <label className="form-label">Deskripsi</label>
               <input
                 type="text"
+                className="form-input"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full p-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500"
-                placeholder="Deskripsi pengeluaran"
+                placeholder="Contoh: Beli ATK"
               />
             </div>
           </div>
-          <div className="flex gap-2 mt-4">
-            <button
-              onClick={() => setShowForm(false)}
-              className="flex-1 px-3 py-1 bg-gray-400 text-white rounded text-sm hover:bg-gray-500 transition"
-            >
-              Batal
-            </button>
-            <button
-              onClick={handleAddRealisasi}
-              disabled={loading}
-              className="flex-1 px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition disabled:bg-gray-400"
-            >
-              Simpan
+
+          <div className="modal-footer" style={{ marginTop: '1rem' }}>
+            <button onClick={() => setShowForm(false)} className="btn btn-outline">Batal</button>
+            <button onClick={handleAddRealisasi} disabled={loading} className="btn btn-primary">
+              {loading ? 'Menyimpan...' : 'Simpan Realisasi'}
             </button>
           </div>
         </div>
       )}
 
-      {/* Realisasi List */}
-      {loading && !realisasi.length ? (
-        <div className="text-center py-6 text-gray-600">Loading...</div>
-      ) : realisasi.length === 0 ? (
-        <div className="text-center py-6 text-gray-600">Belum ada realisasi</div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-gray-100 border-b">
-                <th className="p-2 text-left font-semibold text-gray-700">Tanggal</th>
-                <th className="p-2 text-left font-semibold text-gray-700">Deskripsi</th>
-                <th className="p-2 text-right font-semibold text-gray-700">Jumlah</th>
-                <th className="p-2 text-center font-semibold text-gray-700">Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {realisasi.map((r) => (
-                <tr key={r.id} className="border-b hover:bg-gray-50">
-                  <td className="p-2 text-gray-800">{new Date(r.date).toLocaleDateString('id-ID')}</td>
-                  <td className="p-2 text-gray-800">{r.description || '-'}</td>
-                  <td className="p-2 text-right text-blue-600 font-semibold">
+      {/* Realisasi Table */}
+      <div className="table-container">
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Tanggal</th>
+              <th>Deskripsi</th>
+              <th style={{ textAlign: 'right' }}>Jumlah</th>
+              <th style={{ textAlign: 'center' }}>Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading && !realisasi.length ? (
+              <tr><td colSpan={4} className="text-center">Memuat data...</td></tr>
+            ) : realisasi.length === 0 ? (
+              <tr><td colSpan={4} className="text-center">Belum ada data pengeluaran</td></tr>
+            ) : (
+              realisasi.map((r) => (
+                <tr key={r.id}>
+                  <td>{new Date(r.date).toLocaleDateString('id-ID')}</td>
+                  <td>{r.description || '-'}</td>
+                  <td style={{ textAlign: 'right', fontWeight: 600, color: 'var(--primary-dark)' }}>
                     Rp {r.amount.toLocaleString('id-ID')}
                   </td>
-                  <td className="p-2 text-center">
-                    <button
-                      onClick={() => handleDelete(r.id)}
-                      className="text-red-600 hover:text-red-800 text-xs font-semibold"
-                    >
+                  <td style={{ textAlign: 'center' }}>
+                    <button onClick={() => handleDelete(r.id)} className="btn btn-danger btn-sm">
                       Hapus
                     </button>
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };
-
-
-

@@ -28,12 +28,10 @@ export const AccurateSync: React.FC<AccurateSyncProps> = ({ onSyncComplete }) =>
 
     try {
       const { data, error } = await getAccurateCategories();
-
       if (error) throw error;
 
       if (data && data.data && Array.isArray(data.data)) {
         const { error: syncError } = await syncAccurateCategories(data.data);
-
         if (syncError) throw syncError;
 
         setSyncStatus({
@@ -59,12 +57,10 @@ export const AccurateSync: React.FC<AccurateSyncProps> = ({ onSyncComplete }) =>
 
     try {
       const { data, error } = await getChartOfAccounts();
-
       if (error) throw error;
 
       if (data && data.data && Array.isArray(data.data)) {
         const { error: syncError } = await syncAccurateAccounts(data.data);
-
         if (syncError) throw syncError;
 
         setSyncStatus({
@@ -86,64 +82,72 @@ export const AccurateSync: React.FC<AccurateSyncProps> = ({ onSyncComplete }) =>
 
   const handleSyncAll = async () => {
     setLoading(true);
-
     await handleSyncCategories();
     await new Promise((resolve) => setTimeout(resolve, 1000));
     await handleSyncAccounts();
-
     setLoading(false);
     onSyncComplete?.();
   };
 
+  // Helper untuk menentukan class alert berdasarkan status
+  const getAlertClass = () => {
+    if (syncStatus.status === 'success') return 'alert-success';
+    if (syncStatus.status === 'error') return 'alert-danger';
+    return 'alert-info';
+  };
+
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6">
-      <h3 className="text-lg font-bold text-gray-800 mb-4">
-        🔄 Sinkronisasi Data dari Accurate
-      </h3>
-
-      <p className="text-sm text-gray-600 mb-6">
-        Sinkronisasi kategori dan chart of accounts dari Accurate ke database lokal
-      </p>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <button
-          onClick={handleSyncCategories}
-          disabled={loading}
-          className="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
-        >
-          {loading && syncStatus.type === 'categories' ? '⏳ Syncing...' : '📂 Sync Kategori'}
-        </button>
-
-        <button
-          onClick={handleSyncAccounts}
-          disabled={loading}
-          className="px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
-        >
-          {loading && syncStatus.type === 'accounts' ? '⏳ Syncing...' : '💰 Sync Akun'}
-        </button>
-
-        <button
-          onClick={handleSyncAll}
-          disabled={loading}
-          className="px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed"
-        >
-          {loading ? '⏳ Syncing All...' : '⚡ Sync Semua'}
-        </button>
-      </div>
-
-      {syncStatus.status !== 'idle' && (
-        <div
-          className={`p-4 rounded-lg text-sm ${
-            syncStatus.status === 'success'
-              ? 'bg-green-50 border border-green-200 text-green-800'
-              : syncStatus.status === 'error'
-              ? 'bg-red-50 border border-red-200 text-red-800'
-              : 'bg-blue-50 border border-blue-200 text-blue-800'
-          }`}
-        >
-          {syncStatus.message}
+    <div className="app-container fade-in">
+      <div className="card">
+        <div className="card-header">
+          <h2 className="card-title">🔄 Sinkronisasi Data Accurate</h2>
         </div>
-      )}
+        
+        <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
+          Sinkronisasi kategori dan chart of accounts dari Accurate ke database lokal untuk manajemen budget.
+        </p>
+
+        <div className="stats-grid mb-3">
+          <button
+            onClick={handleSyncCategories}
+            disabled={loading}
+            className="btn btn-primary"
+            style={{ justifyContent: 'center', padding: '1rem' }}
+          >
+            {loading && syncStatus.type === 'categories' ? '⏳ Syncing...' : '📂 Sync Kategori'}
+          </button>
+
+          <button
+            onClick={handleSyncAccounts}
+            disabled={loading}
+            className="btn btn-secondary"
+            style={{ justifyContent: 'center', padding: '1rem' }}
+          >
+            {loading && syncStatus.type === 'accounts' ? '⏳ Syncing...' : '💰 Sync Akun'}
+          </button>
+
+          <button
+            onClick={handleSyncAll}
+            disabled={loading}
+            className="btn btn-outline"
+            style={{ justifyContent: 'center', padding: '1rem' }}
+          >
+            {loading ? '⏳ Syncing All...' : '⚡ Sync Semua'}
+          </button>
+        </div>
+
+        {syncStatus.status !== 'idle' && (
+          <div className={`alert ${getAlertClass()} fade-in`}>
+            {syncStatus.message}
+          </div>
+        )}
+
+        {loading && (
+          <div className="text-center mt-2">
+            <div className="spinner"></div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
