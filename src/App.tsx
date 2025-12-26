@@ -1,13 +1,12 @@
-import React from 'react';
-import { Routes, Route, NavLink, Navigate } from 'react-router-dom';
+import React from "react";
+import { Routes, Route, NavLink, Navigate } from "react-router-dom";
 
-import { BudgetPage } from './pages/BudgetPage';
-import { RealisasiPage } from './pages/RealisasiPage';
-import { AccurateSync } from './pages/SettingsPage';
-import { LoginPage } from './pages/LoginPage';
+import { BudgetPage } from "./pages/BudgetPage";
+import { RealisasiPage } from "./pages/RealisasiPage";
+import { AccurateSync } from "./pages/SettingsPage";
+import { LoginPage } from "./pages/LoginPage";
 
-import { useAuth } from './contexts/AuthContext';
-
+import { useAuth } from "./contexts/AuthContext";
 
 export default function App() {
   const { user, signOut } = useAuth();
@@ -32,7 +31,7 @@ export default function App() {
             <NavLink
               to="/"
               className={({ isActive }) =>
-                `nav-tab ${isActive ? 'active' : ''}`
+                `nav-tab ${isActive ? "active" : ""}`
               }
             >
               📊 Budget
@@ -41,7 +40,7 @@ export default function App() {
             <NavLink
               to="/realisasi"
               className={({ isActive }) =>
-                `nav-tab ${isActive ? 'active' : ''}`
+                `nav-tab ${isActive ? "active" : ""}`
               }
             >
               📈 Realisasi
@@ -50,7 +49,7 @@ export default function App() {
             <NavLink
               to="/settings"
               className={({ isActive }) =>
-                `nav-tab ${isActive ? 'active' : ''}`
+                `nav-tab ${isActive ? "active" : ""}`
               }
             >
               ⚙️ Sinkronisasi
@@ -59,17 +58,15 @@ export default function App() {
             {/* Auth */}
             <div className="nav-auth">
               {user ? (
-                <button
+                <NavLink
+                  to="/login"
                   onClick={handleLogout}
                   className="nav-tab nav-tab-auth"
                 >
                   Logout
-                </button>
+                </NavLink>
               ) : (
-                <NavLink
-                  to="/login"
-                  className="nav-tab nav-tab-auth primary"
-                >
+                <NavLink to="/login" className="nav-tab nav-tab-auth primary">
                   Login
                 </NavLink>
               )}
