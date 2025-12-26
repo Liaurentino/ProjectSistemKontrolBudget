@@ -9,24 +9,7 @@ if (!supabaseUrl || !supabaseKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Auth functions
-export const signUp = (email: string, password: string) => {
-  return supabase.auth.signUp({ email, password });
-};
-
-export const signIn = (email: string, password: string) => {
-  return supabase.auth.signInWithPassword({ email, password });
-};
-
-export const signOut = () => {
-  return supabase.auth.signOut();
-};
-
-export const getCurrentUser = () => {
-  return supabase.auth.getUser();
-};
-
-// Budget functions
+// Budget functions (updated with user_id)
 export const insertBudget = async (budgetData: {
   entity: string;
   department: string;
@@ -34,11 +17,15 @@ export const insertBudget = async (budgetData: {
   period: string;
   description?: string;
   categories_data: any[];
-  user_id?: string;
 }) => {
+  const { data: { user } } = await supabase.auth.getUser();
+  
   const { data, error } = await supabase
     .from('budgets')
-    .insert([budgetData])
+    .insert([{
+      ...budgetData,
+      user_id: user?.id,
+    }])
     .select();
 
   return { data, error };
@@ -82,18 +69,22 @@ export const deleteBudget = async (id: string) => {
   return { error };
 };
 
-// Realisasi functions
+// Realisasi functions (updated with user_id)
 export const insertRealisasi = async (realisasiData: {
   budget_id: string;
   category_id?: string;
   amount: number;
   description?: string;
   date?: string;
-  user_id?: string;
 }) => {
+  const { data: { user } } = await supabase.auth.getUser();
+
   const { data, error } = await supabase
     .from('realisasi')
-    .insert([realisasiData])
+    .insert([{
+      ...realisasiData,
+      user_id: user?.id,
+    }])
     .select();
 
   return { data, error };

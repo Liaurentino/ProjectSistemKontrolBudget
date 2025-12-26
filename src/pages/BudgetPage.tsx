@@ -20,13 +20,11 @@ export const BudgetPage: React.FC = () => {
 
   return (
     <div className="app-container fade-in">
-      {/* ===== HEADER ===== */}
       <div className="app-header">
         <h1>📊 Budget Management</h1>
         <p>Kelola budget dan alokasi kategori perusahaan</p>
       </div>
 
-      {/* ===== ACTION BUTTON ===== */}
       {!showForm && (
         <div className="page-action">
           <button
@@ -38,7 +36,6 @@ export const BudgetPage: React.FC = () => {
         </div>
       )}
 
-      {/* ===== FORM SECTION ===== */}
       {showForm && (
         <div className="card form-wrapper mb-4">
           <BudgetForm
@@ -51,10 +48,8 @@ export const BudgetPage: React.FC = () => {
         </div>
       )}
 
-      {/* ===== LIST HEADER ===== */}
       <h2 className="card-title mb-3">Daftar Budget</h2>
 
-      {/* ===== CONTENT ===== */}
       {loading ? (
         <div className="spinner" />
       ) : budgets.length === 0 ? (

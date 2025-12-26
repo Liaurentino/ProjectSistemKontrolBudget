@@ -1,5 +1,8 @@
 import { supabase } from './supabase';
 
+const CLIENT_ID = import.meta.env.VITE_ACCURATE_CLIENT_ID!;
+const REDIRECT_URI = import.meta.env.VITE_ACCURATE_REDIRECT_URI!;
+
 interface Category {
   accurate_id: string;
   name: string;
@@ -14,22 +17,92 @@ interface Account {
   account_type: string;
 }
 
-// Panggil Edge Function untuk ambil data dari Accurate
-export const callAccurateAPI = async (
-  action: 'getCategories' | 'getChartOfAccounts' | 'getTransactions',
-  params?: Record<string, any>
-) => {
-  try {
-    const { data, error } = await supabase.functions.invoke('accurate-sync', {
-      body: { action, params },
-    });
+/**
+ * 1. Generate Accurate Authorization URL
+ */
+export const getAuthorizationUrl = () => {
+  const params = new URLSearchParams({
+    client_id: CLIENT_ID,
+    response_type: 'code',
+    redirect_uri: REDIRECT_URI,
+    scope: 'bank_read sales_read', // sesuaikan kebutuhan
+  });
 
-    if (error) throw error;
-    return { data, error: null };
-  } catch (error) {
-    console.error('Error calling Accurate API:', error);
-    return { data: null, error };
+  return `https://account.accurate.id/oauth/authorize?${params.toString()}`;
+};
+
+/**
+ * 2. Exchange authorization code → access token
+ * Dilakukan lewat Supabase Edge Function (AMAN)
+ */
+export const exchangeCodeForToken = async (code: string) => {
+  const { data, error } = await supabase.functions.invoke('accurate-oauth', {
+    body: {
+      action: 'exchangeCode',
+      code,
+    },
+  });
+
+  if (error) throw error;
+
+  // SIMPAN SEMENTARA (untuk testing)
+  localStorage.setItem('accurate_access_token', data.access_token);
+  localStorage.setItem('accurate_refresh_token', data.refresh_token);
+  localStorage.setItem(
+    'accurate_expires_at',
+    String(Date.now() + data.expires_in * 1000)
+  );
+
+  return data;
+};
+
+/**
+ * 3. Ambil token dari storage
+ */
+export const getAccessToken = () => {
+  return localStorage.getItem('accurate_access_token');
+};
+
+/**
+ * 4. Cek token expired
+ */
+export const isTokenExpired = () => {
+  const expiresAt = localStorage.getItem('accurate_expires_at');
+  return !expiresAt || Date.now() > Number(expiresAt);
+};
+
+/**
+ * 5. Call Accurate API (DATA API → accurate.id)
+ */
+export const callAccurateAPI = async (
+  endpoint: string,
+  options: RequestInit = {}
+) => {
+  const token = getAccessToken();
+
+  if (!token) {
+    throw new Error('Access token tidak ditemukan. Silakan authorize ulang.');
   }
+
+  if (isTokenExpired()) {
+    throw new Error('Access token expired. Silakan authorize ulang.');
+  }
+
+  const response = await fetch(`https://accurate.id${endpoint}`, {
+    ...options,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Accurate API ${response.status}: ${text}`);
+  }
+
+  return response.json();
 };
 
 // Get kategori dari Accurate
@@ -170,4 +243,3 @@ export const getBudgetMappings = async (budgetId: string) => {
 
   return { data, error };
 };
-

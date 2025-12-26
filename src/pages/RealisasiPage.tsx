@@ -23,13 +23,14 @@ export const RealisasiPage: React.FC = () => {
     }
   };
 
-  useEffect(() => { fetchBudgets(); }, []);
+  useEffect(() => {
+    fetchBudgets();
+  }, []);
 
-  const selectedBudget = budgets.find((b) => b.id === selectedBudgetId);
+  const selectedBudget = budgets.find(b => b.id === selectedBudgetId);
 
   return (
     <div className="app-container fade-in">
-      {/* Header menggunakan class global */}
       <div className="app-header">
         <h1>
           <span className="icon">📈</span>
@@ -38,21 +39,22 @@ export const RealisasiPage: React.FC = () => {
         <p>Bandingkan rencana budget dengan pengeluaran aktual Anda</p>
       </div>
 
-      {/* Selector Budget menggunakan stats-grid agar rapi */}
       {!loading && budgets.length > 0 && (
         <div className="card mb-3">
           <h2 className="card-title mb-2">Pilih Anggaran Perusahaan</h2>
           <div className="stats-grid">
-            {budgets.map((budget) => (
-              <div 
-                key={budget.id} 
+            {budgets.map(budget => (
+              <div
+                key={budget.id}
                 onClick={() => setSelectedBudgetId(budget.id)}
                 className={`budget-item ${selectedBudgetId === budget.id ? 'active' : ''}`}
                 style={{ cursor: 'pointer' }}
               >
                 <p className="budget-item-title">{budget.entity}</p>
-                <p className="budget-item-meta">{budget.department} | {budget.period}</p>
-                <p className="budget-item-amount" style={{ fontSize: '1.1rem' }}>
+                <p className="budget-item-meta">
+                  {budget.department} | {budget.period}
+                </p>
+                <p className="budget-item-amount">
                   Rp {budget.total_budget.toLocaleString('id-ID')}
                 </p>
               </div>
@@ -61,23 +63,19 @@ export const RealisasiPage: React.FC = () => {
         </div>
       )}
 
-      {/* Konten Utama: Memanggil RealisasiTable */}
       {loading ? (
-        <div className="spinner"></div>
+        <div className="spinner" />
       ) : selectedBudget ? (
-        <div className="fade-in">
-          {/* Komponen RealisasiTable yang sudah kita perbaiki CSS-nya tadi */}
-          <RealisasiTable
-            budgetId={selectedBudget.id}
-            categories={selectedBudget.categories_data}
-            totalBudget={selectedBudget.total_budget}
-          />
-        </div>
+        <RealisasiTable
+          budgetId={selectedBudget.id}
+          categories={selectedBudget.categories_data}
+          totalBudget={selectedBudget.total_budget}
+        />
       ) : (
         <div className="empty-state">
           <div className="empty-state-icon">📄</div>
           <div className="empty-state-title">Tidak ada budget terpilih</div>
-          <p>Silakan pilih atau buat budget terlebih dahulu di menu Budget.</p>
+          <p>Silakan pilih atau buat budget terlebih dahulu.</p>
         </div>
       )}
     </div>

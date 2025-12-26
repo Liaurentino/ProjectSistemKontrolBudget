@@ -1,51 +1,103 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { Routes, Route, NavLink, Navigate } from 'react-router-dom';
+
 import { BudgetPage } from './pages/BudgetPage';
 import { RealisasiPage } from './pages/RealisasiPage';
 import { AccurateSync } from './pages/SettingsPage';
+import { LoginPage } from './pages/LoginPage';
 
-type PageType = 'budget' | 'realisasi' | 'settings';
+import { useAuth } from './contexts/AuthContext';
+
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<PageType>('budget');
+  const { user, signOut } = useAuth();
 
- return (
+  const handleLogout = async () => {
+    await signOut();
+  };
+
+  return (
     <div className="fade-in">
-      {/* Navigation menggunakan class nav-tabs dari CSS Global */}
-      <nav style={{ background: 'var(--surface)', borderBottom: '1px solid var(--border-color)', marginBottom: '1rem' }}>
-        <div className="app-container" style={{ padding: '1rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      {/* Navbar */}
+      <nav className="app-navbar">
+        <div className="app-container navbar-inner">
+          {/* Brand */}
           <div className="flex-center gap-2">
-            <div style={{ fontSize: '1.5rem' }}>💼</div>
-            <h1 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>Budget System</h1>
+            <span className="app-brand-icon">💼</span>
+            <h1 className="app-title">Budget System</h1>
           </div>
-          
-          <div className="nav-tabs" style={{ marginBottom: 0, boxShadow: 'none' }}>
-            <button
-              onClick={() => setCurrentPage('budget')}
-              className={`nav-tab ${currentPage === 'budget' ? 'active' : ''}`}
+
+          {/* Tabs */}
+          <div className="nav-tabs navbar-tabs">
+            <NavLink
+              to="/"
+              className={({ isActive }) =>
+                `nav-tab ${isActive ? 'active' : ''}`
+              }
             >
               📊 Budget
-            </button>
-            <button
-              onClick={() => setCurrentPage('realisasi')}
-              className={`nav-tab ${currentPage === 'realisasi' ? 'active' : ''}`}
+            </NavLink>
+
+            <NavLink
+              to="/realisasi"
+              className={({ isActive }) =>
+                `nav-tab ${isActive ? 'active' : ''}`
+              }
             >
               📈 Realisasi
-            </button>
-            <button
-              onClick={() => setCurrentPage('settings')}
-              className={`nav-tab ${currentPage === 'settings' ? 'active' : ''}`}
+            </NavLink>
+
+            <NavLink
+              to="/settings"
+              className={({ isActive }) =>
+                `nav-tab ${isActive ? 'active' : ''}`
+              }
             >
               ⚙️ Sinkronisasi
-            </button>
+            </NavLink>
+
+            {/* Auth */}
+            <div className="nav-auth">
+              {user ? (
+                <button
+                  onClick={handleLogout}
+                  className="nav-tab nav-tab-auth"
+                >
+                  Logout
+                </button>
+              ) : (
+                <NavLink
+                  to="/login"
+                  className="nav-tab nav-tab-auth primary"
+                >
+                  Login
+                </NavLink>
+              )}
+            </div>
           </div>
         </div>
       </nav>
 
       {/* Page Content */}
-      <main>
-        {currentPage === 'budget' && <BudgetPage />}
-        {currentPage === 'realisasi' && <RealisasiPage />}
-        {currentPage === 'settings' && <AccurateSync />}
+      <main className="app-container">
+        <Routes>
+          {/* PUBLIC */}
+          <Route path="/" element={<BudgetPage />} />
+          <Route path="/login" element={<LoginPage />} />
+
+          {/* PROTECTED */}
+          <Route
+            path="/realisasi"
+            element={user ? <RealisasiPage /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/settings"
+            element={user ? <AccurateSync /> : <Navigate to="/login" />}
+          />
+
+          {/* FALLBACK */}
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
       </main>
     </div>
   );
