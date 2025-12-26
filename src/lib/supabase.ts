@@ -7,7 +7,14 @@ if (!supabaseUrl || !supabaseKey) {
   throw new Error('Missing Supabase environment variables');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+export const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true,
+    flowType: 'pkce'
+  }
+});
 
 // Budget functions (updated with user_id)
 export const insertBudget = async (budgetData: {
@@ -118,3 +125,9 @@ export const deleteRealisasi = async (id: string) => {
 
   return { error };
 };
+
+if (typeof window !== 'undefined') {
+  // @ts-ignore
+  window.supabase = supabase;
+  console.log('✅ Supabase exposed to window for debugging');
+}

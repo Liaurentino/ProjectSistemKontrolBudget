@@ -17,6 +17,13 @@ interface Account {
   account_type: string;
 }
 
+// ✅ KEYS untuk localStorage (namespaced untuk avoid conflict)
+const STORAGE_KEYS = {
+  ACCESS_TOKEN: 'accurate_access_token',
+  REFRESH_TOKEN: 'accurate_refresh_token',
+  EXPIRES_AT: 'accurate_expires_at',
+} as const;
+
 /**
  * 1. Generate Accurate Authorization URL
  */
@@ -25,7 +32,7 @@ export const getAuthorizationUrl = () => {
     client_id: CLIENT_ID,
     response_type: 'code',
     redirect_uri: REDIRECT_URI,
-    scope: 'bank_read sales_read', // sesuaikan kebutuhan
+    scope: 'bank_read sales_read',
   });
 
   return `https://account.accurate.id/oauth/authorize?${params.toString()}`;
@@ -36,39 +43,79 @@ export const getAuthorizationUrl = () => {
  * Dilakukan lewat Supabase Edge Function (AMAN)
  */
 export const exchangeCodeForToken = async (code: string) => {
-  const { data, error } = await supabase.functions.invoke('accurate-oauth', {
-    body: {
-      action: 'exchangeCode',
-      code,
-    },
-  });
+  try {
+    const { data, error } = await supabase.functions.invoke('accurate-oauth', {
+      body: {
+        action: 'exchangeCode',
+        code,
+      },
+    });
 
-  if (error) throw error;
+    if (error) throw error;
 
-  // SIMPAN SEMENTARA (untuk testing)
-  localStorage.setItem('accurate_access_token', data.access_token);
-  localStorage.setItem('accurate_refresh_token', data.refresh_token);
-  localStorage.setItem(
-    'accurate_expires_at',
-    String(Date.now() + data.expires_in * 1000)
-  );
+    // ✅ SAFE SAVE dengan validasi
+    if (data?.access_token && data?.refresh_token && data?.expires_in) {
+      try {
+        localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, data.access_token);
+        localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, data.refresh_token);
+        localStorage.setItem(
+          STORAGE_KEYS.EXPIRES_AT,
+          String(Date.now() + data.expires_in * 1000)
+        );
+      } catch (storageError) {
+        console.error('Error saving to localStorage:', storageError);
+        // Tidak throw error, biarkan app tetap jalan
+      }
+    }
 
-  return data;
+    return data;
+  } catch (error) {
+    console.error('Error exchanging code for token:', error);
+    throw error;
+  }
 };
 
 /**
- * 3. Ambil token dari storage
+ * 3. Ambil token dari storage (SAFE)
  */
 export const getAccessToken = () => {
-  return localStorage.getItem('accurate_access_token');
+  try {
+    return localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+  } catch (error) {
+    console.error('Error reading access token:', error);
+    return null;
+  }
 };
 
 /**
- * 4. Cek token expired
+ * 4. Cek token expired (SAFE)
  */
 export const isTokenExpired = () => {
-  const expiresAt = localStorage.getItem('accurate_expires_at');
-  return !expiresAt || Date.now() > Number(expiresAt);
+  try {
+    const expiresAt = localStorage.getItem(STORAGE_KEYS.EXPIRES_AT);
+    if (!expiresAt) return true;
+    
+    const expiryTime = Number(expiresAt);
+    if (isNaN(expiryTime)) return true;
+    
+    return Date.now() > expiryTime;
+  } catch (error) {
+    console.error('Error checking token expiry:', error);
+    return true; // Assume expired kalau error
+  }
+};
+
+/**
+ * 4b. Clear Accurate tokens (untuk logout atau error)
+ */
+export const clearAccurateTokens = () => {
+  try {
+    localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+    localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+    localStorage.removeItem(STORAGE_KEYS.EXPIRES_AT);
+  } catch (error) {
+    console.error('Error clearing accurate tokens:', error);
+  }
 };
 
 /**
@@ -85,39 +132,66 @@ export const callAccurateAPI = async (
   }
 
   if (isTokenExpired()) {
+    clearAccurateTokens(); // Clear expired tokens
     throw new Error('Access token expired. Silakan authorize ulang.');
   }
 
-  const response = await fetch(`https://accurate.id${endpoint}`, {
-    ...options,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
+  try {
+    const response = await fetch(`https://accurate.id${endpoint}`, {
+      ...options,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+    });
 
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`Accurate API ${response.status}: ${text}`);
+    if (!response.ok) {
+      const text = await response.text();
+      
+      // Jika unauthorized, clear tokens
+      if (response.status === 401) {
+        clearAccurateTokens();
+      }
+      
+      throw new Error(`Accurate API ${response.status}: ${text}`);
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error('Error calling Accurate API:', error);
+    throw error;
   }
-
-  return response.json();
 };
 
-// Get kategori dari Accurate
+// ✅ SAFE: Get kategori dari Accurate
 export const getAccurateCategories = async () => {
-  return callAccurateAPI('getCategories');
+  try {
+    return await callAccurateAPI('/api/categories'); // Sesuaikan endpoint
+  } catch (error) {
+    console.error('Error getting Accurate categories:', error);
+    throw error;
+  }
 };
 
-// Get chart of accounts dari Accurate
+// ✅ SAFE: Get chart of accounts dari Accurate
 export const getChartOfAccounts = async () => {
-  return callAccurateAPI('getChartOfAccounts');
+  try {
+    return await callAccurateAPI('/api/accounts'); // Sesuaikan endpoint
+  } catch (error) {
+    console.error('Error getting chart of accounts:', error);
+    throw error;
+  }
 };
 
-// Get transactions dari Accurate
+// ✅ SAFE: Get transactions dari Accurate
 export const getAccurateTransactions = async () => {
-  return callAccurateAPI('getTransactions');
+  try {
+    return await callAccurateAPI('/api/transactions'); // Sesuaikan endpoint
+  } catch (error) {
+    console.error('Error getting Accurate transactions:', error);
+    throw error;
+  }
 };
 
 // Simpan kategori yang disinkronkan ke database lokal
@@ -147,11 +221,15 @@ export const syncAccurateCategories = async (categories: Category[]) => {
     console.error('Error syncing categories:', error);
 
     // Log error
-    await supabase.from('accurate_sync_history').insert({
-      sync_type: 'categories',
-      status: 'failed',
-      error_message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    try {
+      await supabase.from('accurate_sync_history').insert({
+        sync_type: 'categories',
+        status: 'failed',
+        error_message: error instanceof Error ? error.message : 'Unknown error',
+      });
+    } catch (logError) {
+      console.error('Error logging sync failure:', logError);
+    }
 
     return { data: null, error };
   }
@@ -182,11 +260,15 @@ export const syncAccurateAccounts = async (accounts: Account[]) => {
   } catch (error) {
     console.error('Error syncing accounts:', error);
 
-    await supabase.from('accurate_sync_history').insert({
-      sync_type: 'accounts',
-      status: 'failed',
-      error_message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    try {
+      await supabase.from('accurate_sync_history').insert({
+        sync_type: 'accounts',
+        status: 'failed',
+        error_message: error instanceof Error ? error.message : 'Unknown error',
+      });
+    } catch (logError) {
+      console.error('Error logging sync failure:', logError);
+    }
 
     return { data: null, error };
   }
@@ -194,22 +276,32 @@ export const syncAccurateAccounts = async (accounts: Account[]) => {
 
 // Get kategori dari database lokal
 export const getLocalCategories = async () => {
-  const { data, error } = await supabase
-    .from('accurate_categories')
-    .select('*')
-    .eq('is_active', true);
+  try {
+    const { data, error } = await supabase
+      .from('accurate_categories')
+      .select('*')
+      .eq('is_active', true);
 
-  return { data, error };
+    return { data, error };
+  } catch (error) {
+    console.error('Error getting local categories:', error);
+    return { data: null, error };
+  }
 };
 
 // Get accounts dari database lokal
 export const getLocalAccounts = async () => {
-  const { data, error } = await supabase
-    .from('accurate_accounts')
-    .select('*')
-    .eq('is_active', true);
+  try {
+    const { data, error } = await supabase
+      .from('accurate_accounts')
+      .select('*')
+      .eq('is_active', true);
 
-  return { data, error };
+    return { data, error };
+  } catch (error) {
+    console.error('Error getting local accounts:', error);
+    return { data: null, error };
+  }
 };
 
 // Mapping kategori budget ke kategori Accurate
@@ -218,28 +310,38 @@ export const mapBudgetToAccurate = async (
   categoryName: string,
   accurateCategoryId: string
 ) => {
-  const { data, error } = await supabase
-    .from('budget_category_mapping')
-    .insert({
-      budget_id: budgetId,
-      local_category_name: categoryName,
-      accurate_category_id: accurateCategoryId,
-    })
-    .select();
+  try {
+    const { data, error } = await supabase
+      .from('budget_category_mapping')
+      .insert({
+        budget_id: budgetId,
+        local_category_name: categoryName,
+        accurate_category_id: accurateCategoryId,
+      })
+      .select();
 
-  return { data, error };
+    return { data, error };
+  } catch (error) {
+    console.error('Error mapping budget to accurate:', error);
+    return { data: null, error };
+  }
 };
 
 // Get mapping untuk budget tertentu
 export const getBudgetMappings = async (budgetId: string) => {
-  const { data, error } = await supabase
-    .from('budget_category_mapping')
-    .select(`
-      *,
-      accurate_categories(name, code),
-      accurate_accounts(account_name, account_code)
-    `)
-    .eq('budget_id', budgetId);
+  try {
+    const { data, error } = await supabase
+      .from('budget_category_mapping')
+      .select(`
+        *,
+        accurate_categories(name, code),
+        accurate_accounts(account_name, account_code)
+      `)
+      .eq('budget_id', budgetId);
 
-  return { data, error };
+    return { data, error };
+  } catch (error) {
+    console.error('Error getting budget mappings:', error);
+    return { data: null, error };
+  }
 };
