@@ -25,73 +25,100 @@ export const BudgetPage: React.FC = () => {
         <p>Kelola budget dan alokasi kategori perusahaan</p>
       </div>
 
-      {!showForm && (
-        <div className="page-action">
+      <div className="card fade-in">
+        <div className="card-header">
+          <h3 className="card-title">Daftar Budget</h3>
+        </div>
+
+        {/* Button Toggle Form */}
+        {!showForm && (
           <button
-            className="btn btn-primary"
             onClick={() => setShowForm(true)}
+            className="btn btn-primary mb-3"
           >
             + Tambah Budget
           </button>
-        </div>
-      )}
+        )}
 
-      {showForm && (
-        <div className="card form-wrapper mb-4">
-          <BudgetForm
-            onSuccess={() => {
-              setShowForm(false);
-              fetchBudgets();
+        {/* Budget Form */}
+        {showForm && (
+          <div
+            className="card mb-4 fade-in"
+            style={{
+              background: "var(--background)",
+              border: "1px solid var(--border-color)",
             }}
-            onCancel={() => setShowForm(false)}
-          />
-        </div>
-      )}
-
-      <h2 className="card-title mb-3">Daftar Budget</h2>
-
-      {loading ? (
-        <div className="spinner" />
-      ) : budgets.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-state-icon">📊</div>
-          <div className="empty-state-title">Belum ada budget</div>
-          <div className="empty-state-desc">
-            Klik tombol Tambah Budget untuk membuat data baru
+          >
+            <BudgetForm
+              onSuccess={() => {
+                setShowForm(false);
+                fetchBudgets();
+              }}
+              onCancel={() => setShowForm(false)}
+            />
           </div>
-        </div>
-      ) : (
-        <div className="budget-list">
-          {budgets.map(b => (
-            <div key={b.id} className="card budget-card mb-3">
-              <div className="budget-card-header">
-                <h3 className="budget-entity">{b.entity}</h3>
-                <button
-                  className="btn btn-danger btn-sm"
-                  onClick={async () => {
-                    if (confirm('Hapus budget ini?')) {
-                      await deleteBudget(b.id);
-                      fetchBudgets();
-                    }
-                  }}
-                >
-                  Hapus
-                </button>
-              </div>
+        )}
 
-              <div className="budget-meta">
-                <span>{b.department}</span>
-                <span>•</span>
-                <span>{b.period}</span>
-              </div>
-
-              <div className="budget-amount">
-                Rp {b.total_budget.toLocaleString('id-ID')}
-              </div>
-            </div>
-          ))}
+        {/* Budget Table */}
+        <div className="table-container">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Entity</th>
+                <th>Department</th>
+                <th>Periode</th>
+                <th style={{ textAlign: "right" }}>Total Budget</th>
+                <th style={{ textAlign: "center" }}>Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading && !budgets.length ? (
+                <tr>
+                  <td colSpan={5} className="text-center">
+                    Memuat data...
+                  </td>
+                </tr>
+              ) : budgets.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="text-center">
+                    Belum ada data budget
+                  </td>
+                </tr>
+              ) : (
+                budgets.map((b) => (
+                  <tr key={b.id}>
+                    <td style={{ fontWeight: 600 }}>{b.entity}</td>
+                    <td>{b.department}</td>
+                    <td>{b.period}</td>
+                    <td
+                      style={{
+                        textAlign: "right",
+                        fontWeight: 600,
+                        color: "var(--primary-dark)",
+                      }}
+                    >
+                      Rp {b.total_budget.toLocaleString("id-ID")}
+                    </td>
+                    <td style={{ textAlign: "center" }}>
+                      <button
+                        onClick={async () => {
+                          if (confirm("Yakin ingin menghapus budget ini?")) {
+                            await deleteBudget(b.id);
+                            fetchBudgets();
+                          }
+                        }}
+                        className="btn btn-danger btn-sm"
+                      >
+                        Hapus
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
-      )}
+      </div>
     </div>
   );
 };

@@ -5,7 +5,7 @@ import { BudgetPage } from "./pages/BudgetPage";
 import { RealisasiPage } from "./pages/RealisasiPage";
 import { AccurateSync } from "./pages/SettingsPage";
 import { LoginPage } from "./pages/LoginPage";
-
+import { ComparisonPage } from "./pages/ComparisonPage";
 import { useAuth } from "./contexts/AuthContext";
 
 export default function App() {
@@ -47,6 +47,15 @@ export default function App() {
             </NavLink>
 
             <NavLink
+              to="/comparison"
+              className={({ isActive }) =>
+                `nav-tab ${isActive ? "active" : ""}`
+              }
+            >
+              📊 Comparison
+            </NavLink>
+
+            <NavLink
               to="/settings"
               className={({ isActive }) =>
                 `nav-tab ${isActive ? "active" : ""}`
@@ -84,8 +93,16 @@ export default function App() {
 
           {/* PROTECTED */}
           <Route
+            path="/budget"
+            element={user ? <BudgetPage /> : <Navigate to="/login" />}
+          />
+          <Route
             path="/realisasi"
             element={user ? <RealisasiPage /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/comparison"
+            element={user ? <ComparisonPage /> : <Navigate to="/login" />}
           />
           <Route
             path="/settings"

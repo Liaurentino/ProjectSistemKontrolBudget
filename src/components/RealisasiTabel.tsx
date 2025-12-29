@@ -18,13 +18,11 @@ interface Realisasi {
 interface RealisasiTableProps {
   budgetId: string;
   categories: any[];
-  totalBudget: number;
 }
 
 export const RealisasiTable: React.FC<RealisasiTableProps> = ({
   budgetId,
   categories,
-  totalBudget,
 }) => {
   const [realisasi, setRealisasi] = useState<Realisasi[]>([]);
   const [loading, setLoading] = useState(false);
@@ -54,22 +52,10 @@ export const RealisasiTable: React.FC<RealisasiTableProps> = ({
   }, [budgetId]);
 
   const handleAddRealisasi = async () => {
-   const amount = Number(formData.amount);
-
-if (!formData.amount || isNaN(amount)) {
-  alert("Jumlah wajib diisi dan harus berupa angka");
-  return;
-}
-
-if (amount <= 0) {
-  alert("Jumlah harus lebih dari 0");
-  return;
-}
-
-if (amount > sisaBudget) {
-  alert("Jumlah melebihi sisa budget");
-  return;
-}
+    if (!formData.amount || formData.amount <= 0) {
+      alert("Jumlah harus lebih besar dari 0");
+      return;
+    }
 
     setLoading(true);
     try {
@@ -109,74 +95,10 @@ if (amount > sisaBudget) {
     }
   };
 
-  const totalRealisasi = realisasi.reduce((sum, r) => sum + r.amount, 0);
-  const sisaBudget = totalBudget - totalRealisasi;
-  const percentageUsed = (totalRealisasi / totalBudget) * 100;
-
-  // Tentukan warna progress bar
-  const getProgressClass = () => {
-    if (percentageUsed >= 100) return "danger";
-    if (percentageUsed >= 80) return "warning";
-    return "";
-  };
-
   return (
     <div className="card fade-in">
       <div className="card-header">
         <h3 className="card-title">Realisasi Pengeluaran</h3>
-      </div>
-
-      {/* Progress Bar Section */}
-      <div className="mb-4">
-        <div className="flex-between mb-1">
-          <span className="stat-label">Progress Penggunaan Budget</span>
-          <span
-            style={{
-              fontWeight: 700,
-              color:
-                percentageUsed > 100
-                  ? "var(--danger-color)"
-                  : "var(--primary-color)",
-            }}
-          >
-            {percentageUsed.toFixed(1)}%
-          </span>
-        </div>
-        <div className="progress-bar">
-          <div
-            className={`progress-fill ${getProgressClass()}`}
-            style={{ width: `${Math.min(percentageUsed, 100)}%` }}
-          />
-        </div>
-
-        <div className="stats-grid mt-3">
-          <div className="stat-card">
-            <div className="stat-label">Total Budget</div>
-            <div
-              className="stat-value"
-              style={{ color: "var(--primary-color)", fontSize: "1.25rem" }}
-            >
-              Rp {totalBudget.toLocaleString("id-ID")}
-            </div>
-          </div>
-          <div className="stat-card warning">
-            <div className="stat-label">Terpakai</div>
-            <div
-              className="stat-value"
-              style={{ color: "var(--warning-color)", fontSize: "1.25rem" }}
-            >
-              Rp {totalRealisasi.toLocaleString("id-ID")}
-            </div>
-          </div>
-          <div
-            className={`stat-card ${sisaBudget >= 0 ? "success" : "danger"}`}
-          >
-            <div className="stat-label">Sisa</div>
-            <div className="stat-value" style={{ fontSize: "1.25rem" }}>
-              Rp {sisaBudget.toLocaleString("id-ID")}
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Button Toggle Form */}
@@ -211,7 +133,7 @@ if (amount > sisaBudget) {
               >
                 <option value="">Pilih Kategori</option>
                 {categories.map((cat) => (
-                  <option key={cat.name} value={cat.name}>
+                  <option key={cat.id} value={cat.name}>
                     {cat.name}
                   </option>
                 ))}
@@ -284,6 +206,7 @@ if (amount > sisaBudget) {
           <thead>
             <tr>
               <th>Tanggal</th>
+              <th>Kategori</th>
               <th>Deskripsi</th>
               <th style={{ textAlign: "right" }}>Jumlah</th>
               <th style={{ textAlign: "center" }}>Aksi</th>
@@ -292,13 +215,13 @@ if (amount > sisaBudget) {
           <tbody>
             {loading && !realisasi.length ? (
               <tr>
-                <td colSpan={4} className="text-center">
+                <td colSpan={5} className="text-center">
                   Memuat data...
                 </td>
               </tr>
             ) : realisasi.length === 0 ? (
               <tr>
-                <td colSpan={4} className="text-center">
+                <td colSpan={5} className="text-center">
                   Belum ada data pengeluaran
                 </td>
               </tr>
@@ -306,6 +229,7 @@ if (amount > sisaBudget) {
               realisasi.map((r) => (
                 <tr key={r.id}>
                   <td>{new Date(r.date).toLocaleDateString("id-ID")}</td>
+                  <td>{r.category || "-"}</td>
                   <td>{r.description || "-"}</td>
                   <td
                     style={{
