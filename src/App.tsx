@@ -5,7 +5,7 @@ import { BudgetPage } from "./pages/BudgetPage";
 import { RealisasiPage } from "./pages/RealisasiPage";
 import { AccurateSync } from "./pages/SettingsPage";
 import { LoginPage } from "./pages/LoginPage";
-import { ComparisonPage } from "./pages/ComparisonPage";
+import { ComparisonPage } from "./pages/DashboardPage";
 import { useAuth } from "./contexts/AuthContext";
 
 export default function App() {
@@ -52,7 +52,7 @@ export default function App() {
                 `nav-tab ${isActive ? "active" : ""}`
               }
             >
-              📊 Comparison
+              📊 Dashboard
             </NavLink>
 
             <NavLink
