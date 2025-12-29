@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { insertBudget } from '../lib/supabase';
+import React, { useState, useEffect } from 'react';
+import { insertBudget, getEntities } from '../lib/supabase';
 
 interface Category {
   id: string;
@@ -22,7 +22,7 @@ const predefinedCategories = [
 
 export const BudgetForm: React.FC<BudgetFormProps> = ({ onSuccess, onCancel }) => {
   const [formData, setFormData] = useState({
-    entity: '',
+    entity_id: '',
     department: '',
     totalBudget: 0,
     period: '',
@@ -38,7 +38,31 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({ onSuccess, onCancel }) =
     }))
   );
 
+  const [entities, setEntities] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingEntities, setLoadingEntities] = useState(false);
+
+  // Fetch entities dari database
+  useEffect(() => {
+    const fetchEntities = async () => {
+      setLoadingEntities(true);
+      try {
+        const { data, error } = await getEntities();
+
+        console.log('Entities data:', data);
+        console.log('Entities error:', error);
+        if (error) throw error;
+        setEntities(data || []);
+      } catch (error) {
+        console.error('Error fetching entities:', error);
+        alert('Gagal memuat daftar entitas');
+      } finally {
+        setLoadingEntities(false);
+      }
+    };
+
+    fetchEntities();
+  }, []);
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -71,7 +95,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({ onSuccess, onCancel }) =
       return;
     }
 
-    if (!formData.entity || !formData.department || formData.totalBudget <= 0 || !formData.period) {
+    if (!formData.entity_id || !formData.department || formData.totalBudget <= 0 || !formData.period) {
       alert('Mohon lengkapi semua field yang diperlukan!');
       return;
     }
@@ -81,7 +105,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({ onSuccess, onCancel }) =
       const updatedCategories = calculateEstimates();
 
       const { error } = await insertBudget({
-        entity: formData.entity,
+        entity_id: formData.entity_id,
         department: formData.department,
         total_budget: formData.totalBudget,
         period: formData.period,
@@ -93,6 +117,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({ onSuccess, onCancel }) =
 
       onSuccess();
     } catch (error) {
+      console.error('Error:', error);
       alert('Gagal menyimpan budget');
     } finally {
       setLoading(false);
@@ -111,15 +136,20 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({ onSuccess, onCancel }) =
         <div className="form-group">
           <label className="form-label">Entitas</label>
           <select
-            name="entity"
-            value={formData.entity}
-            onChange={(e) => setFormData({ ...formData, entity: e.target.value })}
+            name="entity_id"
+            value={formData.entity_id}
+            onChange={(e) => setFormData({ ...formData, entity_id: e.target.value })}
             className="form-select"
+            disabled={loadingEntities}
           >
-            <option value="">Pilih Entitas</option>
-            <option value="PT Maju Jaya">PT Maju Jaya</option>
-            <option value="PT Sukses Bersama">PT Sukses Bersama</option>
-            <option value="PT Digital Indonesia">PT Digital Indonesia</option>
+            <option value="">
+              {loadingEntities ? 'Memuat...' : 'Pilih Entitas'}
+            </option>
+            {entities.map((entity) => (
+              <option key={entity.id} value={entity.id}>
+                {entity.entity_name}
+              </option>
+            ))}
           </select>
         </div>
 

@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { getBudgets } from '../lib/supabase';
-import { RealisasiTable } from '../components/RealisasiTabel';
+import React, { useEffect, useState } from "react";
+import { getBudgets } from "../lib/supabase";
+import { RealisasiTable } from "../components/RealisasiTabel";
 
 export const RealisasiPage: React.FC = () => {
   const [budgets, setBudgets] = useState<any[]>([]);
@@ -17,7 +17,7 @@ export const RealisasiPage: React.FC = () => {
         setSelectedBudgetId(data[0].id);
       }
     } catch (error) {
-      console.error('Error fetching budgets:', error);
+      console.error("Error fetching budgets:", error);
     } finally {
       setLoading(false);
     }
@@ -27,7 +27,7 @@ export const RealisasiPage: React.FC = () => {
     fetchBudgets();
   }, []);
 
-  const selectedBudget = budgets.find(b => b.id === selectedBudgetId);
+  const selectedBudget = budgets.find((b) => b.id === selectedBudgetId);
 
   return (
     <div className="app-container fade-in">
@@ -43,19 +43,23 @@ export const RealisasiPage: React.FC = () => {
         <div className="card mb-3">
           <h2 className="card-title mb-2">Pilih Anggaran Perusahaan</h2>
           <div className="stats-grid">
-            {budgets.map(budget => (
+            {budgets.map((budget) => (
               <div
                 key={budget.id}
                 onClick={() => setSelectedBudgetId(budget.id)}
-                className={`budget-item ${selectedBudgetId === budget.id ? 'active' : ''}`}
-                style={{ cursor: 'pointer' }}
+                className={`budget-item ${
+                  selectedBudgetId === budget.id ? "active" : ""
+                }`}
+                style={{ cursor: "pointer" }}
               >
-                <p className="budget-item-title">{budget.entity}</p>
+                <p className="budget-item-title">
+                  {budget.entity?.entity_name || "-"}
+                </p>
                 <p className="budget-item-meta">
                   {budget.department} | {budget.period}
                 </p>
                 <p className="budget-item-amount">
-                  Rp {budget.total_budget.toLocaleString('id-ID')}
+                  Rp {budget.total_budget.toLocaleString("id-ID")}
                 </p>
               </div>
             ))}
@@ -69,7 +73,6 @@ export const RealisasiPage: React.FC = () => {
         <RealisasiTable
           budgetId={selectedBudget.id}
           categories={selectedBudget.categories_data}
-          totalBudget={selectedBudget.total_budget}
         />
       ) : (
         <div className="empty-state">

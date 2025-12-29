@@ -87,7 +87,9 @@ export const BudgetPage: React.FC = () => {
               ) : (
                 budgets.map((b) => (
                   <tr key={b.id}>
-                    <td style={{ fontWeight: 600 }}>{b.entity}</td>
+                    <td style={{ fontWeight: 600 }}>
+                      {b.entity?.entity_name || '-'}
+                    </td>
                     <td>{b.department}</td>
                     <td>{b.period}</td>
                     <td

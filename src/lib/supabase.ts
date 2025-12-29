@@ -16,9 +16,19 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
   }
 });
 
-// Budget functions (updated with user_id)
+// Entity functions
+export const getEntities = async () => {
+  const { data, error } = await supabase
+    .from('entity')
+    .select('*')
+    .order('entity_name');
+  
+  return { data, error };
+};
+
+// Budget functions (updated with user_id and entity_id)
 export const insertBudget = async (budgetData: {
-  entity: string;
+  entity_id: string;  // Ganti dari entity ke entity_id
   department: string;
   total_budget: number;
   period: string;
@@ -39,9 +49,18 @@ export const insertBudget = async (budgetData: {
 };
 
 export const getBudgets = async () => {
+  const { data: { user } } = await supabase.auth.getUser();
+
   const { data, error } = await supabase
     .from('budgets')
-    .select('*')
+    .select(`
+      *,
+      entity:entity_id (
+        id,
+        entity_name
+      )
+    `)
+    .eq('user_id', user?.id)
     .order('created_at', { ascending: false });
 
   return { data, error };
@@ -50,7 +69,13 @@ export const getBudgets = async () => {
 export const getBudgetById = async (id: string) => {
   const { data, error } = await supabase
     .from('budgets')
-    .select('*')
+    .select(`
+      *,
+      entity:entity_id (
+        id,
+        entity_name
+      )
+    `)
     .eq('id', id)
     .single();
 
