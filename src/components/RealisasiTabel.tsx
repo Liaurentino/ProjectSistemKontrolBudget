@@ -54,10 +54,22 @@ export const RealisasiTable: React.FC<RealisasiTableProps> = ({
   }, [budgetId]);
 
   const handleAddRealisasi = async () => {
-    if (!formData.amount || formData.amount >= sisaBudget || formData.amount <= 0) {
-      alert("Jumlah harus valid");
-      return;
-    }
+   const amount = Number(formData.amount);
+
+if (!formData.amount || isNaN(amount)) {
+  alert("Jumlah wajib diisi dan harus berupa angka");
+  return;
+}
+
+if (amount <= 0) {
+  alert("Jumlah harus lebih dari 0");
+  return;
+}
+
+if (amount > sisaBudget) {
+  alert("Jumlah melebihi sisa budget");
+  return;
+}
 
     setLoading(true);
     try {
