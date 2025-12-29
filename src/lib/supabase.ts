@@ -79,7 +79,7 @@ export const deleteBudget = async (id: string) => {
 // Realisasi functions (updated with user_id)
 export const insertRealisasi = async (realisasiData: {
   budget_id: string;
-  category_id?: string;
+  category?: string;
   amount: number;
   description?: string;
   date?: string;
