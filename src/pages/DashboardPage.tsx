@@ -50,7 +50,9 @@ export const ComparisonPage: React.FC = () => {
                 className={`budget-item ${selectedBudgetId === budget.id ? 'active' : ''}`}
                 style={{ cursor: 'pointer' }}
               >
-                <p className="budget-item-title">{budget.entity}</p>
+                <p className="budget-item-title">
+                  {budget.entity?.entity_name || '-'}
+                </p>
                 <p className="budget-item-meta">
                   {budget.department} | {budget.period}
                 </p>
