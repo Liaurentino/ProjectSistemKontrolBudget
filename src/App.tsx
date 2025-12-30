@@ -10,26 +10,31 @@ import { EntitasPage } from "./pages/EntitasPage";
 import { useAuth } from "./contexts/AuthContext";
 
 export default function App() {
-  const { user, signOut } = useAuth();
+  const { user, loading, signOut } = useAuth();
 
   const handleLogout = async () => {
     await signOut();
   };
+
+  if (loading) {
+    return (
+      <div className="app-loading">
+        Loading...
+      </div>
+    );
+  }
 
   return (
     <div className="fade-in">
       {/* Navbar */}
       <nav className="app-navbar">
         <div className="app-container navbar-inner">
-          {/* Brand */}
           <div className="flex-center gap-2">
             <span className="app-brand-icon">💼</span>
             <h1 className="app-title">Budget System</h1>
           </div>
 
-          {/* Navigation Tabs */}
           <div className="nav-tabs navbar-tabs">
-
             <NavLink
               to="/entitas"
               className={({ isActive }) =>
@@ -75,7 +80,6 @@ export default function App() {
               Sinkronisasi
             </NavLink>
 
-            {/* Auth */}
             <div className="nav-auth">
               {user ? (
                 <button
@@ -100,17 +104,15 @@ export default function App() {
       {/* Page Content */}
       <main className="app-container">
         <Routes>
-          {/* PUBLIC */}
           <Route path="/login" element={<LoginPage />} />
 
-          {/* PROTECTED */}
-          <Route
-            path="/budget"
-            element={user ? <BudgetPage /> : <Navigate to="/login" />}
-          />
           <Route
             path="/entitas"
             element={user ? <EntitasPage /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/budget"
+            element={user ? <BudgetPage /> : <Navigate to="/login" />}
           />
           <Route
             path="/realisasi"
@@ -125,9 +127,8 @@ export default function App() {
             element={user ? <AccurateSync /> : <Navigate to="/login" />}
           />
 
-          {/* DEFAULT */}
-          <Route path="/" element={<Navigate to="/budget" />} />
-          <Route path="*" element={<Navigate to="/budget" />} />
+          <Route path="/" element={<Navigate to="/entitas" />} />
+          <Route path="*" element={<Navigate to="/entitas" />} />
         </Routes>
       </main>
     </div>
