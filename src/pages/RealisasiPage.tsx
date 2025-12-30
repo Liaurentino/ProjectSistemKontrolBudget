@@ -1,21 +1,20 @@
 import React, { useEffect, useState } from "react";
 import { getBudgets } from "../lib/supabase";
 import { RealisasiTable } from "../components/RealisasiTabel";
+import { useEntity } from "../contexts/EntityContext";
 
 export const RealisasiPage: React.FC = () => {
   const [budgets, setBudgets] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedBudgetId, setSelectedBudgetId] = useState<string | null>(null);
 
+  const { activeEntityIds } = useEntity();
+
   const fetchBudgets = async () => {
     setLoading(true);
     try {
-      const { data, error } = await getBudgets();
-      if (error) throw error;
+      const { data } = await getBudgets();
       setBudgets(data || []);
-      if (data && data.length > 0) {
-        setSelectedBudgetId(data[0].id);
-      }
     } catch (error) {
       console.error("Error fetching budgets:", error);
     } finally {
@@ -27,7 +26,36 @@ export const RealisasiPage: React.FC = () => {
     fetchBudgets();
   }, []);
 
-  const selectedBudget = budgets.find((b) => b.id === selectedBudgetId);
+  // filter sesuai entitas yang dicentang
+  const filteredBudgets =
+    activeEntityIds.length === 0
+      ? []
+      : budgets.filter((b) => activeEntityIds.includes(b.entity?.id));
+
+  // jaga selected budget tetap valid
+  useEffect(() => {
+    if (filteredBudgets.length === 0) {
+      setSelectedBudgetId(null);
+      return;
+    }
+
+    if (!selectedBudgetId) {
+      setSelectedBudgetId(filteredBudgets[0].id);
+      return;
+    }
+
+    const stillExists = filteredBudgets.some(
+      (b) => b.id === selectedBudgetId
+    );
+
+    if (!stillExists) {
+      setSelectedBudgetId(filteredBudgets[0].id);
+    }
+  }, [filteredBudgets, selectedBudgetId]);
+
+  const selectedBudget = filteredBudgets.find(
+    (b) => b.id === selectedBudgetId
+  );
 
   return (
     <div className="app-container fade-in">
@@ -36,14 +64,30 @@ export const RealisasiPage: React.FC = () => {
           <span className="icon">📈</span>
           Monitoring Realisasi
         </h1>
-        <p>Bandingkan rencana budget dengan pengeluaran aktual Anda</p>
+        <p>Bandingkan rencana budget dengan pengeluaran aktual</p>
       </div>
 
-      {!loading && budgets.length > 0 && (
+      {/* KONDISI 1: tidak ada entitas dicentang */}
+      {activeEntityIds.length === 0 && (
+        <div className="card mb-3 text-center">
+          <p>Tidak ada entitas yang dicentang</p>
+        </div>
+      )}
+
+      {/* KONDISI 2: entitas dicentang tapi tidak ada budget */}
+      {activeEntityIds.length > 0 && filteredBudgets.length === 0 && (
+        <div className="card mb-3 text-center">
+          <p>Belum ada budget yang dibuat untuk entitas terpilih</p>
+        </div>
+      )}
+
+      {/* KONDISI 3: ada budget yang cocok, tampilkan daftar saja */}
+      {!loading && filteredBudgets.length > 0 && (
         <div className="card mb-3">
           <h2 className="card-title mb-2">Pilih Anggaran Perusahaan</h2>
+
           <div className="stats-grid">
-            {budgets.map((budget) => (
+            {filteredBudgets.map((budget) => (
               <div
                 key={budget.id}
                 onClick={() => setSelectedBudgetId(budget.id)}
@@ -74,13 +118,7 @@ export const RealisasiPage: React.FC = () => {
           budgetId={selectedBudget.id}
           categories={selectedBudget.categories_data}
         />
-      ) : (
-        <div className="empty-state">
-          <div className="empty-state-icon">📄</div>
-          <div className="empty-state-title">Tidak ada budget terpilih</div>
-          <p>Silakan pilih atau buat budget terlebih dahulu.</p>
-        </div>
-      )}
+      ) : null}
     </div>
   );
 };

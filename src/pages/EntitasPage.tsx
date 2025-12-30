@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { getEntities, deleteEntity } from '../lib/supabase';
 import { EntitasForm } from '../components/EntitasForm';
+import { useEntity } from '../contexts/EntityContext'; // ✅ TAMBAHAN
 
 export const EntitasPage: React.FC = () => {
   const [entities, setEntities] = useState<any[]>([]);
@@ -26,6 +27,9 @@ export const EntitasPage: React.FC = () => {
       setLoading(false);
     }
   };
+  
+  // ✅ TAMBAHAN: context entitas aktif
+  const { toggleEntity, isEntityActive } = useEntity();
 
   useEffect(() => {
     fetchEntities();
@@ -88,90 +92,95 @@ export const EntitasPage: React.FC = () => {
 
         {/* TABLE */}
         <div className="table-container">
-          <table className="table">
+      <table className="table">
             <thead>
               <tr>
+                <th>Aktif</th> {/* ✅ TAMBAHAN */}
                 <th>Nama Entitas</th>
                 <th>ID</th>
                 <th style={{ textAlign: 'center' }}>Aksi</th>
               </tr>
             </thead>
 
-            <tbody>
-              {loading && entities.length === 0 ? (
-                <tr>
-                  <td colSpan={3} className="text-center">
-                    Memuat data...
-                  </td>
-                </tr>
-              ) : entities.length === 0 ? (
-                <tr>
-                  <td colSpan={3} className="text-center">
-                    Belum ada entitas
-                  </td>
-                </tr>
-              ) : (
-                entities.map((e) => (
-                  <tr key={e.id}>
-                    <td style={{ fontWeight: 600 }}>
-                      {e.entity_name}
-                    </td>
-                    <td>{e.id.slice(0, 8)}...</td>
-                    <td style={{ textAlign: 'center' }}>
-                      <div
-                        style={{
-                          display: 'inline-flex',
-                          gap: '6px',
-                        }}
-                      >
-                        {/* EDIT */}
-                        <button
-                          className="btn btn-outline btn-sm"
-                          onClick={() => {
-                            setSelectedEntity(e);
-                            setShowEdit(true);
-                          }}
-                        >
-                          Edit
-                        </button>
+          <tbody>
+  {loading && entities.length === 0 ? (
+    <tr>
+      <td colSpan={4} className="text-center">Memuat data...</td>
+    </tr>
+  ) : entities.length === 0 ? (
+    <tr>
+      <td colSpan={4} className="text-center">Belum ada entitas</td>
+    </tr>
+  ) : (
+    entities.map((e) => (
+      <tr key={e.id}>
+        {/* AKTIF */}
+        <td>
+          <input
+            type="checkbox"
+            checked={isEntityActive(e.id)}
+            onChange={() => toggleEntity(e.id)}
+          />
+        </td>
 
-                        {/* SYNC */}
-                        <button
-                          className="btn btn-primary btn-sm"
-                          onClick={() =>
-                            alert(
-                              `Sync Accurate untuk ${e.entity_name} (coming soon)`
-                            )
-                          }
-                        >
-                          Sync
-                        </button>
+        {/* NAMA ENTITAS */}
+        <td style={{ fontWeight: 600 }}>{e.entity_name}</td>
 
-                        {/* DELETE */}
-                        <button
-                          className="btn btn-danger btn-sm"
-                          onClick={async () => {
-                            if (
-                              confirm(
-                                `Yakin ingin menghapus entitas "${e.entity_name}"?`
-                              )
-                            ) {
-                              await deleteEntity(e.id);
-                              fetchEntities();
-                            }
-                          }}
-                        >
-                          Hapus
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
+        {/* ID */}
+        <td>{e.id.slice(0, 8)}...</td>
+
+        {/* AKSI */}
+        <td style={{ textAlign: "center" }}>
+          <div style={{ display: "inline-flex", gap: "6px" }}>
+            <button
+              className="btn btn-outline btn-sm"
+              onClick={() => {
+                setSelectedEntity(e);
+                setShowEdit(true);
+              }}
+            >
+              Edit
+            </button>
+
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={() =>
+                alert(`Sync Accurate untuk ${e.entity_name} (coming soon)`)
+              }
+            >
+              Sync
+            </button>
+
+            <button
+              className="btn btn-danger btn-sm"
+              onClick={async () => {
+                if (
+                  confirm(`Yakin ingin menghapus entitas "${e.entity_name}"?`)
+                ) {
+                  await deleteEntity(e.id);
+                  fetchEntities();
+                }
+              }}
+            >
+              Hapus
+            </button>
+          </div>
+        </td>
+      </tr>
+    ))
+  )}
+</tbody>
           </table>
         </div>
       </div>
     </div>
   );
 };
+
+
+
+  
+       
+
+       
+             

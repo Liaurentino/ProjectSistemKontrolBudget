@@ -1,11 +1,14 @@
-import React, { useEffect, useState } from 'react';
-import { BudgetForm } from '../components/BudgetForm';
-import { deleteBudget, getBudgets } from '../lib/supabase';
+import React, { useEffect, useState } from "react";
+import { BudgetForm } from "../components/BudgetForm";
+import { deleteBudget, getBudgets } from "../lib/supabase";
+import { useEntity } from "../contexts/EntityContext";
 
 export const BudgetPage: React.FC = () => {
   const [budgets, setBudgets] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
+
+  const { activeEntityIds } = useEntity();
 
   const fetchBudgets = async () => {
     setLoading(true);
@@ -18,11 +21,16 @@ export const BudgetPage: React.FC = () => {
     fetchBudgets();
   }, []);
 
+  const visibleBudgets =
+    activeEntityIds.length === 0
+      ? []
+      : budgets.filter((b) => activeEntityIds.includes(b.entity_id));
+
   return (
     <div className="app-container fade-in">
       <div className="app-header">
         <h1>📊 Budget Management</h1>
-        <p>Kelola budget dan alokasi kategori perusahaan</p>
+        <p>Hanya menampilkan budget dari entitas terpilih</p>
       </div>
 
       <div className="card fade-in">
@@ -30,7 +38,6 @@ export const BudgetPage: React.FC = () => {
           <h3 className="card-title">Daftar Budget</h3>
         </div>
 
-        {/* Button Toggle Form */}
         {!showForm && (
           <button
             onClick={() => setShowForm(true)}
@@ -40,15 +47,8 @@ export const BudgetPage: React.FC = () => {
           </button>
         )}
 
-        {/* Budget Form */}
         {showForm && (
-          <div
-            className="card mb-4 fade-in"
-            style={{
-              background: "var(--background)",
-              border: "1px solid var(--border-color)",
-            }}
-          >
+          <div className="card mb-4 fade-in">
             <BudgetForm
               onSuccess={() => {
                 setShowForm(false);
@@ -59,7 +59,6 @@ export const BudgetPage: React.FC = () => {
           </div>
         )}
 
-        {/* Budget Table */}
         <div className="table-container">
           <table className="table">
             <thead>
@@ -71,52 +70,63 @@ export const BudgetPage: React.FC = () => {
                 <th style={{ textAlign: "center" }}>Aksi</th>
               </tr>
             </thead>
+
             <tbody>
-              {loading && !budgets.length ? (
+              {/* Loading */}
+              {loading && (
                 <tr>
                   <td colSpan={5} className="text-center">
                     Memuat data...
                   </td>
                 </tr>
-              ) : budgets.length === 0 ? (
+              )}
+
+              {/* Kondisi 1: tidak ada entitas dicentang */}
+              {!loading && activeEntityIds.length === 0 && (
                 <tr>
                   <td colSpan={5} className="text-center">
-                    Belum ada data budget
+                    Tidak ada entitas yang dicentang
                   </td>
                 </tr>
-              ) : (
-                budgets.map((b) => (
-                  <tr key={b.id}>
-                    <td style={{ fontWeight: 600 }}>
-                      {b.entity?.entity_name || '-'}
+              )}
+
+              {/* Kondisi 2: ada entitas dicentang tapi belum ada budget */}
+              {!loading &&
+                activeEntityIds.length > 0 &&
+                visibleBudgets.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="text-center">
+                      Belum ada budget yang dibuat untuk entitas terpilih
                     </td>
+                  </tr>
+                )}
+
+              {/* Kondisi 3: ada data */}
+              {!loading &&
+                visibleBudgets.length > 0 &&
+                visibleBudgets.map((b) => (
+                  <tr key={b.id}>
+                    <td>{b.entity?.entity_name}</td>
                     <td>{b.department}</td>
                     <td>{b.period}</td>
-                    <td
-                      style={{
-                        textAlign: "right",
-                        fontWeight: 600,
-                        color: "var(--primary-dark)",
-                      }}
-                    >
+                    <td style={{ textAlign: "right" }}>
                       Rp {b.total_budget.toLocaleString("id-ID")}
                     </td>
                     <td style={{ textAlign: "center" }}>
                       <button
+                        className="btn btn-danger btn-sm"
                         onClick={async () => {
-                          if (confirm("Yakin ingin menghapus budget ini?")) {
+                          if (confirm("Hapus budget ini?")) {
                             await deleteBudget(b.id);
                             fetchBudgets();
                           }
                         }}
-                        className="btn btn-danger btn-sm"
                       >
                         Hapus
                       </button>
                     </td>
                   </tr>
-                ))
-              )}
+                ))}
             </tbody>
           </table>
         </div>
