@@ -4,7 +4,6 @@ import { insertBudget, getEntities } from '../lib/supabase';
 interface Category {
   id: string;
   name: string;
-  percentage: number;
   estimatedAmount: number;
 }
 
@@ -14,10 +13,10 @@ interface BudgetFormProps {
 }
 
 const predefinedCategories = [
-  { name: 'Operasional', defaultPercentage: 40 },
-  { name: 'Gaji', defaultPercentage: 35 },
-  { name: 'Marketing', defaultPercentage: 15 },
-  { name: 'Maintenance', defaultPercentage: 10 },
+  { name: 'Operasional' },
+  { name: 'Gaji' },
+  { name: 'Marketing' },
+  { name: 'Maintenance' },
 ];
 
 export const BudgetForm: React.FC<BudgetFormProps> = ({ onSuccess, onCancel }) => {
@@ -29,11 +28,10 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({ onSuccess, onCancel }) =
     description: '',
   });
 
-  const [categories, setCategories] = useState<Category[]>(
+  const [categories] = useState<Category[]>(
     predefinedCategories.map((cat) => ({
       id: Math.random().toString(),
       name: cat.name,
-      percentage: cat.defaultPercentage,
       estimatedAmount: 0,
     }))
   );
@@ -42,15 +40,11 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({ onSuccess, onCancel }) =
   const [loading, setLoading] = useState(false);
   const [loadingEntities, setLoadingEntities] = useState(false);
 
-  // Fetch entities dari database
   useEffect(() => {
     const fetchEntities = async () => {
       setLoadingEntities(true);
       try {
         const { data, error } = await getEntities();
-
-        console.log('Entities data:', data);
-        console.log('Entities error:', error);
         if (error) throw error;
         setEntities(data || []);
       } catch (error) {
@@ -64,7 +58,9 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({ onSuccess, onCancel }) =
     fetchEntities();
   }, []);
 
-  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleFormChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -72,45 +68,28 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({ onSuccess, onCancel }) =
     }));
   };
 
-  const handleCategoryChange = (id: string, newPercentage: number) => {
-    const updated = categories.map((cat) =>
-      cat.id === id ? { ...cat, percentage: newPercentage } : cat
-    );
-    setCategories(updated);
-  };
-
-  const calculateEstimates = () => {
-    return categories.map((cat) => ({
-      ...cat,
-      estimatedAmount: (cat.percentage / 100) * formData.totalBudget,
-    }));
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const totalPercentage = categories.reduce((sum, cat) => sum + cat.percentage, 0);
-    if (Math.abs(totalPercentage - 100) > 0.01) {
-      alert('Total persentase kategori harus 100%!');
-      return;
-    }
-
-    if (!formData.entity_id || !formData.department || formData.totalBudget <= 0 || !formData.period) {
+    if (
+      !formData.entity_id ||
+      !formData.department ||
+      formData.totalBudget <= 0 ||
+      !formData.period
+    ) {
       alert('Mohon lengkapi semua field yang diperlukan!');
       return;
     }
 
     setLoading(true);
     try {
-      const updatedCategories = calculateEstimates();
-
       const { error } = await insertBudget({
         entity_id: formData.entity_id,
         department: formData.department,
         total_budget: formData.totalBudget,
         period: formData.period,
         description: formData.description,
-        categories_data: updatedCategories,
+        categories_data: categories,
       });
 
       if (error) throw error;
@@ -124,21 +103,19 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({ onSuccess, onCancel }) =
     }
   };
 
-  const totalPercentage = categories.reduce((sum, cat) => sum + cat.percentage, 0);
-  const isValidPercentage = Math.abs(totalPercentage - 100) < 0.01;
-
   return (
     <form className="budget-form" onSubmit={handleSubmit}>
       <h2 className="budget-form-title">Tambah Budget Baru</h2>
 
-      {/* GRID UTAMA */}
       <div className="form-grid">
         <div className="form-group">
           <label className="form-label">Entitas</label>
           <select
             name="entity_id"
             value={formData.entity_id}
-            onChange={(e) => setFormData({ ...formData, entity_id: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, entity_id: e.target.value })
+            }
             className="form-select"
             disabled={loadingEntities}
           >
@@ -158,7 +135,6 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({ onSuccess, onCancel }) =
           <input
             type="text"
             name="department"
-            placeholder="Contoh: IT, Marketing, HR"
             value={formData.department}
             onChange={handleFormChange}
             className="form-input"
@@ -181,7 +157,6 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({ onSuccess, onCancel }) =
           <input
             type="text"
             name="period"
-            placeholder="Contoh: 2024-01"
             value={formData.period}
             onChange={handleFormChange}
             className="form-input"
@@ -189,7 +164,6 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({ onSuccess, onCancel }) =
         </div>
       </div>
 
-      {/* DESKRIPSI */}
       <div className="form-group mt-3">
         <label className="form-label">Deskripsi</label>
         <textarea
@@ -197,59 +171,15 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({ onSuccess, onCancel }) =
           value={formData.description}
           onChange={handleFormChange}
           className="form-textarea"
-          placeholder="Deskripsi budget (opsional)"
         />
       </div>
 
-      {/* ALOKASI KATEGORI */}
-      <div className="category-section">
-        <h3>Alokasi Kategori</h3>
-
-        {categories.map((cat) => (
-          <div key={cat.id} className="category-row">
-            <strong>{cat.name}</strong>
-
-            <input
-              type="number"
-              min="0"
-              max="100"
-              step="0.1"
-              value={cat.percentage}
-              onChange={(e) =>
-                handleCategoryChange(cat.id, parseFloat(e.target.value) || 0)
-              }
-              className="form-input"
-            />
-
-            <span>
-              Rp {(cat.percentage / 100 * formData.totalBudget).toLocaleString('id-ID')}
-            </span>
-          </div>
-        ))}
-
-        <p className="mt-2">
-          <strong>Total Persentase:</strong>{' '}
-          <span style={{ color: isValidPercentage ? 'green' : 'red' }}>
-            {totalPercentage.toFixed(1)}%
-          </span>
-        </p>
-      </div>
-
-      {/* ACTION */}
       <div className="form-actions">
-        <button
-          type="button"
-          className="btn btn-outline"
-          onClick={onCancel}
-        >
+        <button type="button" className="btn btn-outline" onClick={onCancel}>
           Batal
         </button>
 
-        <button
-          type="submit"
-          className="btn btn-primary"
-          disabled={!isValidPercentage || loading}
-        >
+        <button type="submit" className="btn btn-primary" disabled={loading}>
           {loading ? 'Menyimpan...' : 'Simpan Budget'}
         </button>
       </div>

@@ -1,4 +1,3 @@
-import React from "react";
 import { Routes, Route, NavLink, Navigate } from "react-router-dom";
 
 import { BudgetPage } from "./pages/BudgetPage";
@@ -6,6 +5,8 @@ import { RealisasiPage } from "./pages/RealisasiPage";
 import { AccurateSync } from "./pages/SettingsPage";
 import { LoginPage } from "./pages/LoginPage";
 import { ComparisonPage } from "./pages/DashboardPage";
+import { EntitasPage } from "./pages/EntitasPage";
+
 import { useAuth } from "./contexts/AuthContext";
 
 export default function App() {
@@ -26,15 +27,25 @@ export default function App() {
             <h1 className="app-title">Budget System</h1>
           </div>
 
-          {/* Tabs */}
+          {/* Navigation Tabs */}
           <div className="nav-tabs navbar-tabs">
+
             <NavLink
-              to="/"
+              to="/entitas"
               className={({ isActive }) =>
                 `nav-tab ${isActive ? "active" : ""}`
               }
             >
-              📊 Budget
+              Entitas
+            </NavLink>
+
+            <NavLink
+              to="/budget"
+              className={({ isActive }) =>
+                `nav-tab ${isActive ? "active" : ""}`
+              }
+            >
+              Budget
             </NavLink>
 
             <NavLink
@@ -43,7 +54,7 @@ export default function App() {
                 `nav-tab ${isActive ? "active" : ""}`
               }
             >
-              📈 Realisasi
+              Realisasi
             </NavLink>
 
             <NavLink
@@ -52,7 +63,7 @@ export default function App() {
                 `nav-tab ${isActive ? "active" : ""}`
               }
             >
-              📊 Dashboard
+              Dashboard
             </NavLink>
 
             <NavLink
@@ -61,21 +72,23 @@ export default function App() {
                 `nav-tab ${isActive ? "active" : ""}`
               }
             >
-              ⚙️ Sinkronisasi
+              Sinkronisasi
             </NavLink>
 
             {/* Auth */}
             <div className="nav-auth">
               {user ? (
-                <NavLink
-                  to="/login"
+                <button
                   onClick={handleLogout}
                   className="nav-tab nav-tab-auth"
                 >
                   Logout
-                </NavLink>
+                </button>
               ) : (
-                <NavLink to="/login" className="nav-tab nav-tab-auth primary">
+                <NavLink
+                  to="/login"
+                  className="nav-tab nav-tab-auth primary"
+                >
                   Login
                 </NavLink>
               )}
@@ -88,13 +101,16 @@ export default function App() {
       <main className="app-container">
         <Routes>
           {/* PUBLIC */}
-          <Route path="/" element={<BudgetPage />} />
           <Route path="/login" element={<LoginPage />} />
 
           {/* PROTECTED */}
           <Route
             path="/budget"
             element={user ? <BudgetPage /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/entitas"
+            element={user ? <EntitasPage /> : <Navigate to="/login" />}
           />
           <Route
             path="/realisasi"
@@ -109,8 +125,9 @@ export default function App() {
             element={user ? <AccurateSync /> : <Navigate to="/login" />}
           />
 
-          {/* FALLBACK */}
-          <Route path="*" element={<Navigate to="/" />} />
+          {/* DEFAULT */}
+          <Route path="/" element={<Navigate to="/budget" />} />
+          <Route path="*" element={<Navigate to="/budget" />} />
         </Routes>
       </main>
     </div>

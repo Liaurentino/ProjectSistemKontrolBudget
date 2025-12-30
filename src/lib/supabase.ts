@@ -16,6 +16,7 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
   }
 });
 
+
 // Entity functions
 export const getEntities = async () => {
   const { data, error } = await supabase
@@ -26,9 +27,52 @@ export const getEntities = async () => {
   return { data, error };
 };
 
+export const getEntityById = async (entityId: string) => {
+  const { data, error } = await supabase
+    .from('entity')
+    .select('*')
+    .eq('id', entityId)
+    .single();
+  
+  return { data, error };
+};
+
+export const insertEntity = async (entityData: {
+  entity_name: string;
+  description?: string;
+  accurate_db_id?: string;
+  accurate_access_token?: string;
+}) => {
+  const { data, error } = await supabase
+    .from('entity')
+    .insert([entityData])
+    .select();
+  
+  return { data, error };
+};
+
+export const updateEntity = async (id: string, entityData: any) => {
+  const { data, error } = await supabase
+    .from('entity')
+    .update(entityData)
+    .eq('id', id)
+    .select();
+  
+  return { data, error };
+};
+
+export const deleteEntity = async (id: string) => {
+  const { data, error } = await supabase
+    .from('entity')
+    .delete()
+    .eq('id', id);
+  
+  return { data, error };
+};
+
 // Budget functions (updated with user_id and entity_id)
 export const insertBudget = async (budgetData: {
-  entity_id: string;  // Ganti dari entity ke entity_id
+  entity_id: string;  
   department: string;
   total_budget: number;
   period: string;
