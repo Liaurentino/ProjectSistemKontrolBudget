@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { insertBudget, getEntities } from '../lib/supabase';
+import { useEntity } from "../contexts/EntityContext";
 
 interface Category {
   id: string;
@@ -40,21 +41,16 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({ onSuccess, onCancel }) =
   const [loading, setLoading] = useState(false);
   const [loadingEntities, setLoadingEntities] = useState(false);
 
-  useEffect(() => {
-    const fetchEntities = async () => {
-      setLoadingEntities(true);
-      try {
-        const { data, error } = await getEntities();
-        if (error) throw error;
-        setEntities(data || []);
-      } catch (error) {
-        console.error('Error fetching entities:', error);
-        alert('Gagal memuat daftar entitas');
-      } finally {
-        setLoadingEntities(false);
-      }
-    };
+  const { activeEntityIds } = useEntity();
 
+  const fetchEntities = async () => {
+    setLoadingEntities(true);
+    const { data, error } = await getEntities();
+    if (!error) setEntities(data || []);
+    setLoadingEntities(false);
+  };
+
+  useEffect(() => {
     fetchEntities();
   }, []);
 
@@ -110,6 +106,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({ onSuccess, onCancel }) =
       <div className="form-grid">
         <div className="form-group">
           <label className="form-label">Entitas</label>
+
           <select
             name="entity_id"
             value={formData.entity_id}
@@ -119,14 +116,15 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({ onSuccess, onCancel }) =
             className="form-select"
             disabled={loadingEntities}
           >
-            <option value="">
-              {loadingEntities ? 'Memuat...' : 'Pilih Entitas'}
-            </option>
-            {entities.map((entity) => (
-              <option key={entity.id} value={entity.id}>
-                {entity.entity_name}
-              </option>
-            ))}
+            <option value="">Pilih entitas</option>
+
+            {entities
+              .filter((e) => activeEntityIds.includes(e.id))
+              .map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.entity_name}
+                </option>
+              ))}
           </select>
         </div>
 

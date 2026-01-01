@@ -225,6 +225,18 @@ body {
   box-shadow: var(--shadow-md);
   transition: var(--transition);
   margin-bottom: 2rem;
+  min-height: 300px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+}
+
+.card-center {
+  display: flex;
+  align-items: center;     
+  justify-content: center;  
+  text-align: center;
+  font-size: 1rem;
+  min-height: 350px;       
+  margin-bottom: 1rem;
 }
 
 .card:hover {
@@ -534,6 +546,18 @@ body {
 
 .empty-state-description {
   margin-bottom: 2rem;
+}
+.empty-state-center {
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  min-height: 260px;
 }
 
 /* Modal/Dialog */
@@ -906,14 +930,6 @@ body {
   font-size: 1.25rem;
   font-weight: 700;
   margin: 0;
-}
-
-/* ===== Card ===== */
-.card {
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 2rem;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
 }
 
 .auth-card,

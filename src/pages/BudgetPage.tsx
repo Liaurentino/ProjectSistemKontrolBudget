@@ -26,6 +26,27 @@ export const BudgetPage: React.FC = () => {
       ? []
       : budgets.filter((b) => activeEntityIds.includes(b.entity_id));
 
+  if (activeEntityIds.length === 0) {
+    return (
+      
+      <div className="app-container fade-in">
+         <div className="app-header">
+        <h1>📊 Budget Management</h1>
+        <p>Hanya menampilkan budget dari entitas terpilih</p>
+      </div>
+       <div className="card fade-in">
+        <div className="empty-state empty-state-center">
+           <h3 className="empty-state-title">Daftar Budget</h3>
+
+             <p className="empty-state-description">
+             Tidak ada entitas yang dipilih. Pilih setidaknya satu entitas terlebih dahulu.
+           </p>
+        </div>
+      </div>
+   </div>
+    );
+  }
+
   return (
     <div className="app-container fade-in">
       <div className="app-header">
@@ -72,7 +93,6 @@ export const BudgetPage: React.FC = () => {
             </thead>
 
             <tbody>
-              {/* Loading */}
               {loading && (
                 <tr>
                   <td colSpan={5} className="text-center">
@@ -81,27 +101,15 @@ export const BudgetPage: React.FC = () => {
                 </tr>
               )}
 
-              {/* Kondisi 1: tidak ada entitas dicentang */}
-              {!loading && activeEntityIds.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="text-center">
-                    Tidak ada entitas yang dicentang
-                  </td>
-                </tr>
-              )}
-
-              {/* Kondisi 2: ada entitas dicentang tapi belum ada budget */}
               {!loading &&
-                activeEntityIds.length > 0 &&
                 visibleBudgets.length === 0 && (
                   <tr>
                     <td colSpan={5} className="text-center">
-                      Belum ada budget yang dibuat untuk entitas terpilih
+                      Belum ada budget untuk entitas yang dipilih
                     </td>
                   </tr>
                 )}
 
-              {/* Kondisi 3: ada data */}
               {!loading &&
                 visibleBudgets.length > 0 &&
                 visibleBudgets.map((b) => (

@@ -69,21 +69,21 @@ export const RealisasiPage: React.FC = () => {
 
       {/* KONDISI 1: tidak ada entitas dicentang */}
       {activeEntityIds.length === 0 && (
-        <div className="card mb-3 text-center">
+        <div className="card card-center">
           <p>Tidak ada entitas yang dicentang</p>
         </div>
       )}
 
       {/* KONDISI 2: entitas dicentang tapi tidak ada budget */}
       {activeEntityIds.length > 0 && filteredBudgets.length === 0 && (
-        <div className="card mb-3 text-center">
+        <div className="card card-center">
           <p>Belum ada budget yang dibuat untuk entitas terpilih</p>
         </div>
       )}
 
       {/* KONDISI 3: ada budget yang cocok, tampilkan daftar saja */}
       {!loading && filteredBudgets.length > 0 && (
-        <div className="card mb-3">
+        <div className="card fade in mb-4">
           <h2 className="card-title mb-2">Pilih Anggaran Perusahaan</h2>
 
           <div className="stats-grid">
