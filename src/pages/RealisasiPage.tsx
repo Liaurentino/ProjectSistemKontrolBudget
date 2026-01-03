@@ -8,7 +8,7 @@ export const RealisasiPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [selectedBudgetId, setSelectedBudgetId] = useState<string | null>(null);
 
-  const { activeEntityIds } = useEntity();
+  const { entities, activeEntityIds } = useEntity();
 
   const fetchBudgets = async () => {
     setLoading(true);
@@ -26,13 +26,13 @@ export const RealisasiPage: React.FC = () => {
     fetchBudgets();
   }, []);
 
-  // filter sesuai entitas yang dicentang
+  // hanya budget milik entitas yang aktif
   const filteredBudgets =
     activeEntityIds.length === 0
       ? []
       : budgets.filter((b) => activeEntityIds.includes(b.entity?.id));
 
-  // jaga selected budget tetap valid
+  // auto pilih budget pertama
   useEffect(() => {
     if (filteredBudgets.length === 0) {
       setSelectedBudgetId(null);
@@ -51,7 +51,7 @@ export const RealisasiPage: React.FC = () => {
     if (!stillExists) {
       setSelectedBudgetId(filteredBudgets[0].id);
     }
-  }, [filteredBudgets, selectedBudgetId]);
+  }, [filteredBudgets]);
 
   const selectedBudget = filteredBudgets.find(
     (b) => b.id === selectedBudgetId
@@ -67,47 +67,15 @@ export const RealisasiPage: React.FC = () => {
         <p>Bandingkan rencana budget dengan pengeluaran aktual</p>
       </div>
 
-      {/* KONDISI 1: tidak ada entitas dicentang */}
       {activeEntityIds.length === 0 && (
         <div className="card card-center">
           <p>Tidak ada entitas yang dicentang</p>
         </div>
       )}
 
-      {/* KONDISI 2: entitas dicentang tapi tidak ada budget */}
       {activeEntityIds.length > 0 && filteredBudgets.length === 0 && (
         <div className="card card-center">
-          <p>Belum ada budget yang dibuat untuk entitas terpilih</p>
-        </div>
-      )}
-
-      {/* KONDISI 3: ada budget yang cocok, tampilkan daftar saja */}
-      {!loading && filteredBudgets.length > 0 && (
-        <div className="card fade in mb-4">
-          <h2 className="card-title mb-2">Pilih Anggaran Perusahaan</h2>
-
-          <div className="stats-grid">
-            {filteredBudgets.map((budget) => (
-              <div
-                key={budget.id}
-                onClick={() => setSelectedBudgetId(budget.id)}
-                className={`budget-item ${
-                  selectedBudgetId === budget.id ? "active" : ""
-                }`}
-                style={{ cursor: "pointer" }}
-              >
-                <p className="budget-item-title">
-                  {budget.entity?.entity_name || "-"}
-                </p>
-                <p className="budget-item-meta">
-                  {budget.department} | {budget.period}
-                </p>
-                <p className="budget-item-amount">
-                  Rp {budget.total_budget.toLocaleString("id-ID")}
-                </p>
-              </div>
-            ))}
-          </div>
+          <p>Belum ada budget untuk entitas terpilih</p>
         </div>
       )}
 
@@ -116,7 +84,12 @@ export const RealisasiPage: React.FC = () => {
       ) : selectedBudget ? (
         <RealisasiTable
           budgetId={selectedBudget.id}
-          categories={selectedBudget.categories_data}
+          categories={selectedBudget.categories_data || []}
+          budgets={filteredBudgets}
+          entities={entities}               // ⬅️ penting
+          activeEntityIds={activeEntityIds} // ⬅️ penting
+          selectedBudgetId={selectedBudgetId}
+          onChangeBudget={setSelectedBudgetId}
         />
       ) : null}
     </div>
