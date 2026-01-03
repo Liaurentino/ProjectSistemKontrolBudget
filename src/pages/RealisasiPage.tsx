@@ -1,14 +1,21 @@
 import React, { useEffect, useState } from "react";
-import { getBudgets } from "../lib/supabase";
+import { getBudgets, getEntities } from "../lib/supabase"; // ⬅️ tambahkan getEntities
 import { RealisasiTable } from "../components/RealisasiTabel";
 import { useEntity } from "../contexts/EntityContext";
 
 export const RealisasiPage: React.FC = () => {
   const [budgets, setBudgets] = useState<any[]>([]);
+  const [entities, setEntities] = useState<any[]>([]); // ⬅️ tambahkan state entities
   const [loading, setLoading] = useState(false);
   const [selectedBudgetId, setSelectedBudgetId] = useState<string | null>(null);
 
-  const { entities, activeEntityIds } = useEntity();
+  const { activeEntityIds } = useEntity(); // ⬅️ hapus entities dari sini
+
+  // ⬅️ tambahkan fetch entities
+  const fetchEntities = async () => {
+    const { data, error } = await getEntities();
+    if (!error) setEntities(data || []);
+  };
 
   const fetchBudgets = async () => {
     setLoading(true);
@@ -23,6 +30,7 @@ export const RealisasiPage: React.FC = () => {
   };
 
   useEffect(() => {
+    fetchEntities(); // ⬅️ panggil fetch entities
     fetchBudgets();
   }, []);
 
@@ -86,8 +94,8 @@ export const RealisasiPage: React.FC = () => {
           budgetId={selectedBudget.id}
           categories={selectedBudget.categories_data || []}
           budgets={filteredBudgets}
-          entities={entities}               // ⬅️ penting
-          activeEntityIds={activeEntityIds} // ⬅️ penting
+          entities={entities}               // ⬅️ sekarang dari state lokal
+          activeEntityIds={activeEntityIds}
           selectedBudgetId={selectedBudgetId}
           onChangeBudget={setSelectedBudgetId}
         />

@@ -138,9 +138,9 @@ export const RealisasiTable: React.FC<RealisasiTableProps> = ({
         >
           <option value="">Pilih entitas</option>
 
-          {visibleEntities.map((entitites: any) => (
-            <option key={entitites.id} value={entitites.id}>
-              {entitites.name || entitites.nama || `Entitas ${entitites.id}`}
+          {visibleEntities.map((entity: any) => (
+            <option key={entity.id} value={entity.id}>
+              {entity.entity_name}
             </option>
           ))}
         </select>
