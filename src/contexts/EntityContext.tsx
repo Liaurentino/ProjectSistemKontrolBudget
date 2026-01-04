@@ -1,6 +1,16 @@
 import React, { createContext, useContext, useState } from "react";
 
+interface Entity {
+  id: string;
+  entity_name?: string; // sesuai dengan struktur dari Supabase
+  name?: string;
+  nama?: string;
+  // tambahkan field lain sesuai struktur data Anda
+}
+
 interface EntityContextType {
+  entities: Entity[];
+  setEntities: (entities: Entity[]) => void;
   activeEntityIds: string[];
   toggleEntity: (id: string) => void;
   isEntityActive: (id: string) => boolean;
@@ -9,6 +19,7 @@ interface EntityContextType {
 const EntityContext = createContext<EntityContextType | undefined>(undefined);
 
 export const EntityProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [entities, setEntities] = useState<Entity[]>([]);
   const [activeEntityIds, setActiveEntityIds] = useState<string[]>([]);
 
   const toggleEntity = (id: string) => {
@@ -24,7 +35,15 @@ export const EntityProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   return (
-    <EntityContext.Provider value={{ activeEntityIds, toggleEntity, isEntityActive }}>
+    <EntityContext.Provider 
+      value={{ 
+        entities, 
+        setEntities, 
+        activeEntityIds, 
+        toggleEntity, 
+        isEntityActive 
+      }}
+    >
       {children}
     </EntityContext.Provider>
   );

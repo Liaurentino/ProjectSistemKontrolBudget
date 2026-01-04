@@ -8,6 +8,7 @@ export const RealisasiPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [selectedBudgetId, setSelectedBudgetId] = useState<string | null>(null);
 
+  // ✅ Ambil entities dan activeEntityIds dari context
   const { entities, activeEntityIds } = useEntity();
 
   const fetchBudgets = async () => {
@@ -69,7 +70,7 @@ export const RealisasiPage: React.FC = () => {
 
       {activeEntityIds.length === 0 && (
         <div className="card card-center">
-          <p>Tidak ada entitas yang dicentang</p>
+          <p>Tidak ada entitas yang dicentang. Silakan centang entitas di halaman Entitas terlebih dahulu.</p>
         </div>
       )}
 
@@ -86,8 +87,6 @@ export const RealisasiPage: React.FC = () => {
           budgetId={selectedBudget.id}
           categories={selectedBudget.categories_data || []}
           budgets={filteredBudgets}
-          entities={entities}               // ⬅️ penting
-          activeEntityIds={activeEntityIds} // ⬅️ penting
           selectedBudgetId={selectedBudgetId}
           onChangeBudget={setSelectedBudgetId}
         />

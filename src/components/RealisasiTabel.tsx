@@ -4,6 +4,7 @@ import {
   insertRealisasi,
   deleteRealisasi,
 } from "../lib/supabase";
+import { useEntity } from "../contexts/EntityContext";
 
 interface Realisasi {
   id: string;
@@ -19,8 +20,6 @@ interface RealisasiTableProps {
   budgetId: string;
   categories?: any[];
   budgets: any[];
-  entities: any[];              // ⬅️ ditambahkan
-  activeEntityIds: string[];    // ⬅️ ditambahkan
   selectedBudgetId: string | null;
   onChangeBudget: (id: string) => void;
 }
@@ -29,8 +28,6 @@ export const RealisasiTable: React.FC<RealisasiTableProps> = ({
   budgetId,
   categories = [],
   budgets = [],
-  entities = [],
-  activeEntityIds = [],
   selectedBudgetId,
   onChangeBudget,
 }) => {
@@ -44,6 +41,9 @@ export const RealisasiTable: React.FC<RealisasiTableProps> = ({
     description: "",
     date: new Date().toISOString().split("T")[0],
   });
+
+  // ✅ Ambil entities dan activeEntityIds dari context (seperti di BudgetForm)
+  const { entities, activeEntityIds } = useEntity();
 
   const fetchRealisasi = async () => {
     setLoading(true);
@@ -99,7 +99,7 @@ export const RealisasiTable: React.FC<RealisasiTableProps> = ({
   // DROPDOWN ENTITAS
   // =========================
 
-  // hanya entitas aktif yang punya budget
+  // ✅ Filter entities yang aktif (seperti di BudgetForm)
   const visibleEntities = entities.filter((ent: any) =>
     activeEntityIds.includes(ent.id)
   );
@@ -138,9 +138,9 @@ export const RealisasiTable: React.FC<RealisasiTableProps> = ({
         >
           <option value="">Pilih entitas</option>
 
-          {visibleEntities.map((entitites: any) => (
-            <option key={entitites.id} value={entitites.id}>
-              {entitites.name || entitites.nama || `Entitas ${entitites.id}`}
+          {visibleEntities.map((entity: any) => (
+            <option key={entity.id} value={entity.id}>
+              {entity.entity_name || entity.name || entity.nama || `Entitas ${entity.id}`}
             </option>
           ))}
         </select>
