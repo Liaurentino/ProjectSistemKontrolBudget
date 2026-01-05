@@ -27,7 +27,7 @@ export const exchangeCodeForToken = async (code: string) => {
     // Simpan access token ke localStorage atau database
     localStorage.setItem('accurate_access_token', data.access_token);
     localStorage.setItem('accurate_refresh_token', data.refresh_token);
-    localStorage.setItem('accurate_expires_in', Date.now() + data.expires_in * 1000);
+    localStorage.setItem('accurate_expires_in', String(Date.now() + data.expires_in * 1000));
 
     return { data, error: null };
   } catch (error) {
