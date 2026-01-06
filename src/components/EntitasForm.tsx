@@ -39,17 +39,9 @@ export const EntitasForm: React.FC<Props> = ({
   const [tokenDuplicate, setTokenDuplicate] = useState(false);
   const [tokenDuplicateEntity, setTokenDuplicateEntity] = useState('');
 
-  // Entity name checking states
-  const [availableDatabaseNames, setAvailableDatabaseNames] = useState<string[]>([]);
-  const [nameMatches, setNameMatches] = useState<
-    Array<{ value: string; similarity:  number }>
-  >([]);
-  const [showNameSuggestions, setShowNameSuggestions] = useState(false);
-  const [selectedNameSuggestion, setSelectedNameSuggestion] = useState<string | null>(null);
-
-  // Load existing tokens dan databases
+  // Load existing tokens
   useEffect(() => {
-    loadExistingData();
+    loadExistingTokens();
   }, []);
 
   // Isi data saat edit
@@ -66,47 +58,19 @@ export const EntitasForm: React.FC<Props> = ({
   }, [mode, initialData]);
 
   /**
-   * Load semua token dan database names yang sudah ada
+   * Load semua token yang sudah ada
    */
-  const loadExistingData = async () => {
+  const loadExistingTokens = async () => {
     try {
-      const { data, error:  err } = await getEntities();
+      const { data, error: err } = await getEntities();
       if (err) throw err;
 
-      // Load tokens
       const tokens = (data || [])
         .filter((e: any) => e.api_token)
         .map((e: any) => e.api_token);
       setExistingTokens(tokens);
-
-      // Load database names dari entitas yang sudah ada
-      const dbNames = (data || [])
-        .filter((e: any) => e.entity_name)
-        .map((e: any) => e.entity_name);
-      setAvailableDatabaseNames(dbNames);
     } catch (err) {
-      console.error('Error loading existing data:', err);
-    }
-  };
-
-  /**
-   * Check entity name dengan fuzzy matching
-   */
-  const checkEntityName = (name: string) => {
-    if (! name. trim() || availableDatabaseNames.length === 0) {
-      setNameMatches([]);
-      setShowNameSuggestions(false);
-      return;
-    }
-
-    const matches = findFuzzyMatches(name, availableDatabaseNames, 0.65);
-
-    if (matches.length > 0) {
-      setNameMatches(matches);
-      setShowNameSuggestions(true);
-    } else {
-      setNameMatches([]);
-      setShowNameSuggestions(false);
+      console.error('Error loading existing tokens:', err);
     }
   };
 
@@ -120,12 +84,6 @@ export const EntitasForm: React.FC<Props> = ({
     });
     setError('');
     setSuccess('');
-    setSelectedNameSuggestion(null);
-
-    // Check entity name
-    if (name === 'entity_name') {
-      checkEntityName(value);
-    }
 
     // Check duplikasi token saat user mengetik
     if (name === 'api_token') {
@@ -134,16 +92,22 @@ export const EntitasForm: React.FC<Props> = ({
       setDatabases([]);
       setTokenDuplicate(false);
       setTokenDuplicateEntity('');
+      
+      // Reset nama entitas karena token berubah
+      setFormData(prev => ({
+        ...prev,
+        entity_name: '',
+        api_token: value,
+      }));
 
       // Check if token sudah ada (kecuali untuk edit mode dengan token yang sama)
-      if (value. trim() && value !== initialData?.api_token) {
-        const isDuplicate = existingTokens. includes(value. trim());
+      if (value.trim() && value !== initialData?.api_token) {
+        const isDuplicate = existingTokens.includes(value.trim());
         if (isDuplicate) {
           setTokenDuplicate(true);
           // Find entity name yang pake token ini
-          const { data: entities } = getEntities();
-          entities?. then((ents) => {
-            const duplicateEntity = ents?. find(
+          getEntities().then(({ data: entities }) => {
+            const duplicateEntity = entities?.find(
               (e: any) => e.api_token === value.trim()
             );
             setTokenDuplicateEntity(duplicateEntity?.entity_name || 'Entitas lain');
@@ -151,19 +115,6 @@ export const EntitasForm: React.FC<Props> = ({
         }
       }
     }
-  };
-
-  /**
-   * Apply name suggestion
-   */
-  const applyNameSuggestion = (suggestedName: string) => {
-    setFormData({
-      ...formData,
-      entity_name: suggestedName,
-    });
-    setSelectedNameSuggestion(suggestedName);
-    setShowNameSuggestions(false);
-    setNameMatches([]);
   };
 
   /**
@@ -175,7 +126,7 @@ export const EntitasForm: React.FC<Props> = ({
     setValidating(true);
 
     try {
-      if (!formData.api_token. trim()) {
+      if (!formData.api_token.trim()) {
         setError('API Token tidak boleh kosong');
         setValidating(false);
         return;
@@ -199,6 +150,14 @@ export const EntitasForm: React.FC<Props> = ({
         setSuccess(result.message);
         setTokenValidated(true);
 
+        // AUTO-FILL: Set nama entitas dari primary database
+        if (result.primaryDatabase?.name) {
+          setFormData(prev => ({
+            ...prev,
+            entity_name: result.primaryDatabase!.name,
+          }));
+        }
+
         // Set databases dari hasil validasi
         if (result.databases && Array.isArray(result.databases)) {
           setDatabases(result.databases);
@@ -207,11 +166,20 @@ export const EntitasForm: React.FC<Props> = ({
         setError(result.message);
         setTokenValidated(false);
         setDatabases([]);
+        // Reset nama entitas jika validasi gagal
+        setFormData(prev => ({
+          ...prev,
+          entity_name: '',
+        }));
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Gagal validasi token';
       setError(message);
       setTokenValidated(false);
+      setFormData(prev => ({
+        ...prev,
+        entity_name: '',
+      }));
     } finally {
       setValidating(false);
     }
@@ -220,7 +188,7 @@ export const EntitasForm: React.FC<Props> = ({
   /**
    * Handle submit form
    */
-  const handleSubmit = async (e:  React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setSuccess('');
@@ -229,12 +197,12 @@ export const EntitasForm: React.FC<Props> = ({
     try {
       // Validasi input
       if (!formData.entity_name.trim()) {
-        setError('❌ Nama Entitas tidak boleh kosong');
+        setError('❌ Nama Entitas tidak boleh kosong. Silakan validasi token terlebih dahulu.');
         setLoading(false);
         return;
       }
 
-      if (!formData.api_token. trim()) {
+      if (!formData.api_token.trim()) {
         setError('❌ API Token tidak boleh kosong');
         setLoading(false);
         return;
@@ -250,13 +218,14 @@ export const EntitasForm: React.FC<Props> = ({
       }
 
       // PENTING: Cek apakah token sudah divalidasi
-      if (! tokenValidated) {
+      if (!tokenValidated) {
         setError(
-          '⚠️ PERINGATAN:  Anda belum memvalidasi API Token!\n\n' +
+          '⚠️ PERINGATAN: Anda belum memvalidasi API Token!\n\n' +
           'Silakan klik tombol "🔍 Validasi Token" terlebih dahulu untuk:\n' +
           '• Memastikan token valid dan dapat diakses\n' +
           '• Mengecek koneksi ke Accurate\n' +
-          '• Memverifikasi database yang terhubung\n\n' +
+          '• Memverifikasi database yang terhubung\n' +
+          '• Mengambil nama entitas dari Accurate\n\n' +
           'Setelah validasi berhasil, barulah Anda bisa menyimpan.'
         );
         setLoading(false);
@@ -265,17 +234,17 @@ export const EntitasForm: React.FC<Props> = ({
 
       // Prepare data untuk disimpan
       const dataToSave = {
-        entity_name: formData.entity_name. trim(),
-        api_token:  formData.api_token.trim(),
+        entity_name: formData.entity_name.trim(),
+        api_token: formData.api_token.trim(),
       };
 
       // Save to database
       if (mode === 'create') {
-        const { error:  err } = await insertEntity(dataToSave);
+        const { error: err } = await insertEntity(dataToSave);
         if (err) throw new Error(typeof err === 'string' ? err : err.message);
       } else {
-        const { error: err } = await updateEntity(initialData. id, dataToSave);
-        if (err) throw new Error(typeof err === 'string' ?  err : err.message);
+        const { error: err } = await updateEntity(initialData.id, dataToSave);
+        if (err) throw new Error(typeof err === 'string' ? err : err.message);
       }
 
       setSuccess(
@@ -286,7 +255,7 @@ export const EntitasForm: React.FC<Props> = ({
 
       setTimeout(onSuccess, 1500);
     } catch (err) {
-      const message = err instanceof Error ? err. message : 'Gagal menyimpan entitas';
+      const message = err instanceof Error ? err.message : 'Gagal menyimpan entitas';
       setError(`❌ Error: ${message}`);
       console.error(err);
     } finally {
@@ -339,111 +308,6 @@ export const EntitasForm: React.FC<Props> = ({
           </div>
         )}
 
-        {/* Nama Entitas */}
-        <div className="form-group">
-          <label className="form-label">Nama Entitas</label>
-          <div style={{ position: 'relative' }}>
-            <input
-              type="text"
-              name="entity_name"
-              value={formData.entity_name}
-              onChange={handleChange}
-              onFocus={() => {
-                if (nameMatches.length > 0) {
-                  setShowNameSuggestions(true);
-                }
-              }}
-              className="form-control"
-              placeholder="Contoh: PT Cipta Piranti Sejahtera"
-              required
-              style={{
-                borderColor: selectedNameSuggestion ? '#4caf50' : undefined,
-              }}
-            />
-
-            {/* Name Suggestions Dropdown */}
-            {showNameSuggestions && nameMatches.length > 0 && (
-              <div
-                style={{
-                  position:  'absolute',
-                  top: '100%',
-                  left:  0,
-                  right: 0,
-                  backgroundColor: '#fff',
-                  border: '1px solid #ddd',
-                  borderRadius:  '4px',
-                  marginTop: '0.25rem',
-                  zIndex: 1000,
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                  maxHeight: '250px',
-                  overflowY: 'auto',
-                }}
-              >
-                <div
-                  style={{
-                    padding: '0.5rem',
-                    backgroundColor: '#f5f5f5',
-                    fontSize: '0.85rem',
-                    color: '#666',
-                    borderBottom: '1px solid #eee',
-                  }}
-                >
-                  💡 Saran nama yang mirip:
-                </div>
-
-                {nameMatches.map((match, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => applyNameSuggestion(match.value)}
-                    style={{
-                      display: 'block',
-                      width: '100%',
-                      padding: '0.75rem',
-                      border: 'none',
-                      backgroundColor: 'transparent',
-                      textAlign: 'left',
-                      cursor: 'pointer',
-                      borderBottom: '1px solid #eee',
-                      transition: 'background-color 0.2s',
-                    }}
-                    onMouseEnter={(e) => {
-                      (e.currentTarget).style.backgroundColor = '#f9f9f9';
-                    }}
-                    onMouseLeave={(e) => {
-                      (e.currentTarget).style.backgroundColor = 'transparent';
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontWeight: 500 }}>{match.value}</span>
-                      <span
-                        style={{
-                          fontSize: '0.75rem',
-                          backgroundColor: '#e8f5e9',
-                          color: '#2e7d32',
-                          padding: '0.25rem 0.5rem',
-                          borderRadius: '3px',
-                        }}
-                      >
-                        {Math.round(match.similarity * 100)}% match
-                      </span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <small style={{ color: '#666', marginTop: '0.25rem', display: 'block' }}>
-            Nama perusahaan atau unit bisnis Anda
-            {selectedNameSuggestion && (
-              <span style={{ color: '#4caf50', marginLeft: '0.5rem' }}>
-                ✓ Menggunakan saran
-              </span>
-            )}
-          </small>
-        </div>
-
         {/* API Token */}
         <div className="form-group">
           <label className="form-label">API Token Accurate</label>
@@ -473,7 +337,7 @@ export const EntitasForm: React.FC<Props> = ({
                 background: 'none',
                 border: 'none',
                 cursor: 'pointer',
-                fontSize: '1. 2rem',
+                fontSize: '1.2rem',
                 padding: 0,
               }}
             >
@@ -481,7 +345,7 @@ export const EntitasForm: React.FC<Props> = ({
             </button>
           </div>
 
-          {/* WARNING:  Token Duplikasi */}
+          {/* WARNING: Token Duplikasi */}
           {tokenDuplicate && formData.api_token !== initialData?.api_token && (
             <div
               style={{
@@ -498,7 +362,7 @@ export const EntitasForm: React.FC<Props> = ({
             >
               <span>⚠️</span>
               <span>
-                <strong>Token Sudah Terdaftar!  </strong> Token ini sudah digunakan oleh entitas
+                <strong>Token Sudah Terdaftar!</strong> Token ini sudah digunakan oleh entitas
                 "{tokenDuplicateEntity}". Gunakan token yang berbeda.
               </span>
             </div>
@@ -515,12 +379,12 @@ export const EntitasForm: React.FC<Props> = ({
               marginBottom: '0.5rem',
               backgroundColor: tokenValidated ? '#4caf50' : undefined,
               color: tokenValidated ? '#fff' : undefined,
-              border: ! tokenValidated && formData.api_token ?  '2px solid #ff9800' : undefined,
-              fontWeight: ! tokenValidated && formData.api_token ? 'bold' :  'normal',
+              border: !tokenValidated && formData.api_token ? '2px solid #ff9800' : undefined,
+              fontWeight: !tokenValidated && formData.api_token ? 'bold' : 'normal',
             }}
           >
             {validating
-              ? '⏳ Validasi Token.. .'
+              ? '⏳ Validasi Token...'
               : tokenValidated
               ? '✅ Token Valid'
               : '🔍 Validasi Token'}
@@ -532,13 +396,13 @@ export const EntitasForm: React.FC<Props> = ({
         </div>
 
         {/* WARNING: Token Belum Divalidasi */}
-        {formData.api_token && !tokenValidated && ! tokenDuplicate && (
+        {formData.api_token && !tokenValidated && !tokenDuplicate && (
           <div
             style={{
               padding: '0.75rem',
               backgroundColor: '#fff3e0',
               color: '#e65100',
-              borderRadius:  '4px',
+              borderRadius: '4px',
               marginBottom: '1rem',
               border: '2px solid #ffb74d',
               display: 'flex',
@@ -546,26 +410,49 @@ export const EntitasForm: React.FC<Props> = ({
               alignItems: 'flex-start',
             }}
           >
-            <span style={{ fontSize: '1. 2rem' }}>⚠️</span>
+            <span style={{ fontSize: '1.2rem' }}>⚠️</span>
             <div>
               <strong style={{ display: 'block', marginBottom: '0.25rem' }}>
                 Token Belum Divalidasi
               </strong>
               <small>
                 Silakan klik tombol "🔍 Validasi Token" di atas untuk memverifikasi token
-                sebelum menyimpan entitas.
+                dan mengambil nama entitas dari Accurate.
               </small>
             </div>
           </div>
         )}
 
+        {/* Nama Entitas - READ ONLY (Auto-filled dari API) */}
+        {formData.entity_name && (
+          <div className="form-group">
+            <label className="form-label">Nama Entitas</label>
+            <input
+              type="text"
+              name="entity_name"
+              value={formData.entity_name}
+              className="form-control"
+              readOnly
+              style={{
+                backgroundColor: '#f5f5f5',
+                cursor: 'not-allowed',
+                color: '#333',
+                fontWeight: 500,
+              }}
+            />
+            <small style={{ color: '#666', marginTop: '0.25rem', display: 'block' }}>
+              {mode === 'edit' ? '✓ Nama entitas yang tersimpan' : '✓ Nama diambil otomatis dari database Accurate'}
+            </small>
+          </div>
+        )}
+
         {/* Database Info - Jika Token Valid */}
-        {tokenValidated && validationResult?. primaryDatabase && (
+        {tokenValidated && validationResult?.primaryDatabase && (
           <div
             style={{
               padding: '1rem',
               backgroundColor: '#f1f8e9',
-              borderRadius:  '8px',
+              borderRadius: '8px',
               marginBottom: '1rem',
               border: '1px solid #c5e1a5',
             }}
@@ -574,57 +461,37 @@ export const EntitasForm: React.FC<Props> = ({
               ✓ Database Terdeteksi
             </h4>
 
-            <div style={{ display: 'grid', gridTemplateColumns:  '1fr 1fr', gap:  '1rem' }}>
-              <div>
-                <small style={{ color: '#666', display: 'block', marginBottom: '0.25rem' }}>
-                  <strong>Nama Database:</strong>
-                </small>
-                <p style={{ margin: 0, color: '#333', fontWeight: 500 }}>
-                  {validationResult.primaryDatabase.name || '-'}
-                </p>
-              </div>
-
-              <div>
-                <small style={{ color: '#666', display: 'block', marginBottom:  '0.25rem' }}>
-                  <strong>Kode Database:</strong>
-                </small>
-                <p style={{ margin: 0, color: '#333', fontWeight: 500 }}>
-                  {validationResult.primaryDatabase.code || '-'}
-                </p>
-              </div>
-
-              <div style={{ gridColumn: '1 / -1' }}>
-                <small style={{ color: '#666', display: 'block', marginBottom: '0.25rem' }}>
-                  <strong>ID Database:</strong>
-                </small>
-                <code
-                  style={{
-                    backgroundColor: '#fff',
-                    padding: '0.5rem',
-                    borderRadius: '4px',
-                    display: 'block',
-                    fontSize: '0.8rem',
-                    color: '#666',
-                    wordBreak: 'break-all',
-                  }}
-                >
-                  {validationResult. primaryDatabase.id || '-'}
-                </code>
-              </div>
+            <div>
+              <small style={{ color: '#666', display: 'block', marginBottom: '0.25rem' }}>
+                <strong>ID Database:</strong>
+              </small>
+              <code
+                style={{
+                  backgroundColor: '#fff',
+                  padding: '0.5rem',
+                  borderRadius: '4px',
+                  display: 'inline-block',
+                  fontSize: '0.9rem',
+                  color: '#333',
+                  fontWeight: 500,
+                }}
+              >
+                {validationResult.primaryDatabase.id || '-'}
+              </code>
             </div>
 
             {/* Available Databases */}
             {databases.length > 1 && (
               <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #c5e1a5' }}>
-                <small style={{ color: '#666', display: 'block', marginBottom:  '0.5rem' }}>
+                <small style={{ color: '#666', display: 'block', marginBottom: '0.5rem' }}>
                   <strong>Database Lainnya ({databases.length} total):</strong>
                 </small>
                 <div
                   style={{
                     maxHeight: '200px',
                     overflowY: 'auto',
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+                    display: 'flex',
+                    flexDirection: 'column',
                     gap: '0.5rem',
                   }}
                 >
@@ -635,26 +502,17 @@ export const EntitasForm: React.FC<Props> = ({
                         padding: '0.5rem',
                         backgroundColor: '#fff',
                         border: '1px solid #ddd',
-                        borderRadius:  '4px',
-                        fontSize: '0.8rem',
-                        cursor: 'pointer',
-                        transition:  'all 0.2s',
-                      }}
-                      onMouseEnter={(e) => {
-                        (e.currentTarget).style.borderColor = '#7cb342';
-                        (e. currentTarget).style.backgroundColor = '#f9fbe7';
-                      }}
-                      onMouseLeave={(e) => {
-                        (e. currentTarget).style.borderColor = '#ddd';
-                        (e. currentTarget).style.backgroundColor = '#fff';
+                        borderRadius: '4px',
+                        fontSize: '0.85rem',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
                       }}
                     >
-                      <div style={{ fontWeight: 500, marginBottom: '0.25rem' }}>
-                        {db. name}
-                      </div>
-                      <div style={{ color: '#999', fontSize: '0.75rem' }}>
-                        {db. code}
-                      </div>
+                      <span style={{ fontWeight: 500 }}>{db.name}</span>
+                      <code style={{ fontSize: '0.8rem', color: '#666' }}>
+                        ID: {db.id}
+                      </code>
                     </div>
                   ))}
                 </div>
@@ -673,8 +531,8 @@ export const EntitasForm: React.FC<Props> = ({
             fontSize: '0.8rem',
           }}
         >
-          🔒 <strong>Keamanan:  </strong> API Token akan disimpan terenkripsi di database.  Jangan
-          bagikan dengan orang lain. 
+          🔒 <strong>Keamanan:</strong> API Token akan disimpan terenkripsi di database. Jangan
+          bagikan dengan orang lain.
         </div>
       </div>
 
@@ -693,8 +551,8 @@ export const EntitasForm: React.FC<Props> = ({
           className="btn btn-primary"
           disabled={loading || validating || !tokenValidated || tokenDuplicate}
           style={{
-            opacity: ! tokenValidated && formData.api_token ?  0.5 : 1,
-            cursor: ! tokenValidated && formData.api_token ? 'not-allowed' : 'pointer',
+            opacity: !tokenValidated && formData.api_token ? 0.5 : 1,
+            cursor: !tokenValidated && formData.api_token ? 'not-allowed' : 'pointer',
           }}
         >
           {loading ? '⏳ Menyimpan...' : '✓ Simpan'}

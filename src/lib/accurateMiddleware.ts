@@ -1,34 +1,13 @@
-import { supabase } from './supabase';
+// accurateMiddleware.ts
 
-// ============================================
-// CONSTANTS & CONFIG
-// ============================================
-
-const EDGE_FUNCTION_URL = 'accurate-validate';
-
-const STORAGE_KEYS = {
-  ACCESS_TOKEN: 'accurate_access_token',
-  REFRESH_TOKEN: 'accurate_refresh_token',
-  EXPIRES_AT: 'accurate_expires_at',
-} as const;
-
-// ============================================
-// TYPES
-// ============================================
-
-export interface AccurateAPIResponse<T = any> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  status?: number;
-  timestamp?: string;
-}
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 export interface AccurateDatabase {
   id: string;
   name: string;
   code: string;
-  company_name? :  string;
+  company_name?: string;
   database_id?: string;
   db_code?: string;
   description?: string;
@@ -38,239 +17,144 @@ export interface AccurateDatabase {
   city?: string;
   province?: string;
   country?: string;
+  // Additional fields from Accurate API
+  alias?: string;
+  trial?: boolean;
+  expired?: boolean;
+  admin?: boolean;
+  dataAccessType?: string;
 }
 
 export interface AccurateValidationResult {
   isValid: boolean;
-  message:   string;
-  databases? :  AccurateDatabase[];
+  message: string;
+  databases?: AccurateDatabase[];
   primaryDatabase?: AccurateDatabase;
   error?: string;
   raw?: any;
 }
 
-// ============================================
-// TOKEN MANAGEMENT
-// ============================================
-
-/**
- * Get stored access token
- */
-export function getAccessToken(): string | null {
-  try {
-    return localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
-  } catch (error) {
-    console.error('Error reading access token:', error);
-    return null;
-  }
+interface AccurateAPIResponse<T = any> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  status?: number;
+  raw?: any;
 }
 
 /**
- * Save tokens to localStorage
+ * Call Accurate API via Supabase Edge Function
  */
-export function saveTokens(
-  accessToken: string,
-  refreshToken: string,
-  expiresIn: number
-): void {
-  try {
-    localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
-    localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
-    localStorage.setItem(
-      STORAGE_KEYS. EXPIRES_AT,
-      String(Date.now() + expiresIn * 1000)
-    );
-  } catch (error) {
-    console.error('Error saving tokens:', error);
-  }
-}
-
-/**
- * Check if token is expired
- */
-export function isTokenExpired(): boolean {
-  try {
-    const expiresAt = localStorage.getItem(STORAGE_KEYS.EXPIRES_AT);
-    if (!expiresAt) return true;
-
-    const expiryTime = Number(expiresAt);
-    if (isNaN(expiryTime)) return true;
-
-    return Date.now() > expiryTime;
-  } catch (error) {
-    console.error('Error checking token expiry:', error);
-    return true;
-  }
-}
-
-/**
- * Clear all tokens
- */
-export function clearAccurateTokens(): void {
-  try {
-    localStorage.removeItem(STORAGE_KEYS. ACCESS_TOKEN);
-    localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
-    localStorage.removeItem(STORAGE_KEYS.EXPIRES_AT);
-  } catch (error) {
-    console.error('Error clearing tokens:', error);
-  }
-}
-
-// ============================================
-// API CALLER (Via Edge Function)
-// ============================================
-
-/**
- * Call Accurate API via Supabase Edge Function (accurate-validate)
- * Edge Function handle timestamp, signature, dan CORS
- */
-export async function callAccurateAPI<T = any>(
+async function callAccurateAPI(
   apiToken: string,
-  secretKey: string,
-  timeout: number = 30000
-): Promise<AccurateAPIResponse<T>> {
+  secretKey: string
+): Promise<AccurateAPIResponse> {
   try {
-    // Validasi input
-    if (!apiToken || apiToken.trim().length < 10) {
+    const edgeFunctionUrl = `${SUPABASE_URL}/functions/v1/accurate-validate`;
+
+    console.log('[Middleware] Calling Edge Function:', edgeFunctionUrl);
+
+    const response = await fetch(edgeFunctionUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({
+        apiToken,
+        secretKey,
+      }),
+    });
+
+    const data = await response.json();
+
+    console.log('[Middleware] Edge Function Response:', data);
+
+    if (!response.ok) {
       return {
         success: false,
-        error: 'API Token terlalu pendek atau kosong',
-        status: 400,
+        error: data.error || `HTTP ${response.status}`,
+        status: response.status,
+        raw: data,
       };
     }
 
-    if (!secretKey) {
-      return {
-        success: false,
-        error: 'Secret Key tidak dikonfigurasi',
-        status:  500,
-      };
-    }
-
-    console.log('[Middleware] Calling Edge Function:  accurate-validate');
-
-    // Create abort controller untuk timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-    try {
-      // Call Edge Function via Supabase
-      const { data, error } = await supabase. functions. invoke(
-        EDGE_FUNCTION_URL,
-        {
-          body: {
-            apiToken:  apiToken. trim(),
-            secretKey: secretKey.trim(),
-          },
-          signal: controller.signal,
-        }
-      );
-
-      clearTimeout(timeoutId);
-
-      if (error) {
-        console.error('[Middleware] Edge Function Error:', error);
-
-        return {
-          success: false,
-          error: error. message || 'Edge Function error',
-          status: 500,
-        };
-      }
-
-      // Check response dari Accurate API
-      if (data?. error) {
-        console.error('[Middleware] Accurate API Error:', data.error);
-
-        return {
-          success:  false,
-          error: data. error,
-          status: data. status || 400,
-          raw: data,
-        };
-      }
-
-      console.log('[Middleware] Edge Function Success');
-
-      return {
-        success: true,
-        data:  data as T,
-        status: 200,
-      };
-    } catch (fetchError) {
-      clearTimeout(timeoutId);
-
-      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
-        return {
-          success: false,
-          error: `Request timeout (${timeout}ms)`,
-          status: 408,
-        };
-      }
-
-      throw fetchError;
-    }
+    return {
+      success: true,
+      data,
+      status: response.status,
+    };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ?  error.message : 'Unknown error';
-    console.error('[Middleware] API Call Error:', error);
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[Middleware] API call error:', error);
 
     return {
       success: false,
-      error: errorMessage,
+      error: errorMsg,
       status: 500,
     };
   }
 }
 
-// ============================================
-// VALIDATION METHODS
-// ============================================
+/**
+ * Parse response dari Accurate API
+ * Response format: { s: true, d: [...] }
+ */
+function parseAccurateResponse(data: any): any[] {
+  console.log('[Middleware] Parsing Accurate response:', data);
+
+  // Check if response has the correct format
+  if (!data || typeof data !== 'object') {
+    console.warn('[Middleware] Invalid response format - not an object');
+    return [];
+  }
+
+  // Accurate API format: { s: boolean, d: array }
+  if (data.s === true && Array.isArray(data.d)) {
+    console.log('[Middleware] Valid Accurate format, databases:', data.d.length);
+    return data.d;
+  }
+
+  // Fallback: if data is already an array
+  if (Array.isArray(data)) {
+    console.log('[Middleware] Data is array, databases:', data.length);
+    return data;
+  }
+
+  console.warn('[Middleware] Unknown response format');
+  return [];
+}
 
 /**
- * Normalize database object dari berbagai format response
+ * Normalize database object dari Accurate API
+ * Mapping field dari response Accurate ke format standar
  */
 function normalizeDatabase(db: any): AccurateDatabase {
   return {
-    id: db. id || db.database_id || db. dbId || '',
-    name: db.name || db.company_name || db.companyName || '',
-    code:  db.code || db.db_code || db.dbCode || '',
-    company_name: db.company_name || db.name || '',
-    database_id:  db.database_id || db. id || '',
-    db_code:  db.db_code || db. code || '',
-    description: db. description || '',
+    // Primary fields (mapped from Accurate response)
+    id: String(db.id || ''),
+    name: db.alias || db.name || '',  // ← alias adalah nama entitas!
+    code: db.code || db.db_code || '',
+    
+    // Additional fields
+    company_name: db.alias || db.company_name || '',
+    database_id: String(db.id || ''),
+    db_code: db.code || '',
+    description: db.description || '',
     email: db.email || '',
     phone: db.phone || '',
     address: db.address || '',
     city: db.city || '',
     province: db.province || '',
     country: db.country || '',
+    
+    // Accurate-specific fields
+    alias: db.alias || '',
+    trial: db.trial || false,
+    expired: db.expired || false,
+    admin: db.admin || false,
+    dataAccessType: db.dataAccessType || '',
   };
-}
-
-/**
- * Parse response dari Accurate API
- * Handle berbagai format response
- */
-function parseAccurateResponse(response: any): any[] {
-  // Try berbagai format yang mungkin
-  if (Array.isArray(response)) {
-    return response;
-  }
-
-  if (response?. databases && Array.isArray(response.databases)) {
-    return response.databases;
-  }
-
-  if (response?.data && Array.isArray(response.data)) {
-    return response.data;
-  }
-
-  if (response?. d && Array.isArray(response. d)) {
-    return response. d;
-  }
-
-  return [];
 }
 
 /**
@@ -290,13 +174,20 @@ export async function validateAccurateApiToken(
       };
     }
 
-    console.log('[Middleware] Validating token via Edge Function.. .');
+    if (!secretKey || secretKey.trim().length < 10) {
+      return {
+        isValid: false,
+        message: 'Secret Key terlalu pendek atau kosong',
+      };
+    }
+
+    console.log('[Middleware] Validating token via Edge Function...');
 
     // Call Edge Function
     const result = await callAccurateAPI(apiToken, secretKey);
 
     // Check jika request ke edge function gagal
-    if (! result.success) {
+    if (!result.success) {
       let message = result.error || 'Gagal validasi token';
 
       if (result.status === 401) {
@@ -313,17 +204,17 @@ export async function validateAccurateApiToken(
         isValid: false,
         message,
         error: result.error,
-        raw: result. raw,
+        raw: result.raw,
       };
     }
 
     // Parse response dari Accurate
     const rawDatabases = parseAccurateResponse(result.data);
 
-    if (! Array.isArray(rawDatabases) || rawDatabases.length === 0) {
+    if (!Array.isArray(rawDatabases) || rawDatabases.length === 0) {
       return {
         isValid: false,
-        message: 
+        message:
           'API Token valid tetapi tidak ada database/usaha yang ditemukan',
         raw: result.data,
       };
@@ -333,22 +224,23 @@ export async function validateAccurateApiToken(
     const databases = rawDatabases.map(normalizeDatabase);
     const primaryDatabase = databases[0];
 
-    console.log('[Middleware] Token validated.  Databases:', databases. length);
+    console.log('[Middleware] Token validated. Databases:', databases.length);
+    console.log('[Middleware] Primary database:', primaryDatabase);
 
     return {
       isValid: true,
-      message: `✓ API Token valid.  Ditemukan ${databases.length} database. `,
+      message: `✓ API Token valid. Ditemukan ${databases.length} database.`,
       databases,
       primaryDatabase,
     };
   } catch (error) {
     const errorMsg =
-      error instanceof Error ? error. message : 'Error tidak diketahui';
-    console. error('[Middleware] Validation error:', error);
+      error instanceof Error ? error.message : 'Error tidak diketahui';
+    console.error('[Middleware] Validation error:', error);
 
     return {
       isValid: false,
-      message:  `Gagal validasi:  ${errorMsg}`,
+      message: `Gagal validasi: ${errorMsg}`,
       error: errorMsg,
     };
   }
@@ -366,9 +258,9 @@ export async function getAccurateDatabaseList(
 
     if (!result.success) {
       return {
-        success:  false,
-        error: result. error,
-        status: result. status,
+        success: false,
+        error: result.error,
+        status: result.status,
       };
     }
 
@@ -401,4 +293,21 @@ export async function getAccurateDatabaseList(
       status: 500,
     };
   }
+}
+
+// Placeholder functions untuk kompatibilitas
+export async function getAccessToken(): Promise<string | null> {
+  return null;
+}
+
+export async function saveTokens(accessToken: string, refreshToken: string): Promise<void> {
+  // Placeholder
+}
+
+export function isTokenExpired(token: string): boolean {
+  return false;
+}
+
+export async function clearAccurateTokens(): Promise<void> {
+  // Placeholder
 }
