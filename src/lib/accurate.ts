@@ -17,6 +17,23 @@ interface Account {
   account_type: string;
 }
 
+export interface GLAccount {
+  id: number;
+  number: string;
+  name: string;
+  accountType?: string;
+  isActive?: boolean;
+}
+
+export interface GLAccountListResponse {
+  s: boolean;
+  d: GLAccount[];
+  sp?: {
+    pageCount: number;
+    page: number;
+  };
+}
+
 // ✅ KEYS untuk localStorage (namespaced untuk avoid conflict)
 const STORAGE_KEYS = {
   ACCESS_TOKEN: 'accurate_access_token',
@@ -345,3 +362,55 @@ export const getBudgetMappings = async (budgetId: string) => {
     return { data: null, error };
   }
 };
+
+export async function getGLAccountList(
+  sessionId: string,
+  host: string,
+  filter?: string,
+  fields?: string
+): Promise<GLAccountListResponse> {
+  try {
+    const url = new URL(`${host}/accurate/api/glaccount/list.do`);
+    
+    // Add query parameters if provided
+    const params: Record<string, string> = {};
+    if (filter) params.filter = filter;
+    if (fields) params.fields = fields;
+    
+    Object.keys(params).forEach(key => 
+      url.searchParams.append(key, params[key])
+    );
+
+    const response = await fetch(url.toString(), {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Session-ID': sessionId,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data: GLAccountListResponse = await response.json();
+    
+    if (!data.s) {
+      throw new Error('API returned error status');
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error fetching GL Account list:', error);
+    throw error;
+  }
+}
+
+export async function searchGLAccounts(
+  sessionId: string,
+  host: string,
+  keyword: string
+): Promise<GLAccountListResponse> {
+  const filter = `number.CONTAINS('${keyword}') OR name.CONTAINS('${keyword}')`;
+  return getGLAccountList(sessionId, host, filter);
+}

@@ -7,6 +7,7 @@ import { AccurateSync } from "./pages/SettingsPage";
 import { LoginPage } from "./pages/LoginPage";
 import { ComparisonPage } from "./pages/DashboardPage";
 import { EntitasPage } from "./pages/EntitasPage";
+import { COAPage } from "./pages/COAPage";
 
 import { useAuth } from "./contexts/AuthContext";
 
@@ -84,10 +85,15 @@ export default function App() {
                     <span className="sidebar-menu-label">List Entitas</span>
                   </NavLink>
 
-                  <div className="sidebar-menu-item child disabled">
+                  <NavLink
+                    to="/akun"
+                    className={({ isActive }) => 
+                      `sidebar-menu-item child ${isActive ? "active" : ""}`
+                    }
+                  >
                     <span className="sidebar-menu-icon">👥</span>
                     <span className="sidebar-menu-label">List Akun</span>
-                  </div>
+                  </NavLink>
 
                   <NavLink
                     to="/budget"
@@ -127,7 +133,7 @@ export default function App() {
               }
             >
               <span className="sidebar-menu-icon">📚</span>
-              <span className="sidebar-menu-label">Sinkronisasi Akun</span>
+              <span className="sidebar-menu-label">Dokumentasi</span>
             </NavLink>
           </nav>
 
@@ -160,6 +166,10 @@ export default function App() {
             <Route
               path="/entitas"
               element={user ? <EntitasPage /> : <Navigate to="/login" />}
+            />
+            <Route
+              path="/akun"
+              element={user ? <COAPage /> : <Navigate to="/login" />}
             />
             <Route
               path="/budget"
