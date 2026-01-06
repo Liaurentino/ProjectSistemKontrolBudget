@@ -1,235 +1,102 @@
-import { useState, useEffect } from 'react';
-import { getGLAccountList, searchGLAccounts, GLAccount } from '../lib/accurate';
+import React, { useEffect, useState } from "react";
+import { getLocalAccounts, subscribeAccounts } from "../lib/accurate";
 
-export function COAPage() {
-  const [accounts, setAccounts] = useState<GLAccount[]>([]);
+interface LocalAccount {
+  id?: string;
+  accurate_id: string;
+  account_name: string;
+  account_code: string;
+  account_type: string;
+  is_active?: boolean;
+}
+
+const CoaPage: React.FC = () => {
+  const [accounts, setAccounts] = useState<LocalAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isSearching, setIsSearching] = useState(false);
 
-  useEffect(() => {
-    loadAccounts();
-  }, []);
-
-  const loadAccounts = async () => {
+  async function loadAccounts() {
     try {
-      setLoading(true);
       setError(null);
+      setLoading(true);
 
-    
-      const sessionId = localStorage.getItem('accurate_session_id');
-      const host = localStorage.getItem('accurate_host');
-      
-      if (!sessionId || !host) {
-        throw new Error('Session tidak ditemukan. Silakan sync database terlebih dahulu.');
-      }
+      const { data, error } = await getLocalAccounts();
+      if (error) throw error;
 
-      const response = await getGLAccountList(sessionId, host);
-      setAccounts(response.d);
-      
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Terjadi kesalahan saat memuat data');
-      console.error('Error loading accounts:', err);
+      setAccounts(data ?? []);
+    } catch (err: any) {
+      console.error("Error loading accounts:", err);
+      setError(
+        err?.message || "Gagal memuat daftar akun. Pastikan webhook sudah aktif."
+      );
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleSearch = async (query: string) => {
-    setSearchQuery(query);
-
-    if (!query.trim()) {
-      loadAccounts();
-      return;
-    }
-
-    try {
-      setIsSearching(true);
-      setError(null);
-
-
-
-    const sessionId = localStorage.getItem('accurate_session_id');
-      const host = localStorage.getItem('accurate_host');
-
-      if (!sessionId || !host) {
-        throw new Error('Session tidak ditemukan.');
-      }
-
-      const response = await searchGLAccounts(sessionId, host, query);
-      setAccounts(response.d);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Terjadi kesalahan saat mencari data');
-      console.error('Error searching accounts:', err);
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  const handleSyncAll = async () => {
-    await loadAccounts();
-  };
-
-  const handleEdit = (account: GLAccount) => {
-    console.log('Edit account:', account);
-    // TODO: Implement edit functionality
-  };
-
-  const handleDelete = (account: GLAccount) => {
-    console.log('Delete account:', account);
-    // TODO: Implement delete functionality
-  };
-
-  const getAccountTypeBadge = (type?: string) => {
-    switch(type) {
-      case 'Kas/Bank':
-        return 'badge-success';
-      case 'Akun Piutang':
-        return 'badge-warning';
-      default:
-        return 'badge-primary';
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="coa-page">
-        <div className="card card-center">
-          <div className="spinner"></div>
-          <p>Memuat data akun...</p>
-        </div>
-      </div>
-    );
   }
 
+  useEffect(() => {
+    loadAccounts();
+
+    const channel = subscribeAccounts(() => {
+      loadAccounts();
+    });
+
+    return () => {
+      try {
+        channel?.unsubscribe();
+      } catch {}
+    };
+  }, []);
+
   return (
-    <div className="coa-page">
-      {/* Breadcrumb */}
-      <div className="coa-breadcrumb">
-        <span className="breadcrumb-icon">📁</span>
-        <span className="breadcrumb-text">Master Data</span>
-        <span className="breadcrumb-separator">/</span>
-        <span className="breadcrumb-active">List Akun</span>
+    <div className="coa-container">
+      <div className="header-area">
+        <h2 className="page-title">Chart of Accounts</h2>
+
+        <button className="btn-refresh" onClick={loadAccounts} disabled={loading}>
+          Refresh
+        </button>
       </div>
 
-      {/* Header */}
-      <div className="coa-header">
-        <div className="coa-header-content">
-          <h1 className="coa-title">Akun Perkiraan (Chart of Accounts)</h1>
-          <p className="coa-subtitle">
-            Kelola akun perkiraan dari Accurate Online atau manual entry
-          </p>
-        </div>
-        <div className="coa-header-actions">
-          <button 
-            className="btn btn-primary coa-btn-sync"
-            onClick={handleSyncAll}
-            disabled={loading}
-          >
-            <span className="btn-icon">🔄</span>
-            Sync All Entities
-          </button>
-          <button className="btn btn-secondary coa-btn-add">
-            <span className="btn-icon">+</span>
-            Tambah Manual
-          </button>
-        </div>
-      </div>
+      {error && <div className="alert alert-danger">{error}</div>}
 
-      {/* Search Bar */}
-      <div className="coa-search-container">
-        <div className="coa-search-wrapper">
-          <span className="coa-search-icon">🔍</span>
-          <input
-            type="text"
-            className="coa-search-input"
-            placeholder="Cari kode atau nama akun..."
-            value={searchQuery}
-            onChange={(e) => handleSearch(e.target.value)}
-          />
-        </div>
-      </div>
-
-      {/* Error Message */}
-      {error && (
-        <div className="alert alert-danger">
-          <strong>Error:</strong> {error}
-        </div>
-      )}
-
-      {/* Table */}
-      <div className="card coa-table-card">
-        <div className="table-container">
-          <table className="table coa-table">
+      {loading ? (
+        <div className="loading-area">Memuat data...</div>
+      ) : (
+        <div className="table-wrapper">
+          <table className="coa-table">
             <thead>
               <tr>
-                <th className="coa-table-th-number"># KODE</th>
-                <th className="coa-table-th-name">NAMA AKUN</th>
-                <th className="coa-table-th-type">TIPE</th>
-                <th className="coa-table-th-status">STATUS</th>
-                <th className="coa-table-th-actions">AKSI</th>
+                <th>Kode</th>
+                <th>Nama Akun</th>
+                <th>Tipe</th>
+                <th>Status</th>
               </tr>
             </thead>
+
             <tbody>
-              {isSearching ? (
+              {accounts.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="coa-table-loading">
-                    <div className="spinner"></div>
-                    <span>Mencari...</span>
+                  <td colSpan={4} className="empty-state">
+                    Belum ada data COA. Pastikan webhook Accurate berjalan.
                   </td>
                 </tr>
-              ) : accounts.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="coa-table-empty">
-                    <div className="empty-state-center">
-                      <div className="empty-state-icon">📋</div>
-                      <h3 className="empty-state-title">Tidak ada data akun</h3>
-                      <p className="empty-state-description">
-                        {searchQuery 
-                          ? 'Tidak ditemukan akun yang sesuai dengan pencarian'
-                          : 'Silakan sync data dari Accurate atau tambah akun manual'
-                        }
-                      </p>
-                    </div>
-                  </td>
-                </tr>
-              ) : (
-                accounts.map((account) => (
-                  <tr key={account.id} className="coa-table-row">
-                    <td className="coa-table-code">{account.number}</td>
-                    <td className="coa-table-name">{account.name}</td>
-                    <td className="coa-table-type">
-                      <span className={`badge ${getAccountTypeBadge(account.accountType)}`}>
-                        {account.accountType || 'Asset'}
-                      </span>
-                    </td>
-                    <td className="coa-table-status">
-                      <span className="badge badge-success">Aktif</span>
-                    </td>
-                    <td className="coa-table-actions">
-                      <button 
-                        className="coa-action-btn coa-action-edit"
-                        title="Edit"
-                        onClick={() => handleEdit(account)}
-                      >
-                        ✏️
-                      </button>
-                      <button 
-                        className="coa-action-btn coa-action-delete"
-                        title="Hapus"
-                        onClick={() => handleDelete(account)}
-                      >
-                        🗑️
-                      </button>
-                    </td>
-                  </tr>
-                ))
               )}
+
+              {accounts.map((acc) => (
+                <tr key={acc.accurate_id}>
+                  <td>{acc.account_code}</td>
+                  <td>{acc.account_name}</td>
+                  <td>{acc.account_type}</td>
+                  <td>{acc.is_active !== false ? "Aktif" : "Nonaktif"}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
-      </div>
+      )}
     </div>
   );
-}
+};
+
+export default CoaPage;

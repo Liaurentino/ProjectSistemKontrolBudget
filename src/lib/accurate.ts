@@ -233,6 +233,21 @@ export const getLocalCategories = async () => {
 /**
  * Get accounts from local database
  */
+export function subscribeAccounts(onChange: () => void) {
+  return supabase
+    .channel("accounts_updates")
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "accurate_accounts",
+      },
+      () => onChange()
+    )
+    .subscribe();
+}
+
 export const getLocalAccounts = async () => {
   const { data, error } = await supabase
     .from('accurate_accounts')
