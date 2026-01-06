@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 import React, {
   createContext,
   useContext,
@@ -6,6 +7,11 @@ import React, {
 } from "react";
 import type { User, Session } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
+=======
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import type { User, Session } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabase';
+>>>>>>> Stashed changes
 
 interface AuthContextType {
   user: User | null;
@@ -26,6 +32,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   // 🔧 tambahan penting
   const [loading, setLoading] = useState(true);
 
+<<<<<<< Updated upstream
+=======
+  const ensureUserAccount = async (user: User) => {
+    const { data, error } = await supabase
+      .from('useraccount')
+      .select('id')
+      .eq('id', user.id)
+      .single();
+
+    if (!data && !error) {
+      await supabase.from('useraccount').insert({
+        id: user.id,
+        email: user.email,
+        full_name: user.user_metadata?.full_name ?? null,
+      });
+    }
+  };
+
+>>>>>>> Stashed changes
   useEffect(() => {
     let mounted = true;
 
