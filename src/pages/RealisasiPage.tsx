@@ -94,7 +94,7 @@ export const RealisasiPage: React.FC = () => {
           budgetId={selectedBudget.id}
           categories={selectedBudget.categories_data || []}
           budgets={filteredBudgets}
-          entities={entities}               // ⬅️ sekarang dari state lokal
+          entities={entities}              
           activeEntityIds={activeEntityIds}
           selectedBudgetId={selectedBudgetId}
           onChangeBudget={setSelectedBudgetId}
