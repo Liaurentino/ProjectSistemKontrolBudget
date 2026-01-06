@@ -1,52 +1,161 @@
 import React, { useEffect, useState } from 'react';
 import { getEntities, deleteEntity } from '../lib/supabase';
 import { EntitasForm } from '../components/EntitasForm';
-import { useEntity } from '../contexts/EntityContext'; // ✅ TAMBAHAN
+import { useEntity } from '../contexts/EntityContext';
+import { validateEntitasToken } from '../lib/accurate';
+import type { AccurateValidationResult } from '../lib/accurate';
 
-export const EntitasPage: React.FC = () => {
+export const EntitasPage: React. FC = () => {
   const [entities, setEntities] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
 
-  // EXISTING
+  // Form states
   const [showForm, setShowForm] = useState(false);
-
-  // TAMBAHAN (EDIT)
   const [showEdit, setShowEdit] = useState(false);
   const [selectedEntity, setSelectedEntity] = useState<any>(null);
 
+  // Entity status states
+  const [entityStatus, setEntityStatus] = useState<Record<string, AccurateValidationResult>>({});
+
+  const { toggleEntity, isEntityActive } = useEntity();
+
+  /**
+   * Fetch entitas dari Supabase
+   */
   const fetchEntities = async () => {
     setLoading(true);
+    setError('');
     try {
-      const { data, error } = await getEntities();
-      if (error) throw error;
+      const { data, error:  err } = await getEntities();
+      if (err) throw new Error(typeof err === 'string' ? err : err.message);
       setEntities(data || []);
     } catch (err) {
+      const message = err instanceof Error ? err. message : 'Gagal memuat entitas';
+      setError(message);
       console.error(err);
-      alert('Gagal memuat entitas');
     } finally {
       setLoading(false);
     }
   };
-  
-  // ✅ TAMBAHAN: context entitas aktif
-  const { toggleEntity, isEntityActive } = useEntity();
 
+  /**
+   * Check status koneksi setiap entitas
+   */
+  const checkEntityStatus = async (entity: any) => {
+    if (!entity.api_token) {
+      setEntityStatus((prev) => ({
+        ...prev,
+        [entity.id]: {
+          isValid: false,
+          message: 'Belum ada token',
+        },
+      }));
+      return;
+    }
+
+    try {
+      const result = await validateEntitasToken(entity.api_token);
+      setEntityStatus((prev) => ({
+        ...prev,
+        [entity.id]: result,
+      }));
+    } catch (err) {
+      setEntityStatus((prev) => ({
+        ...prev,
+        [entity.id]: {
+          isValid: false,
+          message: 'Gagal cek koneksi',
+        },
+      }));
+    }
+  };
+
+  /**
+   * Check status semua entitas
+   */
+  const checkAllStatus = async () => {
+    setRefreshing(true);
+    try {
+      for (const entity of entities) {
+        await checkEntityStatus(entity);
+      }
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  /**
+   * Handle delete entity
+   */
+  const handleDeleteEntity = async (id: string, name: string) => {
+    if (! confirm(`Yakin ingin menghapus entitas "${name}"?`)) return;
+
+    setLoading(true);
+    try {
+      const { error:  err } = await deleteEntity(id);
+      if (err) throw new Error(typeof err === 'string' ? err : err.message);
+      await fetchEntities();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Gagal menghapus entitas';
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Initial fetch
   useEffect(() => {
     fetchEntities();
   }, []);
+
+  // Check status ketika entities berubah
+  useEffect(() => {
+    if (entities.length > 0) {
+      entities.forEach((entity) => {
+        if (! entityStatus[entity.id]) {
+          checkEntityStatus(entity);
+        }
+      });
+    }
+  }, [entities]);
 
   return (
     <div className="app-container fade-in">
       {/* HEADER */}
       <div className="app-header">
         <h1>🏢 Manajemen Entitas</h1>
-        <p>Kelola entitas perusahaan yang digunakan pada budget</p>
+        <p>Kelola koneksi entitas perusahaan Anda dengan Accurate</p>
       </div>
+
+      {/* ERROR */}
+      {error && (
+        <div
+          style={{
+            padding: '1rem',
+            backgroundColor: '#ffebee',
+            color: '#c62828',
+            borderRadius: '8px',
+            marginBottom: '1rem',
+          }}
+        >
+          ⚠️ {error}
+        </div>
+      )}
 
       {/* CARD */}
       <div className="card fade-in">
         <div className="card-header">
           <h3 className="card-title">Daftar Entitas</h3>
+          <button
+            className="btn btn-sm btn-secondary"
+            onClick={checkAllStatus}
+            disabled={refreshing || loading}
+            style={{ marginLeft: 'auto' }}
+          >
+            {refreshing ? '⏳ Refresh.. .' : '🔄 Cek Status'}
+          </button>
         </div>
 
         {/* BUTTON TAMBAH */}
@@ -54,14 +163,15 @@ export const EntitasPage: React.FC = () => {
           <button
             className="btn btn-primary mb-3"
             onClick={() => setShowForm(true)}
+            disabled={loading}
           >
-            + Tambah Entitas
+            + Tambah Entitas Baru
           </button>
         )}
 
-        {/* FORM TAMBAH (INLINE) */}
+        {/* FORM TAMBAH */}
         {showForm && (
-          <div>
+          <div style={{ marginBottom: '1rem' }}>
             <EntitasForm
               mode="create"
               onSuccess={() => {
@@ -73,7 +183,7 @@ export const EntitasPage: React.FC = () => {
           </div>
         )}
 
-        {/* FORM EDIT (MODAL MELAYANG) */}
+        {/* FORM EDIT */}
         {showEdit && selectedEntity && (
           <EntitasForm
             mode="edit"
@@ -92,95 +202,146 @@ export const EntitasPage: React.FC = () => {
 
         {/* TABLE */}
         <div className="table-container">
-      <table className="table">
+          <table className="table">
             <thead>
               <tr>
-                <th>Aktif</th> {/* ✅ TAMBAHAN */}
+                <th>Aktif</th>
                 <th>Nama Entitas</th>
-                <th>ID</th>
+                <th>Status Koneksi</th>
+                <th>Database</th>
                 <th style={{ textAlign: 'center' }}>Aksi</th>
               </tr>
             </thead>
 
-          <tbody>
-  {loading && entities.length === 0 ? (
-    <tr>
-      <td colSpan={4} className="text-center">Memuat data...</td>
-    </tr>
-  ) : entities.length === 0 ? (
-    <tr>
-      <td colSpan={4} className="text-center">Belum ada entitas</td>
-    </tr>
-  ) : (
-    entities.map((e) => (
-      <tr key={e.id}>
-        {/* AKTIF */}
-        <td>
-          <input
-            type="checkbox"
-            checked={isEntityActive(e.id)}
-            onChange={() => toggleEntity(e.id)}
-          />
-        </td>
+            <tbody>
+              {loading && entities.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="text-center">
+                    Memuat data... 
+                  </td>
+                </tr>
+              ) : entities.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="text-center">
+                    Belum ada entitas.  Silakan tambahkan entitas baru untuk memulai.
+                  </td>
+                </tr>
+              ) : (
+                entities. map((e) => {
+                  const status = entityStatus[e.id];
+                  const statusColor = status?.isValid ? '#4caf50' : '#f44336';
+                  const statusText = status?.isValid ? '✓ Terhubung' : '✗ Invalid';
 
-        {/* NAMA ENTITAS */}
-        <td style={{ fontWeight: 600 }}>{e.entity_name}</td>
+                  return (
+                    <tr key={e.id}>
+                      {/* AKTIF */}
+                      <td>
+                        <input
+                          type="checkbox"
+                          checked={isEntityActive(e.id)}
+                          onChange={() => toggleEntity(e.id)}
+                          disabled={loading}
+                        />
+                      </td>
 
-        {/* ID */}
-        <td>{e.id.slice(0, 8)}...</td>
+                      {/* NAMA ENTITAS */}
+                      <td style={{ fontWeight: 600 }}>{e.entity_name}</td>
 
-        {/* AKSI */}
-        <td style={{ textAlign: "center" }}>
-          <div style={{ display: "inline-flex", gap: "6px" }}>
-            <button
-              className="btn btn-outline btn-sm"
-              onClick={() => {
-                setSelectedEntity(e);
-                setShowEdit(true);
-              }}
-            >
-              Edit
-            </button>
+                      {/* STATUS KONEKSI */}
+                      <td>
+                        <span
+                          style={{
+                            display: 'inline-block',
+                            padding: '0.25rem 0.75rem',
+                            backgroundColor: statusColor,
+                            color: '#fff',
+                            borderRadius: '4px',
+                            fontSize: '0.85rem',
+                            fontWeight: 500,
+                          }}
+                        >
+                          {statusText}
+                        </span>
+                      </td>
+ 
+                      {/* DATABASE */}
+                      <td style={{ fontSize: '0.9rem', color: '#666' }}>
+                        {status?.primaryDatabase ?  (
+                          <div>
+                            <div style={{ fontWeight: 500 }}>{status.primaryDatabase.name}</div>
+                           <code style={{ fontSize: '0.75rem', color: '#999' }}>
+                             {status?.primaryDatabase?.id
+                                 ? String(status.primaryDatabase.id).substring(0, 20) + '...'
+                                     : '(tanpa id)'}
+                               </code>
+                          </div>
+                        ) : status?.isValid === false && ! status. message?. includes('Belum') ? (
+                          <span style={{ color: '#f44336' }}>Tidak terhubung</span>
+                        ) : (
+                          '-'
+                        )}
+                      </td>
 
-            <button
-              className="btn btn-primary btn-sm"
-              onClick={() =>
-                alert(`Sync Accurate untuk ${e.entity_name} (coming soon)`)
-              }
-            >
-              Sync
-            </button>
+                      {/* AKSI */}
+                      <td style={{ textAlign: 'center' }}>
+                        <div style={{ display: 'inline-flex', gap: '6px' }}>
+                          <button
+                            className="btn btn-outline btn-sm"
+                            onClick={() => {
+                              setSelectedEntity(e);
+                              setShowEdit(true);
+                            }}
+                            disabled={loading}
+                          >
+                            Edit
+                          </button>
 
-            <button
-              className="btn btn-danger btn-sm"
-              onClick={async () => {
-                if (
-                  confirm(`Yakin ingin menghapus entitas "${e.entity_name}"?`)
-                ) {
-                  await deleteEntity(e.id);
-                  fetchEntities();
-                }
-              }}
-            >
-              Hapus
-            </button>
-          </div>
-        </td>
-      </tr>
-    ))
-  )}
-</tbody>
+                          <button
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => checkEntityStatus(e)}
+                            disabled={loading || refreshing}
+                            title="Cek koneksi entitas ini"
+                          >
+                            🔍
+                          </button>
+
+                          <button
+                            className="btn btn-danger btn-sm"
+                            onClick={() => handleDeleteEntity(e. id, e.entity_name)}
+                            disabled={loading}
+                          >
+                            Hapus
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
           </table>
+        </div>
+
+        {/* LEGEND */}
+        <div
+          style={{
+            marginTop: '1.5rem',
+            paddingTop: '1rem',
+            borderTop: '1px solid #eee',
+            fontSize: '0.85rem',
+          }}
+        >
+          <strong>Keterangan Status:</strong>
+          <div style={{ marginTop: '0.5rem', display: 'flex', gap:  '2rem' }}>
+            <div>
+              <span style={{ color:  '#4caf50', fontWeight: 'bold' }}>✓ Terhubung</span> - Entitas terhubung dengan Accurate
+            </div>
+            <div>
+              <span style={{ color:  '#f44336', fontWeight:  'bold' }}>✗ Invalid</span> - Token tidak valid
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
 };
-
-
-
-  
-       
-
-       
-             

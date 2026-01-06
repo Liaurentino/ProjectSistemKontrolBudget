@@ -16,8 +16,10 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
   }
 });
 
+// ============================================
+// ENTITY FUNCTIONS (SIMPLIFIED)
+// ============================================
 
-// Entity functions
 export const getEntities = async () => {
   const { data, error } = await supabase
     .from('entity')
@@ -27,7 +29,7 @@ export const getEntities = async () => {
   return { data, error };
 };
 
-export const getEntityById = async (entityId: string) => {
+export const getEntityById = async (entityId:  string) => {
   const { data, error } = await supabase
     .from('entity')
     .select('*')
@@ -39,47 +41,72 @@ export const getEntityById = async (entityId: string) => {
 
 export const insertEntity = async (entityData: {
   entity_name: string;
-  description?: string;
-  accurate_db_id?: string;
-  accurate_access_token?: string;
+  api_token: string;
 }) => {
-  const { data, error } = await supabase
-    .from('entity')
-    .insert([entityData])
-    .select();
-  
-  return { data, error };
+  try {
+    const { data, error } = await supabase
+      .from('entity')
+      .insert([entityData])
+      .select();
+    
+    if (error) throw error;
+    
+    return { data, error: null };
+  } catch (err) {
+    const error = err instanceof Error ? err. message : 'Gagal menyimpan entitas';
+    return { data: null, error };
+  }
 };
 
-export const updateEntity = async (id: string, entityData: any) => {
-  const { data, error } = await supabase
-    .from('entity')
-    .update(entityData)
-    .eq('id', id)
-    .select();
-  
-  return { data, error };
+export const updateEntity = async (id: string, entityData: {
+  entity_name?:  string;
+  api_token?:  string;
+}) => {
+  try {
+    const { data, error } = await supabase
+      .from('entity')
+      .update(entityData)
+      .eq('id', id)
+      .select();
+    
+    if (error) throw error;
+    
+    return { data, error: null };
+  } catch (err) {
+    const error = err instanceof Error ? err.message : 'Gagal mengubah entitas';
+    return { data: null, error };
+  }
 };
 
 export const deleteEntity = async (id: string) => {
-  const { data, error } = await supabase
-    .from('entity')
-    .delete()
-    .eq('id', id);
-  
-  return { data, error };
+  try {
+    const { error } = await supabase
+      .from('entity')
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw error;
+    
+    return { error: null };
+  } catch (err) {
+    const error = err instanceof Error ? err. message : 'Gagal menghapus entitas';
+    return { error };
+  }
 };
 
-// Budget functions (updated with user_id and entity_id)
+// ============================================
+// BUDGET FUNCTIONS
+// ============================================
+
 export const insertBudget = async (budgetData: {
   entity_id: string;  
   department: string;
   total_budget: number;
   period: string;
-  description?: string;
-  categories_data: any[];
+  description?:  string;
+  categories_data:  any[];
 }) => {
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data:  { user } } = await supabase. auth.getUser();
   
   const { data, error } = await supabase
     .from('budgets')
@@ -93,13 +120,13 @@ export const insertBudget = async (budgetData: {
 };
 
 export const getBudgets = async () => {
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data:  { user } } = await supabase.auth.getUser();
 
   const { data, error } = await supabase
     .from('budgets')
     .select(`
       *,
-      entity:entity_id (
+      entity: entity_id (
         id,
         entity_name
       )
@@ -126,7 +153,7 @@ export const getBudgetById = async (id: string) => {
   return { data, error };
 };
 
-export const updateBudget = async (id: string, updates: any) => {
+export const updateBudget = async (id:  string, updates: any) => {
   const { data, error } = await supabase
     .from('budgets')
     .update(updates)
@@ -145,15 +172,18 @@ export const deleteBudget = async (id: string) => {
   return { error };
 };
 
-// Realisasi functions (updated with user_id)
+// ============================================
+// REALISASI FUNCTIONS
+// ============================================
+
 export const insertRealisasi = async (realisasiData: {
   budget_id: string;
-  category?: string;
+  category?:  string;
   amount: number;
   description?: string;
-  date?: string;
+  date?:  string;
 }) => {
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data:  { user } } = await supabase.auth.getUser();
 
   const { data, error } = await supabase
     .from('realisasi')
@@ -176,9 +206,9 @@ export const getRealisasiByBudget = async (budgetId: string) => {
   return { data, error };
 };
 
-export const updateRealisasi = async (id: string, updates: any) => {
+export const updateRealisasi = async (id:  string, updates: any) => {
   const { data, error } = await supabase
-    .from('realisasi')
+    . from('realisasi')
     .update(updates)
     .eq('id', id)
     .select();
@@ -194,6 +224,10 @@ export const deleteRealisasi = async (id: string) => {
 
   return { error };
 };
+
+// ============================================
+// DEBUG
+// ============================================
 
 if (typeof window !== 'undefined') {
   // @ts-ignore

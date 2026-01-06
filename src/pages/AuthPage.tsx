@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { getAuthorizationUrl, exchangeCodeForToken } from '../lib/accurateAuth';
+import { getAuthorizationUrl, exchangeCodeForToken } from '../lib/accurateMiddleware';
 
 export const AuthPage: React.FC = () => {
   const [searchParams] = useSearchParams();
