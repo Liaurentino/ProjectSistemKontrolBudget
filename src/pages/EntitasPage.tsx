@@ -5,7 +5,7 @@ import { useEntity } from '../contexts/EntityContext';
 import { validateEntitasToken } from '../lib/accurate';
 import type { AccurateValidationResult } from '../lib/accurate';
 
-export const EntitasPage: React. FC = () => {
+export const EntitasPage: React.FC = () => {
   const [entities, setEntities] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -19,7 +19,7 @@ export const EntitasPage: React. FC = () => {
   // Entity status states
   const [entityStatus, setEntityStatus] = useState<Record<string, AccurateValidationResult>>({});
 
-  const { toggleEntity, isEntityActive } = useEntity();
+  const { setActiveEntity, isEntityActive, setEntities: setContextEntities } = useEntity();
 
   /**
    * Fetch entitas dari Supabase
@@ -28,11 +28,12 @@ export const EntitasPage: React. FC = () => {
     setLoading(true);
     setError('');
     try {
-      const { data, error:  err } = await getEntities();
+      const { data, error: err } = await getEntities();
       if (err) throw new Error(typeof err === 'string' ? err : err.message);
       setEntities(data || []);
+      setContextEntities(data || []); // Update context
     } catch (err) {
-      const message = err instanceof Error ? err. message : 'Gagal memuat entitas';
+      const message = err instanceof Error ? err.message : 'Gagal memuat entitas';
       setError(message);
       console.error(err);
     } finally {
@@ -90,12 +91,18 @@ export const EntitasPage: React. FC = () => {
    * Handle delete entity
    */
   const handleDeleteEntity = async (id: string, name: string) => {
-    if (! confirm(`Yakin ingin menghapus entitas "${name}"?`)) return;
+    if (!confirm(`Yakin ingin menghapus entitas "${name}"?`)) return;
 
     setLoading(true);
     try {
-      const { error:  err } = await deleteEntity(id);
+      const { error: err } = await deleteEntity(id);
       if (err) throw new Error(typeof err === 'string' ? err : err.message);
+      
+      // Jika entity yang dihapus adalah active entity, clear selection
+      if (isEntityActive(id)) {
+        setActiveEntity(null);
+      }
+      
       await fetchEntities();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Gagal menghapus entitas';
@@ -114,7 +121,7 @@ export const EntitasPage: React. FC = () => {
   useEffect(() => {
     if (entities.length > 0) {
       entities.forEach((entity) => {
-        if (! entityStatus[entity.id]) {
+        if (!entityStatus[entity.id]) {
           checkEntityStatus(entity);
         }
       });
@@ -154,7 +161,7 @@ export const EntitasPage: React. FC = () => {
             disabled={refreshing || loading}
             style={{ marginLeft: 'auto' }}
           >
-            {refreshing ? '⏳ Refresh.. .' : '🔄 Cek Status'}
+            {refreshing ? '⏳ Refresh...' : '🔄 Cek Status'}
           </button>
         </div>
 
@@ -205,7 +212,7 @@ export const EntitasPage: React. FC = () => {
           <table className="table">
             <thead>
               <tr>
-                <th>Aktif</th>
+                <th style={{ width: '60px', textAlign: 'center' }}>Aktif</th>
                 <th>Nama Entitas</th>
                 <th>Status Koneksi</th>
                 <th>Database</th>
@@ -217,30 +224,32 @@ export const EntitasPage: React. FC = () => {
               {loading && entities.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="text-center">
-                    Memuat data... 
+                    Memuat data...
                   </td>
                 </tr>
               ) : entities.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="text-center">
-                    Belum ada entitas.  Silakan tambahkan entitas baru untuk memulai.
+                    Belum ada entitas. Silakan tambahkan entitas baru untuk memulai.
                   </td>
                 </tr>
               ) : (
-                entities. map((e) => {
+                entities.map((e) => {
                   const status = entityStatus[e.id];
                   const statusColor = status?.isValid ? '#4caf50' : '#f44336';
                   const statusText = status?.isValid ? '✓ Terhubung' : '✗ Invalid';
 
                   return (
                     <tr key={e.id}>
-                      {/* AKTIF */}
-                      <td>
+                      {/* AKTIF - CHANGED TO RADIO */}
+                      <td style={{ textAlign: 'center' }}>
                         <input
-                          type="checkbox"
+                          type="radio"
+                          name="active-entity"
                           checked={isEntityActive(e.id)}
-                          onChange={() => toggleEntity(e.id)}
+                          onChange={() => setActiveEntity(e.id)}
                           disabled={loading}
+                          style={{ cursor: 'pointer' }}
                         />
                       </td>
 
@@ -266,16 +275,16 @@ export const EntitasPage: React. FC = () => {
  
                       {/* DATABASE */}
                       <td style={{ fontSize: '0.9rem', color: '#666' }}>
-                        {status?.primaryDatabase ?  (
+                        {status?.primaryDatabase ? (
                           <div>
                             <div style={{ fontWeight: 500 }}>{status.primaryDatabase.name}</div>
-                           <code style={{ fontSize: '0.75rem', color: '#999' }}>
-                             {status?.primaryDatabase?.id
-                                 ? String(status.primaryDatabase.id).substring(0, 20) + '...'
-                                     : '(tanpa id)'}
-                               </code>
+                            <code style={{ fontSize: '0.75rem', color: '#999' }}>
+                              {status?.primaryDatabase?.id
+                                ? String(status.primaryDatabase.id).substring(0, 20) + '...'
+                                : '(tanpa id)'}
+                            </code>
                           </div>
-                        ) : status?.isValid === false && ! status. message?. includes('Belum') ? (
+                        ) : status?.isValid === false && !status.message?.includes('Belum') ? (
                           <span style={{ color: '#f44336' }}>Tidak terhubung</span>
                         ) : (
                           '-'
@@ -307,7 +316,7 @@ export const EntitasPage: React. FC = () => {
 
                           <button
                             className="btn btn-danger btn-sm"
-                            onClick={() => handleDeleteEntity(e. id, e.entity_name)}
+                            onClick={() => handleDeleteEntity(e.id, e.entity_name)}
                             disabled={loading}
                           >
                             Hapus
@@ -331,13 +340,16 @@ export const EntitasPage: React. FC = () => {
             fontSize: '0.85rem',
           }}
         >
-          <strong>Keterangan Status:</strong>
-          <div style={{ marginTop: '0.5rem', display: 'flex', gap:  '2rem' }}>
-            <div>
-              <span style={{ color:  '#4caf50', fontWeight: 'bold' }}>✓ Terhubung</span> - Entitas terhubung dengan Accurate
+          <strong>Keterangan:</strong>
+          <div style={{ marginTop: '0.5rem' }}>
+            <div style={{ marginBottom: '0.5rem' }}>
+              <span style={{ color: '#4caf50', fontWeight: 'bold' }}>✓ Terhubung</span> - Entitas terhubung dengan Accurate
+            </div>
+            <div style={{ marginBottom: '0.5rem' }}>
+              <span style={{ color: '#f44336', fontWeight: 'bold' }}>✗ Invalid</span> - Token tidak valid
             </div>
             <div>
-              <span style={{ color:  '#f44336', fontWeight:  'bold' }}>✗ Invalid</span> - Token tidak valid
+              <span style={{ fontWeight: 'bold' }}>💡 Tips:</span> Pilih satu entitas sebagai aktif untuk digunakan di seluruh aplikasi
             </div>
           </div>
         </div>

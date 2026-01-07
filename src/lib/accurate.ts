@@ -57,6 +57,28 @@ export interface GLAccountListResponse {
   };
 }
 
+// NEW: Types for fetchCoaFromAccurate
+export interface CoaAccount {
+  id: number;
+  account_code: string;
+  account_name: string;
+  account_type: string;
+  account_type_name: string;
+  balance: number;
+  currency: string;
+  is_parent: boolean;
+  suspended: boolean;
+  parent_id: number | null;
+}
+
+export interface FetchCoaResult {
+  success: boolean;
+  accounts?: CoaAccount[];
+  total?: number;
+  pagination?: any;
+  error?: string;
+}
+
 export type { AccurateValidationResult, AccurateDatabase };
 
 // ============================================
@@ -97,7 +119,105 @@ export const exchangeCodeForToken = async (code: string) => {
 };
 
 // ============================================
+// NEW: FETCH COA (tanpa simpan ke DB)
+// ============================================
+
+/**
+ * Fetch COA dari Accurate API via Edge Function (tanpa simpan ke DB)
+ * Ini dipakai di CoaPage yang baru
+ */
+export async function fetchCoaFromAccurate(entityId: string, apiToken: string): Promise<FetchCoaResult> {
+  try {
+    console.log(`[fetchCoaFromAccurate] Starting...`);
+    console.log(`[fetchCoaFromAccurate] Entity ID: ${entityId}`);
+    console.log(`[fetchCoaFromAccurate] API Token length: ${apiToken?.length || 0}`);
+
+    if (!apiToken) {
+      console.error('[fetchCoaFromAccurate] No API token provided');
+      return {
+        success: false,
+        error: 'API Token tidak ditemukan untuk entitas ini',
+      };
+    }
+
+    // Get secret key from env (frontend)
+    const secretKey = HMAC_SECRET_KEY;
+    if (!secretKey) {
+      console.error('[fetchCoaFromAccurate] No secret key in environment');
+      return {
+        success: false,
+        error: 'Secret key tidak dikonfigurasi',
+      };
+    }
+
+    console.log(`[fetchCoaFromAccurate] Calling Edge Function...`);
+    console.log(`[fetchCoaFromAccurate] Secret key length: ${secretKey?.length}`);
+
+    // Call Edge Function accurate-fetch-coa
+    const { data, error } = await supabase.functions.invoke('accurate-fetch-coa', {
+      body: {
+        apiToken,
+        secretKey,
+        entityId,
+      },
+    });
+
+    console.log('[fetchCoaFromAccurate] Edge Function responded');
+    console.log('[fetchCoaFromAccurate] Has error:', !!error);
+    console.log('[fetchCoaFromAccurate] Has data:', !!data);
+    console.log('[fetchCoaFromAccurate] Full data:', data);
+    console.log('[fetchCoaFromAccurate] Full error:', error);
+
+    if (error) {
+      console.error('[fetchCoaFromAccurate] Edge Function error:', error);
+      console.error('[fetchCoaFromAccurate] Error type:', typeof error);
+      console.error('[fetchCoaFromAccurate] Error details:', JSON.stringify(error, null, 2));
+      
+      // Try to get detailed error message from response
+      let detailedError = error.message || 'Gagal memanggil Edge Function';
+      if (data && data.error) {
+        detailedError = data.error;
+      }
+      
+      return {
+        success: false,
+        error: detailedError,
+      };
+    }
+
+    console.log('[fetchCoaFromAccurate] Data:', data);
+
+    if (!data || !data.success) {
+      console.error('[fetchCoaFromAccurate] Fetch failed, data:', data);
+      return {
+        success: false,
+        error: data?.error || 'Fetch gagal tanpa error message',
+      };
+    }
+
+    console.log(`[fetchCoaFromAccurate] Successfully fetched ${data.total} accounts`);
+
+    return {
+      success: true,
+      accounts: data.accounts,
+      total: data.total,
+      pagination: data.pagination,
+    };
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[fetchCoaFromAccurate] Caught error:', error);
+    console.error('[fetchCoaFromAccurate] Error stack:', error instanceof Error ? error.stack : 'N/A');
+
+    return {
+      success: false,
+      error: errorMsg,
+    };
+  }
+}
+
+// ============================================
 // SYNC COA VIA EDGE FUNCTION (per entity)
+// Yang lama - untuk sync + simpan ke DB
 // ============================================
 
 export async function fetchAndSyncCOA(entityId: string): Promise<{
