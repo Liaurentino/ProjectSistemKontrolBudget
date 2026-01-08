@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useEntity } from '../contexts/EntityContext';
-import { fetchCoaFromAccurate, type CoaAccount } from '../lib/accurate';
+import { 
+  fetchCoaFromAccurate, 
+  getLocalAccounts,
+  subscribeAccounts,
+  type CoaAccount 
+} from '../lib/accurate';
 
 const CoaPage: React.FC = () => {
   const [accounts, setAccounts] = useState<CoaAccount[]>([]);
@@ -8,13 +13,76 @@ const CoaPage: React.FC = () => {
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [syncStatus, setSyncStatus] = useState<string | null>(null);
+  const [webhookEnabled, setWebhookEnabled] = useState(false);
+  const [lastSync, setLastSync] = useState<string | null>(null);
+  const [dataSource, setDataSource] = useState<'database' | 'api'>('database');
 
   const { activeEntity } = useEntity();
 
+  // Check if webhook is enabled for this entity
+  useEffect(() => {
+    if (activeEntity?.accurate_database_id) {
+      setWebhookEnabled(true);
+    } else {
+      setWebhookEnabled(false);
+    }
+  }, [activeEntity]);
+
   /**
-   * Sync COA dari Accurate API
+   * Load COA data dari Supabase (data yang sudah disimpan oleh webhook)
    */
-  async function handleSync() {
+  async function loadCoaFromDatabase() {
+    if (!activeEntity?.id) return;
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      console.log('[CoaPage] Loading COA from database for entity:', activeEntity.id);
+
+      const { data, error: dbError } = await getLocalAccounts(activeEntity.id);
+
+      if (dbError) {
+        console.error('[CoaPage] Database error:', dbError);
+        throw new Error(dbError.message);
+      }
+
+      console.log('[CoaPage] Loaded accounts from database:', data?.length || 0);
+
+      // Map database structure to CoaAccount type
+      const mappedAccounts: CoaAccount[] = (data || []).map((acc: any) => ({
+        id: acc.accurate_id,
+        account_code: acc.account_code,
+        account_name: acc.account_name,
+        account_type: acc.account_type,
+        account_type_name: acc.account_type_name || acc.account_type,
+        balance: acc.balance || 0,
+        currency: acc.currency || 'IDR',
+        is_parent: false,
+        suspended: acc.suspended || false,
+        parent_id: null,
+      }));
+
+      setAccounts(mappedAccounts);
+      setDataSource('database');
+      setLastSync(new Date().toLocaleString('id-ID'));
+
+      if (mappedAccounts.length === 0) {
+        setSyncStatus('ℹ️ Belum ada data COA di database. Klik "Tarik dari Accurate" untuk sync pertama kali.');
+      }
+    } catch (err: any) {
+      console.error('[CoaPage] Error loading from database:', err);
+      setError('Gagal memuat COA dari database: ' + err.message);
+      setAccounts([]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  /**
+   * Manual sync COA dari Accurate API (fallback / initial load)
+   */
+  async function handleManualSync() {
     if (!activeEntity) {
       setError('Tidak ada entitas yang aktif. Pilih entitas di halaman Manajemen Entitas.');
       return;
@@ -28,7 +96,7 @@ const CoaPage: React.FC = () => {
     try {
       setSyncing(true);
       setError(null);
-      setSyncStatus('🔄 Mengambil data COA dari Accurate...');
+      setSyncStatus('🔄 Mengambil data COA dari Accurate API...');
 
       const result = await fetchCoaFromAccurate(activeEntity.id, activeEntity.api_token);
 
@@ -37,6 +105,9 @@ const CoaPage: React.FC = () => {
       }
 
       setAccounts(result.accounts || []);
+      setDataSource('api');
+      setLastSync(new Date().toLocaleString('id-ID'));
+      
       setSyncStatus(
         `✅ Berhasil mengambil ${result.total} akun COA dari Accurate${
           result.pagination ? ` (Page ${result.pagination.page}/${result.pagination.pageCount})` : ''
@@ -48,7 +119,7 @@ const CoaPage: React.FC = () => {
         setSyncStatus(null);
       }, 5000);
     } catch (err: any) {
-      console.error('Error syncing COA:', err);
+      console.error('[CoaPage] Error syncing COA:', err);
       setError('Gagal mengambil COA: ' + err.message);
       setSyncStatus(null);
     } finally {
@@ -57,12 +128,38 @@ const CoaPage: React.FC = () => {
   }
 
   /**
-   * Auto-clear accounts when active entity changes
+   * Initial load dan setup real-time subscription
    */
   useEffect(() => {
-    setAccounts([]);
-    setError(null);
-    setSyncStatus(null);
+    if (!activeEntity?.id) {
+      setAccounts([]);
+      setError(null);
+      setSyncStatus(null);
+      return;
+    }
+
+    // Load data from database
+    loadCoaFromDatabase();
+
+    // Setup real-time subscription (auto-refresh when webhook updates data)
+    console.log('[CoaPage] Setting up real-time subscription for entity:', activeEntity.id);
+    
+    const subscription = subscribeAccounts(activeEntity.id, () => {
+      console.log('[CoaPage] Real-time update detected, reloading data...');
+      loadCoaFromDatabase();
+      setSyncStatus('🔔 Data COA diperbarui secara otomatis via webhook!');
+      
+      // Clear notification after 3 seconds
+      setTimeout(() => {
+        setSyncStatus(null);
+      }, 3000);
+    });
+
+    // Cleanup subscription on unmount
+    return () => {
+      console.log('[CoaPage] Cleaning up real-time subscription');
+      subscription.unsubscribe();
+    };
   }, [activeEntity?.id]);
 
   return (
@@ -81,9 +178,50 @@ const CoaPage: React.FC = () => {
         <div>
           <h2 style={{ margin: 0, fontSize: '28px', fontWeight: 600 }}>Chart of Accounts</h2>
           {activeEntity ? (
-            <p style={{ margin: '4px 0 0', fontSize: '14px', color: '#6c757d' }}>
-              Entitas: <strong>{activeEntity.entity_name || activeEntity.name || 'Unknown'}</strong>
-            </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px', flexWrap: 'wrap' }}>
+              <p style={{ margin: 0, fontSize: '14px', color: '#6c757d' }}>
+                Entitas: <strong>{activeEntity.entity_name || activeEntity.name || 'Unknown'}</strong>
+              </p>
+              {webhookEnabled && (
+                <span
+                  style={{
+                    padding: '2px 8px',
+                    backgroundColor: '#d4edda',
+                    color: '#155724',
+                    borderRadius: '12px',
+                    fontSize: '12px',
+                    fontWeight: 500,
+                  }}
+                >
+                  🔔 Webhook Active
+                </span>
+              )}
+              {lastSync && (
+                <span
+                  style={{
+                    padding: '2px 8px',
+                    backgroundColor: '#e7f3ff',
+                    color: '#0066cc',
+                    borderRadius: '12px',
+                    fontSize: '11px',
+                  }}
+                >
+                  Last sync: {lastSync}
+                </span>
+              )}
+              <span
+                style={{
+                  padding: '2px 8px',
+                  backgroundColor: dataSource === 'database' ? '#d4edda' : '#fff3cd',
+                  color: dataSource === 'database' ? '#155724' : '#856404',
+                  borderRadius: '12px',
+                  fontSize: '11px',
+                  fontWeight: 500,
+                }}
+              >
+                {dataSource === 'database' ? '💾 From Database' : '☁️ From API'}
+              </span>
+            </div>
           ) : (
             <p style={{ margin: '4px 0 0', fontSize: '14px', color: '#dc3545' }}>
               ⚠️ Tidak ada entitas yang aktif
@@ -93,7 +231,34 @@ const CoaPage: React.FC = () => {
 
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
           <button
-            onClick={handleSync}
+            onClick={loadCoaFromDatabase}
+            disabled={loading || !activeEntity}
+            style={{
+              padding: '10px 20px',
+              backgroundColor: loading ? '#6c757d' : activeEntity ? '#17a2b8' : '#adb5bd',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: loading || !activeEntity ? 'not-allowed' : 'pointer',
+              fontWeight: 600,
+              fontSize: '14px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+            }}
+          >
+            {loading ? (
+              <>
+                <span style={{ animation: 'spin 1s linear infinite' }}>⟳</span>
+                Loading...
+              </>
+            ) : (
+              <>🔄 Refresh dari Database</>
+            )}
+          </button>
+          
+          <button
+            onClick={handleManualSync}
             disabled={syncing || !activeEntity}
             style={{
               padding: '10px 20px',
@@ -115,7 +280,7 @@ const CoaPage: React.FC = () => {
                 Syncing...
               </>
             ) : (
-              <>🔄 Tarik dari Accurate</>
+              <>☁️ Tarik dari Accurate</>
             )}
           </button>
         </div>
@@ -227,7 +392,7 @@ const CoaPage: React.FC = () => {
                   >
                     📋 Belum ada data COA.{' '}
                     {activeEntity
-                      ? 'Klik tombol "Tarik dari Accurate" untuk mengambil data.'
+                      ? 'Klik tombol "Tarik dari Accurate" untuk mengambil data pertama kali.'
                       : 'Pilih entitas terlebih dahulu di halaman Manajemen Entitas.'}
                   </td>
                 </tr>

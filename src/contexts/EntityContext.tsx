@@ -6,6 +6,7 @@ interface Entity {
   name?: string;
   nama?: string;
   api_token?: string;
+  accurate_database_id?: number | null; // ✅ ADDED: For webhook support
 }
 
 interface EntityContextType {

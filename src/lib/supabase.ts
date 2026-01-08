@@ -17,7 +17,7 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
 });
 
 // ============================================
-// ENTITY FUNCTIONS (SIMPLIFIED)
+// ENTITY FUNCTIONS (UPDATED WITH WEBHOOK SUPPORT)
 // ============================================
 
 export const getEntities = async () => {
@@ -29,7 +29,7 @@ export const getEntities = async () => {
   return { data, error };
 };
 
-export const getEntityById = async (entityId:  string) => {
+export const getEntityById = async (entityId: string) => {
   const { data, error } = await supabase
     .from('entity')
     .select('*')
@@ -42,6 +42,7 @@ export const getEntityById = async (entityId:  string) => {
 export const insertEntity = async (entityData: {
   entity_name: string;
   api_token: string;
+  accurate_database_id?: number | null;
 }) => {
   try {
     const { data, error } = await supabase
@@ -53,14 +54,15 @@ export const insertEntity = async (entityData: {
     
     return { data, error: null };
   } catch (err) {
-    const error = err instanceof Error ? err. message : 'Gagal menyimpan entitas';
+    const error = err instanceof Error ? err.message : 'Gagal menyimpan entitas';
     return { data: null, error };
   }
 };
 
 export const updateEntity = async (id: string, entityData: {
-  entity_name?:  string;
-  api_token?:  string;
+  entity_name?: string;
+  api_token?: string;
+  accurate_database_id?: number | null;
 }) => {
   try {
     const { data, error } = await supabase
@@ -89,9 +91,22 @@ export const deleteEntity = async (id: string) => {
     
     return { error: null };
   } catch (err) {
-    const error = err instanceof Error ? err. message : 'Gagal menghapus entitas';
+    const error = err instanceof Error ? err.message : 'Gagal menghapus entitas';
     return { error };
   }
+};
+
+/**
+ * Get entity by Accurate Database ID (for webhook)
+ */
+export const getEntityByAccurateDatabaseId = async (databaseId: number) => {
+  const { data, error } = await supabase
+    .from('entity')
+    .select('*')
+    .eq('accurate_database_id', databaseId)
+    .single();
+  
+  return { data, error };
 };
 
 // ============================================
@@ -103,10 +118,10 @@ export const insertBudget = async (budgetData: {
   department: string;
   total_budget: number;
   period: string;
-  description?:  string;
-  categories_data:  any[];
+  description?: string;
+  categories_data: any[];
 }) => {
-  const { data:  { user } } = await supabase. auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
   
   const { data, error } = await supabase
     .from('budgets')
@@ -120,7 +135,7 @@ export const insertBudget = async (budgetData: {
 };
 
 export const getBudgets = async () => {
-  const { data:  { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
 
   const { data, error } = await supabase
     .from('budgets')
@@ -153,7 +168,7 @@ export const getBudgetById = async (id: string) => {
   return { data, error };
 };
 
-export const updateBudget = async (id:  string, updates: any) => {
+export const updateBudget = async (id: string, updates: any) => {
   const { data, error } = await supabase
     .from('budgets')
     .update(updates)
@@ -178,12 +193,12 @@ export const deleteBudget = async (id: string) => {
 
 export const insertRealisasi = async (realisasiData: {
   budget_id: string;
-  category?:  string;
+  category?: string;
   amount: number;
   description?: string;
-  date?:  string;
+  date?: string;
 }) => {
-  const { data:  { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
 
   const { data, error } = await supabase
     .from('realisasi')
@@ -206,9 +221,9 @@ export const getRealisasiByBudget = async (budgetId: string) => {
   return { data, error };
 };
 
-export const updateRealisasi = async (id:  string, updates: any) => {
+export const updateRealisasi = async (id: string, updates: any) => {
   const { data, error } = await supabase
-    . from('realisasi')
+    .from('realisasi')
     .update(updates)
     .eq('id', id)
     .select();

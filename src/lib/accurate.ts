@@ -27,11 +27,15 @@ export interface Category {
 
 export interface Account {
   id?: string;
-  entity_id: string;  // ID database Accurate
+  entity_id: string;
   accurate_id: string;
   account_name: string;
   account_code: string;
   account_type: string;
+  account_type_name?: string;
+  balance?: number;
+  currency?: string;
+  suspended?: boolean;
   is_active?: boolean;
   created_at?: string;
   updated_at?: string;
@@ -57,7 +61,7 @@ export interface GLAccountListResponse {
   };
 }
 
-// NEW: Types for fetchCoaFromAccurate
+// Types for fetchCoaFromAccurate (manual sync)
 export interface CoaAccount {
   id: number;
   account_code: string;
@@ -119,12 +123,18 @@ export const exchangeCodeForToken = async (code: string) => {
 };
 
 // ============================================
-// NEW: FETCH COA (tanpa simpan ke DB)
+// FETCH COA - Manual Sync (Fallback/Initial Load)
 // ============================================
 
 /**
  * Fetch COA dari Accurate API via Edge Function (tanpa simpan ke DB)
- * Ini dipakai di CoaPage yang baru
+ * 
+ * USE CASE:
+ * - Initial load (first time setup)
+ * - Force refresh (kalau webhook gagal)
+ * - Bulk sync on-demand
+ * 
+ * NOTE: Untuk real-time updates, gunakan webhook (otomatis)
  */
 export async function fetchCoaFromAccurate(entityId: string, apiToken: string): Promise<FetchCoaResult> {
   try {
@@ -151,7 +161,6 @@ export async function fetchCoaFromAccurate(entityId: string, apiToken: string): 
     }
 
     console.log(`[fetchCoaFromAccurate] Calling Edge Function...`);
-    console.log(`[fetchCoaFromAccurate] Secret key length: ${secretKey?.length}`);
 
     // Call Edge Function accurate-fetch-coa
     const { data, error } = await supabase.functions.invoke('accurate-fetch-coa', {
@@ -165,13 +174,9 @@ export async function fetchCoaFromAccurate(entityId: string, apiToken: string): 
     console.log('[fetchCoaFromAccurate] Edge Function responded');
     console.log('[fetchCoaFromAccurate] Has error:', !!error);
     console.log('[fetchCoaFromAccurate] Has data:', !!data);
-    console.log('[fetchCoaFromAccurate] Full data:', data);
-    console.log('[fetchCoaFromAccurate] Full error:', error);
 
     if (error) {
       console.error('[fetchCoaFromAccurate] Edge Function error:', error);
-      console.error('[fetchCoaFromAccurate] Error type:', typeof error);
-      console.error('[fetchCoaFromAccurate] Error details:', JSON.stringify(error, null, 2));
       
       // Try to get detailed error message from response
       let detailedError = error.message || 'Gagal memanggil Edge Function';
@@ -184,8 +189,6 @@ export async function fetchCoaFromAccurate(entityId: string, apiToken: string): 
         error: detailedError,
       };
     }
-
-    console.log('[fetchCoaFromAccurate] Data:', data);
 
     if (!data || !data.success) {
       console.error('[fetchCoaFromAccurate] Fetch failed, data:', data);
@@ -206,7 +209,6 @@ export async function fetchCoaFromAccurate(entityId: string, apiToken: string): 
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : 'Unknown error';
     console.error('[fetchCoaFromAccurate] Caught error:', error);
-    console.error('[fetchCoaFromAccurate] Error stack:', error instanceof Error ? error.stack : 'N/A');
 
     return {
       success: false,
@@ -216,117 +218,12 @@ export async function fetchCoaFromAccurate(entityId: string, apiToken: string): 
 }
 
 // ============================================
-// SYNC COA VIA EDGE FUNCTION (per entity)
-// Yang lama - untuk sync + simpan ke DB
-// ============================================
-
-export async function fetchAndSyncCOA(entityId: string): Promise<{
-  success: boolean;
-  synced: number;
-  error?: string;
-}> {
-  try {
-    console.log(`[Accurate] Starting COA sync for entity ${entityId}...`);
-
-    const accessToken = await getAccessToken();
-    if (!accessToken) {
-      throw new Error('No access token available. Please authenticate first.');
-    }
-
-    // Call Edge Function untuk bulk sync
-    const { data, error } = await supabase.functions.invoke('accurate-sync-coa', {
-      body: {
-        accessToken,
-        dbId: entityId,  // entityId = dbId dari Accurate
-        pageSize: 100,
-      },
-    });
-
-    if (error) {
-      console.error('[Accurate] Edge Function error:', error);
-      throw error;
-    }
-
-    if (!data?.success) {
-      throw new Error(data?.error || 'Sync failed');
-    }
-
-    console.log(`[Accurate] COA sync completed for entity ${entityId}: ${data.synced} accounts`);
-
-    return {
-      success: true,
-      synced: data.synced,
-    };
-  } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[Accurate] COA sync error:', error);
-
-    return {
-      success: false,
-      synced: 0,
-      error: errorMsg,
-    };
-  }
-}
-
-/**
- * Sync single account via webhook (sudah include entity_id)
- */
-export async function syncSingleAccount(
-  entityId: string,
-  accountId: number
-): Promise<{ success: boolean; error?: string }> {
-  try {
-    const accessToken = await getAccessToken();
-    if (!accessToken) {
-      throw new Error('No access token available');
-    }
-
-    // Open session
-    const sessionResponse = await fetch('https://account.accurate.id/api/open-db.do', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: `dbId=${entityId}`,
-    });
-
-    const sessionResult = await sessionResponse.json();
-    if (!sessionResult.s) {
-      throw new Error('Failed to open database session');
-    }
-
-    const { session: sessionId, host } = sessionResult.d;
-
-    // Call webhook edge function
-    const { data, error } = await supabase.functions.invoke('accurate-webhook-coa', {
-      body: {
-        event: 'glAccount.update',
-        id: accountId,
-        entityId,  // Pass entity ID
-        host,
-        sessionId,
-        accessToken,
-      },
-    });
-
-    if (error) throw error;
-
-    return { success: true };
-  } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[Accurate] Sync single account error:', error);
-    return { success: false, error: errorMsg };
-  }
-}
-
-// ============================================
-// LOCAL DATABASE QUERIES (dengan entity filter)
+// LOCAL DATABASE QUERIES (untuk display data)
 // ============================================
 
 /**
  * Get accounts untuk entity tertentu
+ * Data ini di-populate via webhook secara otomatis
  */
 export const getLocalAccounts = async (entityId: string) => {
   const { data, error } = await supabase
@@ -356,6 +253,7 @@ export const getLocalAccountsByEntities = async (entityIds: string[]) => {
 
 /**
  * Subscribe to account changes untuk entity tertentu
+ * Ini auto-update UI saat webhook save data baru
  */
 export function subscribeAccounts(entityId: string, onChange: () => void) {
   return supabase
@@ -464,30 +362,3 @@ export const getEntitasList = async (
     success: result.success,
   };
 };
-
-// ============================================
-// BULK SYNC untuk multiple entities
-// ============================================
-
-export async function syncMultipleEntities(
-  entityIds: string[]
-): Promise<{
-  results: { entityId: string; success: boolean; synced: number; error?: string }[];
-  totalSynced: number;
-}> {
-  const results = [];
-  let totalSynced = 0;
-
-  for (const entityId of entityIds) {
-    const result = await fetchAndSyncCOA(entityId);
-    results.push({
-      entityId,
-      ...result,
-    });
-    if (result.success) {
-      totalSynced += result.synced;
-    }
-  }
-
-  return { results, totalSynced };
-}
