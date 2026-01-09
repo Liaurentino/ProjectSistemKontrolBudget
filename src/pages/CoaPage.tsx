@@ -32,7 +32,10 @@ const CoaPage: React.FC = () => {
    * Load COA data dari Supabase (data yang sudah disimpan oleh webhook)
    */
   async function loadCoaFromDatabase() {
-    if (!activeEntity?.id) return;
+    if (!activeEntity?.id) {
+      console.log('[CoaPage] No active entity, skipping database load');
+      return;
+    }
 
     try {
       setLoading(true);
@@ -47,29 +50,43 @@ const CoaPage: React.FC = () => {
         throw new Error(dbError.message);
       }
 
+      console.log('[CoaPage] Raw database data:', data);
       console.log('[CoaPage] Loaded accounts from database:', data?.length || 0);
 
+      if (!data || data.length === 0) {
+        console.log('[CoaPage] No accounts found in database');
+        setAccounts([]);
+        setDataSource('database');
+        setSyncStatus('ℹ️ Belum ada data COA di database. Klik "Tarik dari Accurate" untuk sync pertama kali.');
+        return;
+      }
+
       // Map database structure to CoaAccount type
-      const mappedAccounts: CoaAccount[] = (data || []).map((acc: any) => ({
-        id: acc.accurate_id,
-        account_code: acc.account_code,
-        account_name: acc.account_name,
-        account_type: acc.account_type,
-        account_type_name: acc.account_type_name || acc.account_type,
-        balance: acc.balance || 0,
-        currency: acc.currency || 'IDR',
-        is_parent: false,
-        suspended: acc.suspended || false,
-        parent_id: null,
-      }));
+      const mappedAccounts: CoaAccount[] = data.map((acc: any) => {
+        console.log('[CoaPage] Mapping account:', acc);
+        
+        return {
+          id: parseInt(acc.accurate_id) || 0, // Convert string to number
+          account_code: acc.account_code || '',
+          account_name: acc.account_name || '',
+          account_type: acc.account_type || 'UNKNOWN',
+          account_type_name: acc.account_type_name || acc.account_type || 'Unknown',
+          balance: parseFloat(acc.balance) || 0, // Ensure number
+          currency: acc.currency || 'IDR',
+          is_parent: false,
+          suspended: acc.suspended === true || acc.suspended === 'true',
+          parent_id: null,
+        };
+      });
+
+      console.log('[CoaPage] Mapped accounts:', mappedAccounts.length);
+      console.log('[CoaPage] First account sample:', mappedAccounts[0]);
 
       setAccounts(mappedAccounts);
       setDataSource('database');
       setLastSync(new Date().toLocaleString('id-ID'));
+      setSyncStatus(null);
 
-      if (mappedAccounts.length === 0) {
-        setSyncStatus('ℹ️ Belum ada data COA di database. Klik "Tarik dari Accurate" untuk sync pertama kali.');
-      }
     } catch (err: any) {
       console.error('[CoaPage] Error loading from database:', err);
       setError('Gagal memuat COA dari database: ' + err.message);
@@ -104,14 +121,19 @@ const CoaPage: React.FC = () => {
         throw new Error(result.error || 'Gagal mengambil data COA');
       }
 
-      setAccounts(result.accounts || []);
-      setDataSource('api');
-      setLastSync(new Date().toLocaleString('id-ID'));
+      console.log('[CoaPage] Manual sync result:', result);
+
+      // Data sudah tersimpan ke database oleh edge function
+      // Sekarang load dari database
+      setSyncStatus('✅ Data berhasil disimpan. Memuat dari database...');
       
+      // Wait a bit for database to be updated
+      setTimeout(() => {
+        loadCoaFromDatabase();
+      }, 500);
+
       setSyncStatus(
-        `✅ Berhasil mengambil ${result.total} akun COA dari Accurate${
-          result.pagination ? ` (Page ${result.pagination.page}/${result.pagination.pageCount})` : ''
-        }`
+        `✅ Berhasil sync ${result.total} akun COA dari Accurate dan tersimpan ke database`
       );
 
       // Clear success message after 5 seconds
@@ -131,14 +153,19 @@ const CoaPage: React.FC = () => {
    * Initial load dan setup real-time subscription
    */
   useEffect(() => {
+    console.log('[CoaPage] useEffect triggered, activeEntity:', activeEntity?.id);
+
     if (!activeEntity?.id) {
+      console.log('[CoaPage] No active entity, clearing state');
       setAccounts([]);
       setError(null);
       setSyncStatus(null);
+      setLastSync(null);
       return;
     }
 
     // Load data from database
+    console.log('[CoaPage] Loading initial data from database');
     loadCoaFromDatabase();
 
     // Setup real-time subscription (auto-refresh when webhook updates data)
