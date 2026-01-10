@@ -1,3 +1,5 @@
+// accurate.ts - Complete with parent-child and edit/delete functions
+
 import {
   getAccessToken,
   saveTokens,
@@ -18,13 +20,6 @@ const HMAC_SECRET_KEY = import.meta.env.VITE_ACCURATE_HMAC_SECRET || '';
 // TYPES
 // ============================================
 
-export interface Category {
-  accurate_id: string;
-  name: string;
-  code: string;
-  description?: string;
-}
-
 export interface Account {
   id?: string;
   entity_id: string;
@@ -37,31 +32,13 @@ export interface Account {
   currency?: string;
   suspended?: boolean;
   is_active?: boolean;
+  parent_id?: number | null;
+  is_parent?: boolean;
+  lvl?: number;
   created_at?: string;
   updated_at?: string;
 }
 
-export interface GLAccount {
-  id: number;
-  number: string;
-  name: string;
-  accountType?: {
-    id: number;
-    name: string;
-  };
-  isActive?: boolean;
-}
-
-export interface GLAccountListResponse {
-  s: boolean;
-  d: GLAccount[];
-  sp?: {
-    pageCount: number;
-    page: number;
-  };
-}
-
-// Types for fetchCoaFromAccurate (manual sync)
 export interface CoaAccount {
   id: number;
   account_code: string;
@@ -73,6 +50,7 @@ export interface CoaAccount {
   is_parent: boolean;
   suspended: boolean;
   parent_id: number | null;
+  lvl: number;
 }
 
 export interface FetchCoaResult {
@@ -96,25 +74,18 @@ export const getAuthorizationUrl = () => {
     redirect_uri: REDIRECT_URI,
     scope: 'read write',
   });
-
   return `https://account.accurate.id/oauth/authorize?${params.toString()}`;
 };
 
 export const exchangeCodeForToken = async (code: string) => {
   try {
     const { data, error } = await supabase.functions.invoke('accurate-oauth', {
-      body: {
-        action: 'exchangeCode',
-        code,
-      },
+      body: { action: 'exchangeCode', code },
     });
-
     if (error) throw error;
-
     if (data?.access_token && data?.refresh_token && data?.expires_in) {
       saveTokens(data.access_token, data.refresh_token, data.expires_in);
     }
-
     return { data, error: null };
   } catch (error) {
     console.error('Error exchanging code for token:', error);
@@ -123,83 +94,38 @@ export const exchangeCodeForToken = async (code: string) => {
 };
 
 // ============================================
-// FETCH COA - Manual Sync (Fallback/Initial Load)
+// FETCH COA - Manual Sync
 // ============================================
 
-/**
- * Fetch COA dari Accurate API via Edge Function (tanpa simpan ke DB)
- * 
- * USE CASE:
- * - Initial load (first time setup)
- * - Force refresh (kalau webhook gagal)
- * - Bulk sync on-demand
- * 
- * NOTE: Untuk real-time updates, gunakan webhook (otomatis)
- */
 export async function fetchCoaFromAccurate(entityId: string, apiToken: string): Promise<FetchCoaResult> {
   try {
-    console.log(`[fetchCoaFromAccurate] Starting...`);
-    console.log(`[fetchCoaFromAccurate] Entity ID: ${entityId}`);
-    console.log(`[fetchCoaFromAccurate] API Token length: ${apiToken?.length || 0}`);
+    console.log('[fetchCoaFromAccurate] Starting...');
 
     if (!apiToken) {
-      console.error('[fetchCoaFromAccurate] No API token provided');
-      return {
-        success: false,
-        error: 'API Token tidak ditemukan untuk entitas ini',
-      };
+      return { success: false, error: 'API Token tidak ditemukan' };
     }
 
-    // Get secret key from env (frontend)
     const secretKey = HMAC_SECRET_KEY;
     if (!secretKey) {
-      console.error('[fetchCoaFromAccurate] No secret key in environment');
-      return {
-        success: false,
-        error: 'Secret key tidak dikonfigurasi',
-      };
+      return { success: false, error: 'Secret key tidak dikonfigurasi' };
     }
 
-    console.log(`[fetchCoaFromAccurate] Calling Edge Function...`);
+    console.log('[fetchCoaFromAccurate] Calling Edge Function...');
 
-    // Call Edge Function accurate-fetch-coa
     const { data, error } = await supabase.functions.invoke('accurate-fetch-coa', {
-      body: {
-        apiToken,
-        secretKey,
-        entityId,
-      },
+      body: { apiToken, secretKey, entityId },
     });
 
-    console.log('[fetchCoaFromAccurate] Edge Function responded');
-    console.log('[fetchCoaFromAccurate] Has error:', !!error);
-    console.log('[fetchCoaFromAccurate] Has data:', !!data);
-
     if (error) {
-      console.error('[fetchCoaFromAccurate] Edge Function error:', error);
-      
-      // Try to get detailed error message from response
-      let detailedError = error.message || 'Gagal memanggil Edge Function';
-      if (data && data.error) {
-        detailedError = data.error;
-      }
-      
-      return {
-        success: false,
-        error: detailedError,
-      };
+      console.error('[fetchCoaFromAccurate] Edge error:', error);
+      return { success: false, error: data?.error || error.message };
     }
 
     if (!data || !data.success) {
-      console.error('[fetchCoaFromAccurate] Fetch failed, data:', data);
-      return {
-        success: false,
-        error: data?.error || 'Fetch gagal tanpa error message',
-      };
+      return { success: false, error: data?.error || 'Fetch failed' };
     }
 
-    console.log(`[fetchCoaFromAccurate] Successfully fetched ${data.total} accounts`);
-
+    console.log(`[fetchCoaFromAccurate] Fetched ${data.total} accounts`);
     return {
       success: true,
       accounts: data.accounts,
@@ -208,23 +134,15 @@ export async function fetchCoaFromAccurate(entityId: string, apiToken: string): 
     };
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[fetchCoaFromAccurate] Caught error:', error);
-
-    return {
-      success: false,
-      error: errorMsg,
-    };
+    console.error('[fetchCoaFromAccurate] Error:', error);
+    return { success: false, error: errorMsg };
   }
 }
 
 // ============================================
-// LOCAL DATABASE QUERIES (untuk display data)
+// LOCAL DATABASE QUERIES
 // ============================================
 
-/**
- * Get accounts untuk entity tertentu
- * Data ini di-populate via webhook secara otomatis
- */
 export const getLocalAccounts = async (entityId: string) => {
   const { data, error } = await supabase
     .from('accurate_accounts')
@@ -232,13 +150,9 @@ export const getLocalAccounts = async (entityId: string) => {
     .eq('entity_id', entityId)
     .eq('is_active', true)
     .order('account_code', { ascending: true });
-
   return { data, error };
 };
 
-/**
- * Get accounts untuk multiple entities (untuk reporting)
- */
 export const getLocalAccountsByEntities = async (entityIds: string[]) => {
   const { data, error } = await supabase
     .from('accurate_accounts')
@@ -247,14 +161,9 @@ export const getLocalAccountsByEntities = async (entityIds: string[]) => {
     .eq('is_active', true)
     .order('entity_id', { ascending: true })
     .order('account_code', { ascending: true });
-
   return { data, error };
 };
 
-/**
- * Subscribe to account changes untuk entity tertentu
- * Ini auto-update UI saat webhook save data baru
- */
 export function subscribeAccounts(entityId: string, onChange: () => void) {
   return supabase
     .channel(`accounts_${entityId}`)
@@ -271,9 +180,6 @@ export function subscribeAccounts(entityId: string, onChange: () => void) {
     .subscribe();
 }
 
-/**
- * Get sync history dengan entity filter
- */
 export const getSyncHistory = async (entityId?: string, limit: number = 10) => {
   let query = supabase
     .from('accurate_sync_history')
@@ -290,58 +196,163 @@ export const getSyncHistory = async (entityId?: string, limit: number = 10) => {
 };
 
 // ============================================
-// SYNC CATEGORIES (jika perlu - per entity)
+// PARENT-CHILD HELPERS
 // ============================================
 
-export const syncAccurateCategories = async (entityId: string, categories: Category[]) => {
+/**
+ * Calculate total balance for parent account (including all children recursively)
+ */
+export function calculateTotalBalance(
+  accountId: number,
+  accounts: CoaAccount[]
+): number {
+  const account = accounts.find(a => a.id === accountId);
+  const children = accounts.filter(a => a.parent_id === accountId);
+  
+  const childrenTotal = children.reduce((sum, child) => {
+    return sum + calculateTotalBalance(child.id, accounts);
+  }, 0);
+  
+  return (account?.balance || 0) + childrenTotal;
+}
+
+/**
+ * Get all child accounts for a parent (recursive)
+ */
+export function getChildAccounts(
+  parentId: number,
+  accounts: CoaAccount[]
+): CoaAccount[] {
+  const directChildren = accounts.filter(a => a.parent_id === parentId);
+  const allChildren: CoaAccount[] = [...directChildren];
+  
+  directChildren.forEach(child => {
+    const grandChildren = getChildAccounts(child.id, accounts);
+    allChildren.push(...grandChildren);
+  });
+  
+  return allChildren;
+}
+
+/**
+ * Build hierarchical tree structure
+ */
+export function buildAccountTree(accounts: CoaAccount[]): CoaAccount[] {
+  // Sort by account code for consistent ordering
+  return accounts.sort((a, b) => a.account_code.localeCompare(b.account_code));
+}
+
+// ============================================
+// EDIT ACCOUNT
+// ============================================
+
+export interface EditAccountData {
+  account_code?: string;
+  account_name?: string;
+  account_type?: string;
+  asOf?: string;         // Format: DD/MM/YYYY (required by Accurate)
+  currencyCode?: string; // e.g., 'IDR'
+}
+
+export async function editAccount(
+  entityId: string,
+  accountId: number,
+  updates: EditAccountData
+) {
   try {
-    const { data, error } = await supabase
-      .from('accurate_categories')
-      .upsert(
-        categories.map((cat) => ({
-          entity_id: entityId,
-          accurate_id: cat.accurate_id,
-          name: cat.name,
-          code: cat.code,
-          description: cat.description,
-          is_active: true,
-          updated_at: new Date().toISOString(),
-        })),
-        { onConflict: 'entity_id,accurate_id' }
-      );
-
-    if (error) throw error;
-
-    await supabase.from('accurate_sync_history').insert({
-      entity_id: entityId,
-      sync_type: 'categories',
-      status: 'success',
-      records_synced: categories.length,
-      synced_at: new Date().toISOString(),
+    console.log('[editAccount] Calling edge function...');
+    console.log('[editAccount] Entity ID:', entityId);
+    console.log('[editAccount] Account ID:', accountId);
+    console.log('[editAccount] Updates:', updates);
+    
+    // Ensure required fields are present
+    const completeUpdates = {
+      ...updates,
+      // Default asOf to today if not provided
+      asOf: updates.asOf || new Date().toLocaleDateString('en-GB'), // DD/MM/YYYY
+      // Default currencyCode to IDR if not provided
+      currencyCode: updates.currencyCode || 'IDR',
+    };
+    
+    console.log('[editAccount] Complete updates:', completeUpdates);
+    
+    const { data, error } = await supabase.functions.invoke('accurate-edit-account', {
+      body: {
+        entityId,
+        accountId,
+        updates: completeUpdates,
+      },
     });
 
-    return { data, error: null };
-  } catch (error) {
-    console.error('Error syncing categories:', error);
+    console.log('[editAccount] Edge function response:', { data, error });
 
-    try {
-      await supabase.from('accurate_sync_history').insert({
-        entity_id: entityId,
-        sync_type: 'categories',
-        status: 'failed',
-        error_message: error instanceof Error ? error.message : 'Unknown error',
-        synced_at: new Date().toISOString(),
-      });
-    } catch (logError) {
-      console.error('Error logging sync failure:', logError);
+    if (error) {
+      console.error('[editAccount] Edge error:', error);
+      throw error;
     }
 
-    return { data: null, error };
+    if (!data?.success) {
+      console.error('[editAccount] Edge function returned error:', data);
+      throw new Error(data?.error || 'Failed to edit account');
+    }
+
+    console.log('[editAccount] ✅ Account updated successfully');
+    return { success: true, data: data.data };
+  } catch (error) {
+    console.error('[editAccount] Error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
   }
-};
+}
 
 // ============================================
-// DATABASE / ENTITAS OPERATIONS
+// DELETE ACCOUNT
+// ============================================
+
+export async function deleteAccount(entityId: string, accountId: number) {
+  try {
+    console.log('[deleteAccount] Calling edge function...');
+    
+    const { data, error } = await supabase.functions.invoke('accurate-delete-account', {
+      body: {
+        entityId,
+        accountId,
+      },
+    });
+
+    if (error) {
+      console.error('[deleteAccount] Edge error:', error);
+      throw error;
+    }
+
+    if (!data?.success) {
+      // Special handling for children warning
+      if (data?.hasChildren) {
+        return {
+          success: false,
+          hasChildren: true,
+          children: data.children,
+          error: data.message || 'Account has children',
+        };
+      }
+      throw new Error(data?.error || 'Failed to delete account');
+    }
+
+    console.log('[deleteAccount] ✅ Account deleted successfully');
+    return { success: true, message: data.message };
+  } catch (error) {
+    console.error('[deleteAccount] Error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+// ============================================
+// ENTITY OPERATIONS
 // ============================================
 
 export const validateEntitasToken = async (
