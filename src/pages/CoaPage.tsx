@@ -200,57 +200,22 @@ const CoaPage: React.FC = () => {
               ) : (
                 accounts.filter(isVisible).map((acc) => (
                   <tr key={acc.id} style={{ borderBottom: '1px solid #dee2e6' }}>
+                    {/* KODE AKUN - DENGAN INDENT */}
                     <td style={{ ...tableCellStyle, fontFamily: 'monospace' }}>
-                      {acc.account_code}
-                    </td>
-                    <td style={tableCellStyle}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        {/* Indent based on level */}
+                      <div style={{ display: 'flex', alignItems: 'center' }}>
                         <span style={{ marginLeft: `${(acc.lvl - 1) * 24}px` }} />
-                        
-                        {/* Expand/collapse button for parents */}
-                        {acc.is_parent ? (
-                          <button
-                            onClick={() => toggleExpand(acc.id)}
-                            style={{
-                              background: 'none',
-                              border: 'none',
-                              cursor: 'pointer',
-                              fontSize: '16px',
-                              padding: '0 4px',
-                              color: '#495057',
-                            }}
-                            title={expanded[acc.id] ? 'Collapse' : 'Expand'}
-                          >
-                            {expanded[acc.id] ? '📂' : '📁'}
-                          </button>
-                        ) : (
-                          <span style={{ width: '24px', display: 'inline-block' }} />
-                        )}
-                        
-                        {/* Account name with level badge */}
-                        <span style={{ 
-                          fontWeight: acc.is_parent ? 600 : 400,
-                          color: acc.is_parent ? '#212529' : '#495057'
-                        }}>
-                          {acc.account_name}
-                        </span>
-                        
-                        {/* Level badge for parent */}
-                        {acc.is_parent && (
-                          <span style={{
-                            fontSize: '10px',
-                            padding: '2px 6px',
-                            backgroundColor: '#e7f3ff',
-                            color: '#004085',
-                            borderRadius: '3px',
-                            fontWeight: 500,
-                          }}>
-                            Lvl {acc.lvl}
-                          </span>
-                        )}
+                        {acc.account_code}
                       </div>
                     </td>
+                    
+                    {/* NAMA AKUN - DENGAN INDENT */}
+                    <td style={tableCellStyle}>
+                      <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <span style={{ marginLeft: `${(acc.lvl - 1) * 24}px` }} />
+                        {acc.account_name}
+                      </div>
+                    </td>
+                    
                     <td style={tableCellStyle}>
                       <span style={{
                         padding: '4px 8px',
@@ -263,17 +228,9 @@ const CoaPage: React.FC = () => {
                       </span>
                     </td>
                     <td style={{ ...tableCellStyle, textAlign: 'right' }}>
-                      <span style={{
-                        fontFamily: 'monospace',
-                        fontWeight: acc.is_parent ? 600 : 400,
-                      }}>
+                      <span style={{ fontFamily: 'monospace' }}>
                         {acc.currency} {getDisplayBalance(acc).toLocaleString('id-ID')}
                       </span>
-                      {acc.is_parent && (
-                        <span style={{ fontSize: '11px', color: '#6c757d', marginLeft: '4px' }}>
-                          (total)
-                        </span>
-                      )}
                     </td>
                     <td style={tableCellStyle}>
                       <span style={{
@@ -571,12 +528,14 @@ const tableHeaderStyle: React.CSSProperties = {
   letterSpacing: '0.5px',
   color: '#495057',
   borderBottom: '2px solid #dee2e6',
+  borderRight: '1px solid #dee2e6',
 };
 
 const tableCellStyle: React.CSSProperties = {
   padding: '14px 16px',
   fontSize: '14px',
   color: '#212529',
+  borderRight: '1px solid #dee2e6',
 };
 
 export default CoaPage;
