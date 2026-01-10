@@ -15,7 +15,6 @@ export interface AccurateDatabase {
   city?: string;
   province?: string;
   country?: string;
-  // Additional fields from Accurate API
   alias?: string;
   trial?: boolean;
   expired?: boolean;

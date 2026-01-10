@@ -1,393 +1,69 @@
-import React, { useEffect, useState } from 'react';
-import { useEntity } from '../contexts/EntityContext';
-import {
-  fetchCoaFromAccurate,
-  getLocalAccounts,
-  subscribeAccounts,
-  calculateTotalBalance,
-  getChildAccounts,
-  editAccount,
-  deleteAccount,
-  type CoaAccount,
-  type EditAccountData,
-} from '../lib/accurate';
-
-interface ExpandedState {
-  [accountId: number]: boolean;
-}
+import React from 'react';
+import { useCoaForm } from '../components/CoaForm';
 
 const CoaPage: React.FC = () => {
-  const [accounts, setAccounts] = useState<CoaAccount[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [syncing, setSyncing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [syncStatus, setSyncStatus] = useState<string | null>(null);
-  const [webhookEnabled, setWebhookEnabled] = useState(false);
-  const [lastSync, setLastSync] = useState<string | null>(null);
-  const [dataSource, setDataSource] = useState<'database' | 'api'>('database');
-  
-  // Expand/collapse state
-  const [expanded, setExpanded] = useState<ExpandedState>({});
-  
-  // Edit modal state
-  const [editModalOpen, setEditModalOpen] = useState(false);
-  const [editingAccount, setEditingAccount] = useState<CoaAccount | null>(null);
-  const [editForm, setEditForm] = useState<EditAccountData>({});
-  const [editLoading, setEditLoading] = useState(false);
-  
-  // Delete modal state
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [deletingAccount, setDeletingAccount] = useState<CoaAccount | null>(null);
-  const [deleteLoading, setDeleteLoading] = useState(false);
-
-  const { activeEntity } = useEntity();
-
-  useEffect(() => {
-    if (activeEntity?.accurate_database_id) {
-      setWebhookEnabled(true);
-    } else {
-      setWebhookEnabled(false);
-    }
-  }, [activeEntity]);
-
-  async function loadCoaFromDatabase() {
-    if (!activeEntity?.id) {
-      console.log('[CoaPage] No active entity');
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError(null);
-
-      console.log('[CoaPage] Loading COA from database');
-
-      const { data, error: dbError } = await getLocalAccounts(activeEntity.id);
-
-      if (dbError) {
-        throw new Error(dbError.message);
-      }
-
-      if (!data || data.length === 0) {
-        setAccounts([]);
-        setDataSource('database');
-        setSyncStatus('ℹ️ Belum ada data COA. Klik "Tarik dari Accurate" untuk sync.');
-        return;
-      }
-
-      const mappedAccounts: CoaAccount[] = data.map((acc: any) => ({
-        id: parseInt(acc.accurate_id) || 0,
-        account_code: acc.account_code || '',
-        account_name: acc.account_name || '',
-        account_type: acc.account_type || 'UNKNOWN',
-        account_type_name: acc.account_type_name || acc.account_type || 'Unknown',
-        balance: parseFloat(acc.balance) || 0,
-        currency: acc.currency || 'IDR',
-        is_parent: acc.is_parent === true || acc.is_parent === 'true',
-        suspended: acc.suspended === true || acc.suspended === 'true',
-        parent_id: acc.parent_id ? parseInt(acc.parent_id) : null,
-        lvl: parseInt(acc.lvl) || 1,
-      }));
-
-      console.log(`[CoaPage] Loaded ${mappedAccounts.length} accounts`);
-
-      setAccounts(mappedAccounts);
-      setDataSource('database');
-      setLastSync(new Date().toLocaleString('id-ID'));
-      setSyncStatus(null);
-
-    } catch (err: any) {
-      console.error('[CoaPage] Error:', err);
-      setError('Gagal memuat COA: ' + err.message);
-      setAccounts([]);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handleManualSync() {
-    if (!activeEntity) {
-      setError('Tidak ada entitas yang aktif');
-      return;
-    }
-    if (!activeEntity.api_token) {
-      setError('API Token tidak ditemukan');
-      return;
-    }
-
-    try {
-      setSyncing(true);
-      setError(null);
-      setSyncStatus('🔄 Mengambil data COA dari Accurate API...');
-
-      const result = await fetchCoaFromAccurate(activeEntity.id, activeEntity.api_token);
-
-      if (!result.success) {
-        throw new Error(result.error || 'Gagal mengambil data COA');
-      }
-
-      setSyncStatus('✅ Data berhasil disimpan. Memuat dari database...');
-      
-      setTimeout(() => {
-        loadCoaFromDatabase();
-      }, 500);
-
-      setSyncStatus(`✅ Berhasil sync ${result.total} akun COA`);
-      setTimeout(() => setSyncStatus(null), 5000);
-    } catch (err: any) {
-      console.error('[CoaPage] Error syncing:', err);
-      setError('Gagal mengambil COA: ' + err.message);
-      setSyncStatus(null);
-    } finally {
-      setSyncing(false);
-    }
-  }
-
-  // Toggle expand/collapse
-  const toggleExpand = (accountId: number) => {
-    setExpanded(prev => ({ ...prev, [accountId]: !prev[accountId] }));
-  };
-
-  // Check if account should be visible (based on parent expand state)
-  const isVisible = (account: CoaAccount): boolean => {
-    if (!account.parent_id) return true; // Root level always visible
+  const {
+    // State
+    accounts,
+    loading,
+    syncing,
+    error,
+    syncStatus,
+    lastSync,
+    expanded,
+    activeEntity,
     
-    const parent = accounts.find(a => a.id === account.parent_id);
-    if (!parent) return true;
+    // Edit Modal State
+    editModalOpen,
+    editingAccount,
+    editForm,
+    editLoading,
+    setEditForm,
+    setEditModalOpen,
     
-    // Parent must be expanded AND visible
-    return expanded[account.parent_id] === true && isVisible(parent);
-  };
-
-  // Get display balance (total for parent, own balance for children)
-  const getDisplayBalance = (account: CoaAccount): number => {
-    if (account.is_parent) {
-      return calculateTotalBalance(account.id, accounts);
-    }
-    return account.balance;
-  };
-
-  // Open edit modal
-  const handleEdit = (account: CoaAccount) => {
-    console.log('[handleEdit] Editing account:', account);
-    setEditingAccount(account);
+    // Delete Modal State
+    deleteModalOpen,
+    deletingAccount,
+    deleteLoading,
+    setDeleteModalOpen,
     
-    // Format date as DD/MM/YYYY
-    const today = new Date();
-    const formattedDate = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
-    
-    setEditForm({
-      account_code: account.account_code,
-      account_name: account.account_name,
-      account_type: account.account_type,
-      currencyCode: account.currency || 'IDR',
-      asOf: formattedDate,
-    });
-    
-    console.log('[handleEdit] Edit form initialized:', {
-      account_code: account.account_code,
-      account_name: account.account_name,
-      account_type: account.account_type,
-      currencyCode: account.currency || 'IDR',
-      asOf: formattedDate,
-    });
-    
-    setEditModalOpen(true);
-  };
-
-  // Submit edit
-  const handleEditSubmit = async () => {
-    if (!activeEntity || !editingAccount) return;
-
-    try {
-      setEditLoading(true);
-      setError(null);
-
-      console.log('[handleEditSubmit] Submitting edit...');
-      console.log('[handleEditSubmit] Entity ID:', activeEntity.id);
-      console.log('[handleEditSubmit] Account ID:', editingAccount.id);
-      console.log('[handleEditSubmit] Updates:', editForm);
-
-      const result = await editAccount(
-        activeEntity.id,
-        editingAccount.id,
-        editForm
-      );
-
-      console.log('[handleEditSubmit] Edit result:', result);
-
-      if (!result.success) {
-        throw new Error(result.error || 'Gagal mengedit account');
-      }
-
-      setSyncStatus('✅ Account berhasil diupdate');
-      setEditModalOpen(false);
-      
-      // Reload data
-      setTimeout(() => loadCoaFromDatabase(), 500);
-      setTimeout(() => setSyncStatus(null), 3000);
-    } catch (err: any) {
-      console.error('[handleEditSubmit] Error:', err);
-      setError('Gagal mengedit: ' + err.message);
-    } finally {
-      setEditLoading(false);
-    }
-  };
-
-  // Open delete modal
-  const handleDelete = (account: CoaAccount) => {
-    setDeletingAccount(account);
-    setDeleteModalOpen(true);
-  };
-
-  // Submit delete
-  const handleDeleteConfirm = async () => {
-    if (!activeEntity || !deletingAccount) return;
-
-    try {
-      setDeleteLoading(true);
-      setError(null);
-
-      const result = await deleteAccount(activeEntity.id, deletingAccount.id);
-
-      if (!result.success) {
-        if (result.hasChildren) {
-          // Show children warning
-          const childNames = result.children?.map((c: any) => c.account_name).join(', ');
-          setError(`Tidak dapat menghapus account yang memiliki children: ${childNames}`);
-          setDeleteModalOpen(false);
-          return;
-        }
-        throw new Error(result.error || 'Gagal menghapus account');
-      }
-
-      setSyncStatus('✅ Account berhasil dihapus');
-      setDeleteModalOpen(false);
-      
-      // Reload data
-      setTimeout(() => loadCoaFromDatabase(), 500);
-      setTimeout(() => setSyncStatus(null), 3000);
-    } catch (err: any) {
-      setError('Gagal menghapus: ' + err.message);
-    } finally {
-      setDeleteLoading(false);
-    }
-  };
-
-  // Initial load and subscription
-  useEffect(() => {
-    if (!activeEntity?.id) {
-      setAccounts([]);
-      setError(null);
-      setSyncStatus(null);
-      setLastSync(null);
-      return;
-    }
-
-    loadCoaFromDatabase();
-
-    const subscription = subscribeAccounts(activeEntity.id, () => {
-      console.log('[CoaPage] Real-time update detected');
-      loadCoaFromDatabase();
-      setSyncStatus('🔔 Data diperbarui via webhook!');
-      setTimeout(() => setSyncStatus(null), 3000);
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [activeEntity?.id]);
+    // Handlers
+    loadCoaFromDatabase,
+    handleManualSync,
+    toggleExpand,
+    isVisible,
+    getDisplayBalance,
+    handleEdit,
+    handleEditSubmit,
+    handleDelete,
+    handleDeleteConfirm,
+  } = useCoaForm();
 
   return (
     <div style={{ padding: '24px', maxWidth: '1400px', margin: '0 auto' }}>
       {/* Header */}
       <div style={{ marginBottom: '24px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <div>
-            <h1 style={{ fontSize: '28px', fontWeight: 600, margin: 0 }}>Chart of Accounts</h1>
-            {activeEntity ? (
-              <div style={{ display: 'flex', gap: '12px', marginTop: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-                <div style={{ fontSize: '14px', color: '#6c757d' }}>
-                  <strong>Entitas:</strong> {activeEntity.entity_name || activeEntity.name || 'Unknown'}
-                </div>
-                {webhookEnabled && (
-                  <span style={{ fontSize: '12px', padding: '4px 8px', backgroundColor: '#d4edda', color: '#155724', borderRadius: '4px', fontWeight: 500 }}>
-                    🔔 Webhook Active
-                  </span>
-                )}
-                {lastSync && (
-                  <span style={{ fontSize: '12px', color: '#6c757d' }}>
-                    Last sync: {lastSync}
-                  </span>
-                )}
-                <span style={{ fontSize: '12px', padding: '4px 8px', backgroundColor: '#e7f3ff', color: '#004085', borderRadius: '4px' }}>
-                  {dataSource === 'database' ? '💾 From Database' : '☁️ From API'}
-                </span>
-              </div>
-            ) : (
-              <div style={{ marginTop: '8px', color: '#dc3545', fontSize: '14px' }}>
-                ⚠️ Tidak ada entitas yang aktif
-              </div>
+        <div style={{ marginBottom: '16px' }}>
+          <h1 style={{ fontSize: '28px', fontWeight: 600, margin: 0 }}>📊 Chart of Accounts</h1>
+          <p style={{ margin: '8px 0 0 0', color: '#6c757d', fontSize: '14px' }}>
+            Kelola Chart of Accounts dari Accurate Online
+          </p>
+        </div>
+        
+        {activeEntity ? (
+          <div style={{ fontSize: '14px', color: '#6c757d' }}>
+            <strong>Entitas:</strong> {activeEntity.entity_name || activeEntity.name || 'Unknown'}
+            {lastSync && (
+              <span style={{ marginLeft: '16px', fontSize: '12px' }}>
+                Last sync: {lastSync}
+              </span>
             )}
           </div>
-
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <button
-              onClick={loadCoaFromDatabase}
-              disabled={loading || !activeEntity}
-              style={{
-                padding: '10px 20px',
-                backgroundColor: '#6c757d',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: loading || !activeEntity ? 'not-allowed' : 'pointer',
-                fontSize: '14px',
-                fontWeight: 500,
-                opacity: loading || !activeEntity ? 0.6 : 1,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-              }}
-            >
-              {loading ? (
-                <>
-                  <span style={{ animation: 'spin 1s linear infinite' }}>⟳</span>
-                  Loading...
-                </>
-              ) : (
-                <>🔄 Refresh dari Database</>
-              )}
-            </button>
-            <button
-              onClick={handleManualSync}
-              disabled={syncing || !activeEntity}
-              style={{
-                padding: '10px 20px',
-                backgroundColor: '#007bff',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: syncing || !activeEntity ? 'not-allowed' : 'pointer',
-                fontSize: '14px',
-                fontWeight: 500,
-                opacity: syncing || !activeEntity ? 0.6 : 1,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-              }}
-            >
-              {syncing ? (
-                <>
-                  <span style={{ animation: 'spin 1s linear infinite' }}>⟳</span>
-                  Syncing...
-                </>
-              ) : (
-                <>☁️ Tarik dari Accurate</>
-              )}
-            </button>
+        ) : (
+          <div style={{ marginTop: '8px', color: '#dc3545', fontSize: '14px' }}>
+            ⚠️ Tidak ada entitas yang aktif
           </div>
-        </div>
+        )}
       </div>
 
       {/* No Active Entity Warning */}
@@ -418,7 +94,7 @@ const CoaPage: React.FC = () => {
       {/* Error Alert */}
       {error && (
         <div style={{ padding: '16px', backgroundColor: '#f8d7da', border: '1px solid #f5c6cb', borderRadius: '6px', marginBottom: '20px', color: '#721c24' }}>
-          Error: {error}
+          ⚠️ {error}
         </div>
       )}
 
@@ -429,8 +105,70 @@ const CoaPage: React.FC = () => {
         </div>
       )}
 
-      {/* COA Table */}
+      {/* COA Card */}
       <div style={{ backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
+        {/* Card Header */}
+        <div style={{ padding: '16px 24px', borderBottom: '1px solid #dee2e6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600 }}>Daftar Akun</h3>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button
+              onClick={loadCoaFromDatabase}
+              disabled={loading || !activeEntity}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: '#6c757d',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: loading || !activeEntity ? 'not-allowed' : 'pointer',
+                fontSize: '14px',
+                fontWeight: 500,
+                opacity: loading || !activeEntity ? 0.6 : 1,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              {loading ? (
+                <>
+                  <span style={{ animation: 'spin 1s linear infinite' }}>⟳</span>
+                  Loading...
+                </>
+              ) : (
+                <>🔄 Refresh</>
+              )}
+            </button>
+            <button
+              onClick={handleManualSync}
+              disabled={syncing || !activeEntity}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: '#007bff',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: syncing || !activeEntity ? 'not-allowed' : 'pointer',
+                fontSize: '14px',
+                fontWeight: 500,
+                opacity: syncing || !activeEntity ? 0.6 : 1,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              {syncing ? (
+                <>
+                  <span style={{ animation: 'spin 1s linear infinite' }}>⟳</span>
+                  Syncing...
+                </>
+              ) : (
+                <>☁️ Tarik dari Accurate</>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Table */}
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
@@ -470,8 +208,8 @@ const CoaPage: React.FC = () => {
                         {/* Indent based on level */}
                         <span style={{ marginLeft: `${(acc.lvl - 1) * 24}px` }} />
                         
-                        {/* Expand/collapse icon for parents */}
-                        {acc.is_parent && (
+                        {/* Expand/collapse button for parents */}
+                        {acc.is_parent ? (
                           <button
                             onClick={() => toggleExpand(acc.id)}
                             style={{
@@ -480,19 +218,37 @@ const CoaPage: React.FC = () => {
                               cursor: 'pointer',
                               fontSize: '16px',
                               padding: '0 4px',
+                              color: '#495057',
                             }}
+                            title={expanded[acc.id] ? 'Collapse' : 'Expand'}
                           >
-                            {expanded[acc.id] ? '▼' : '▶'}
+                            {expanded[acc.id] ? '📂' : '📁'}
                           </button>
+                        ) : (
+                          <span style={{ width: '24px', display: 'inline-block' }} />
                         )}
                         
-                        {/* Parent icon */}
-                        {acc.is_parent && <span>📁</span>}
-                        
-                        {/* Account name */}
-                        <span style={{ fontWeight: acc.is_parent ? 600 : 400 }}>
+                        {/* Account name with level badge */}
+                        <span style={{ 
+                          fontWeight: acc.is_parent ? 600 : 400,
+                          color: acc.is_parent ? '#212529' : '#495057'
+                        }}>
                           {acc.account_name}
                         </span>
+                        
+                        {/* Level badge for parent */}
+                        {acc.is_parent && (
+                          <span style={{
+                            fontSize: '10px',
+                            padding: '2px 6px',
+                            backgroundColor: '#e7f3ff',
+                            color: '#004085',
+                            borderRadius: '3px',
+                            fontWeight: 500,
+                          }}>
+                            Lvl {acc.lvl}
+                          </span>
+                        )}
                       </div>
                     </td>
                     <td style={tableCellStyle}>
