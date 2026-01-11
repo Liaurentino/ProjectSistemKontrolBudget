@@ -19,17 +19,15 @@ interface BudgetFormProps {
   onCancel: () => void;
 }
 
-// Helper function untuk format currency dengan singkatan
+// Helper: Get adaptive font size based on amount
+const getAdaptiveFontSize = (amount: number): number => {
+  if (amount >= 1_000_000_000_000) return 14; // >= 1 Triliun
+  if (amount >= 1_000_000_000) return 16;      // 1-999 Miliar
+  return 20;                                    // < 1 Miliar
+};
+
+// Helper: Format currency - NO abbreviations, full number
 const formatCurrency = (amount: number): string => {
-  if (amount >= 1_000_000_000_000) {
-    return `${(amount / 1_000_000_000_000).toFixed(1)} Trilliun`;
-  } else if (amount >= 1_000_000_000) {
-    return `${(amount / 1_000_000_000).toFixed(1)} Milliar`;
-  } else if (amount >= 1_000_000) {
-    return `${(amount / 1_000_000).toFixed(1)} Juta`;
-  } else if (amount >= 1_000) {
-    return `${(amount / 1_000).toFixed(0)} Ribu`;
-  }
   return amount.toLocaleString('id-ID');
 };
 
@@ -45,7 +43,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
   // Form state
   const [name, setName] = useState(budget?.name || '');
   const [period, setPeriod] = useState(budget?.period || '');
-  const [totalBudget, setTotalBudget] = useState(budget?.total_budget || 0);
+  const [totalBudget, setTotalBudget] = useState<number | ''>(budget?.total_budget || ''); // EMPTY default
   const [description, setDescription] = useState(budget?.description || '');
 
   // Items state
@@ -54,7 +52,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
 
   // New item state
   const [selectedAccountId, setSelectedAccountId] = useState('');
-  const [itemAmount, setItemAmount] = useState(0);
+  const [itemAmount, setItemAmount] = useState<number | ''>(''); // EMPTY default
   const [itemDescription, setItemDescription] = useState('');
   const [showAddItem, setShowAddItem] = useState(false);
 
@@ -64,6 +62,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
   // UI state
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [warnings, setWarnings] = useState<string[]>([]);
 
   // Load available accounts
   useEffect(() => {
@@ -89,15 +88,33 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
 
   // Calculate totals
   const totalAllocated = budgetItems.reduce((sum, item) => sum + item.allocated_amount, 0);
-  const remaining = totalBudget - totalAllocated;
-  const isOverBudget = totalAllocated > totalBudget;
+  const budgetValue = typeof totalBudget === 'number' ? totalBudget : 0;
+  const remaining = budgetValue - totalAllocated;
+  const isOverBudget = totalAllocated > budgetValue;
+
+  // Check for warnings
+  useEffect(() => {
+    const newWarnings: string[] = [];
+    
+    // Check total budget
+    if (typeof totalBudget === 'number' && totalBudget > 0 && totalBudget % 1000 !== 0) {
+      newWarnings.push('Total budget: Disarankan gunakan angka bulat ribuan (kelipatan 1.000)');
+    }
+    
+    // Check item amount
+    if (typeof itemAmount === 'number' && itemAmount > 0 && itemAmount % 1000 !== 0) {
+      newWarnings.push('Jumlah alokasi: Disarankan gunakan angka bulat ribuan (kelipatan 1.000)');
+    }
+    
+    setWarnings(newWarnings);
+  }, [totalBudget, itemAmount]);
 
   // Handle account selection - AUTO-FILL BALANCE
   const handleAccountSelect = (accountId: string) => {
     setSelectedAccountId(accountId);
     
     if (!accountId) {
-      setItemAmount(0);
+      setItemAmount('');
       return;
     }
 
@@ -130,8 +147,8 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
       return;
     }
 
-    if (totalBudget <= 0) {
-      setError('Total budget harus lebih dari 0');
+    if (totalBudget === '' || totalBudget <= 0) {
+      setError('Total budget harus diisi dan lebih dari 0');
       return;
     }
 
@@ -144,7 +161,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
           entity_id: activeEntity.id,
           name: name.trim(),
           period,
-          total_budget: totalBudget,
+          total_budget: Number(totalBudget),
           description: description.trim(),
         });
 
@@ -170,7 +187,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
         await updateBudget(budget!.id, {
           name: name.trim(),
           period,
-          total_budget: totalBudget,
+          total_budget: Number(totalBudget),
           description: description.trim(),
         });
 
@@ -193,8 +210,8 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
       return;
     }
 
-    if (itemAmount <= 0) {
-      setError('Jumlah budget harus lebih dari 0');
+    if (itemAmount === '' || itemAmount <= 0) {
+      setError('Jumlah budget harus diisi dan lebih dari 0');
       return;
     }
 
@@ -219,7 +236,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
       account_code: selectedAccount.account_code,
       account_name: selectedAccount.account_name,
       account_type: selectedAccount.account_type,
-      allocated_amount: itemAmount,
+      allocated_amount: Number(itemAmount),
       description: itemDescription.trim(),
     };
 
@@ -227,7 +244,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
 
     // Reset form
     setSelectedAccountId('');
-    setItemAmount(0);
+    setItemAmount('');
     setItemDescription('');
     setAccountFilter('');
     setShowAddItem(false);
@@ -238,8 +255,8 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
   const handleAddItemToExistingBudget = async () => {
     if (!budget?.id || !selectedAccountId) return;
 
-    if (itemAmount <= 0) {
-      setError('Jumlah budget harus lebih dari 0');
+    if (itemAmount === '' || itemAmount <= 0) {
+      setError('Jumlah budget harus diisi dan lebih dari 0');
       return;
     }
 
@@ -257,7 +274,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
         account_code: selectedAccount.account_code,
         account_name: selectedAccount.account_name,
         account_type: selectedAccount.account_type,
-        allocated_amount: itemAmount,
+        allocated_amount: Number(itemAmount),
         description: itemDescription.trim(),
       });
 
@@ -267,7 +284,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
 
       // Reset
       setSelectedAccountId('');
-      setItemAmount(0);
+      setItemAmount('');
       setItemDescription('');
       setAccountFilter('');
       setShowAddItem(false);
@@ -354,6 +371,24 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
           </div>
         )}
 
+        {/* Warning Alert */}
+        {warnings.length > 0 && (
+          <div style={{
+            padding: '12px 16px',
+            backgroundColor: '#fff3cd',
+            border: '1px solid #ffc107',
+            borderRadius: '6px',
+            marginBottom: '20px',
+            color: '#856404',
+            fontSize: '13px',
+          }}>
+            <div style={{ fontWeight: 600, marginBottom: '4px' }}>⚠️ Peringatan:</div>
+            {warnings.map((warning, idx) => (
+              <div key={idx}>• {warning}</div>
+            ))}
+          </div>
+        )}
+
         {/* Section: Informasi Budget */}
         <div style={{ marginBottom: '24px' }}>
           <h3 style={{
@@ -365,49 +400,14 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
             Informasi Budget
           </h3>
 
-          {/* Nama Budget */}
-          <div style={{ marginBottom: '16px' }}>
-            <label style={{
-              display: 'block',
-              marginBottom: '6px',
-              fontSize: '14px',
-              fontWeight: 500,
-              color: '#212529',
-            }}>
-              Nama Budget <span style={{ color: '#dc3545' }}>*</span>
-            </label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              maxLength={150}
-              disabled={loading}
-              placeholder="Contoh: Budget Operasional Q1 2026"
-              style={{
-                width: '100%',
-                maxWidth: '100%',
-                padding: '8px 12px',
-                border: '1px solid #ced4da',
-                borderRadius: '4px',
-                fontSize: '14px',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-            />
-            <div style={{ fontSize: '11px', color: '#6c757d', marginTop: '4px' }}>
-              {name.length}/150 karakter
-            </div>
-          </div>
-
-          {/* Periode & Total Budget - Grid */}
+          {/* FIXED GRID: 1fr | 200px | 250px */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
+            gridTemplateColumns: '1fr 200px 250px',
             gap: '16px',
             marginBottom: '16px',
           }}>
+            {/* Nama Budget */}
             <div>
               <label style={{
                 display: 'block',
@@ -416,7 +416,39 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
                 fontWeight: 500,
                 color: '#212529',
               }}>
-                Periode (Bulan) <span style={{ color: '#dc3545' }}>*</span>
+                Nama Budget <span style={{ color: '#dc3545' }}>*</span>
+              </label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                maxLength={150}
+                disabled={loading}
+                placeholder="Contoh: Budget Operasional Q1 2026"
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: '1px solid #ced4da',
+                  borderRadius: '4px',
+                  fontSize: '14px',
+                }}
+              />
+              <div style={{ fontSize: '11px', color: '#6c757d', marginTop: '4px' }}>
+                {name.length}/150 karakter
+              </div>
+            </div>
+
+            {/* Periode */}
+            <div>
+              <label style={{
+                display: 'block',
+                marginBottom: '6px',
+                fontSize: '14px',
+                fontWeight: 500,
+                color: '#212529',
+              }}>
+                Periode <span style={{ color: '#dc3545' }}>*</span>
               </label>
               <input
                 type="month"
@@ -434,6 +466,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
               />
             </div>
 
+            {/* Total Budget */}
             <div>
               <label style={{
                 display: 'block',
@@ -447,28 +480,25 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
               <input
                 type="number"
                 value={totalBudget}
-                onChange={(e) => setTotalBudget(Number(e.target.value))}
+                onChange={(e) => setTotalBudget(e.target.value === '' ? '' : Number(e.target.value))}
                 required
                 min={0}
                 max={999_999_999_999_999}
-                step={1000}
+                step={1}
                 disabled={loading}
-                placeholder="0"
+                placeholder="Masukkan nominal"
                 style={{
                   width: '100%',
-                  maxWidth: '100%',
                   padding: '8px 12px',
                   border: '1px solid #ced4da',
                   borderRadius: '4px',
                   fontSize: '14px',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
                 }}
               />
             </div>
           </div>
 
-          {/* Deskripsi */}
+          {/* Deskripsi - FULL WIDTH */}
           <div>
             <label style={{
               display: 'block',
@@ -488,7 +518,6 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
               placeholder="Deskripsi budget (opsional)..."
               style={{
                 width: '100%',
-                maxWidth: '100%',
                 padding: '8px 12px',
                 border: '1px solid #ced4da',
                 borderRadius: '4px',
@@ -503,7 +532,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
           </div>
         </div>
 
-        {/* Budget Summary */}
+        {/* Budget Summary - EQUAL 3 COLUMNS */}
         <div style={{
           padding: '16px',
           backgroundColor: isOverBudget ? '#fff3cd' : '#d1ecf1',
@@ -527,11 +556,11 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
                 Total Budget
               </div>
               <div style={{
-                fontSize: '20px',
+                fontSize: `${getAdaptiveFontSize(budgetValue)}px`,
                 fontWeight: 600,
                 color: '#212529',
               }}>
-                Rp {formatCurrency(totalBudget)}
+                Rp {formatCurrency(budgetValue)}
               </div>
             </div>
 
@@ -546,7 +575,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
                 Total Alokasi
               </div>
               <div style={{
-                fontSize: '20px',
+                fontSize: `${getAdaptiveFontSize(totalAllocated)}px`,
                 fontWeight: 600,
                 color: isOverBudget ? '#dc3545' : '#28a745',
               }}>
@@ -565,7 +594,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
                 Sisa Budget
               </div>
               <div style={{
-                fontSize: '20px',
+                fontSize: `${getAdaptiveFontSize(Math.abs(remaining))}px`,
                 fontWeight: 600,
                 color: isOverBudget ? '#dc3545' : '#0066cc',
               }}>
@@ -800,22 +829,19 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
                       <input
                         type="number"
                         value={itemAmount}
-                        onChange={(e) => setItemAmount(Number(e.target.value))}
+                        onChange={(e) => setItemAmount(e.target.value === '' ? '' : Number(e.target.value))}
                         min={0}
                         max={999_999_999_999_999}
-                        step={1000}
+                        step={1}
                         disabled={loading}
-                        placeholder="0"
+                        placeholder="Masukkan nominal"
                         style={{
                           width: '100%',
-                          maxWidth: '100%',
                           padding: '8px 12px',
                           border: '1px solid #ced4da',
                           borderRadius: '4px',
                           fontSize: '14px',
                           fontWeight: 600,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
                         }}
                       />
                       <div style={{
@@ -845,13 +871,10 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
                         placeholder="Catatan (opsional)..."
                         style={{
                           width: '100%',
-                          maxWidth: '100%',
                           padding: '8px 12px',
                           border: '1px solid #ced4da',
                           borderRadius: '4px',
                           fontSize: '13px',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
                         }}
                       />
                     </div>
@@ -861,14 +884,14 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
                   <button
                     type="button"
                     onClick={mode === 'edit' && budget?.id ? handleAddItemToExistingBudget : handleAddItem}
-                    disabled={!selectedAccountId || itemAmount <= 0 || loading}
+                    disabled={!selectedAccountId || itemAmount === '' || itemAmount <= 0 || loading}
                     style={{
                       padding: '10px 20px',
-                      backgroundColor: !selectedAccountId || itemAmount <= 0 || loading ? '#adb5bd' : '#28a745',
+                      backgroundColor: !selectedAccountId || itemAmount === '' || itemAmount <= 0 || loading ? '#adb5bd' : '#28a745',
                       color: 'white',
                       border: 'none',
                       borderRadius: '4px',
-                      cursor: !selectedAccountId || itemAmount <= 0 || loading ? 'not-allowed' : 'pointer',
+                      cursor: !selectedAccountId || itemAmount === '' || itemAmount <= 0 || loading ? 'not-allowed' : 'pointer',
                       fontSize: '14px',
                       fontWeight: 600,
                     }}
@@ -943,7 +966,11 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
                         </span>
                       </td>
                       <td style={tableCellStyle}>
-                        <strong>Rp {formatCurrency(item.allocated_amount)}</strong>
+                        <strong style={{
+                          fontSize: `${getAdaptiveFontSize(item.allocated_amount)}px`,
+                        }}>
+                          Rp {formatCurrency(item.allocated_amount)}
+                        </strong>
                       </td>
                       <td style={{ ...tableCellStyle, color: '#6c757d', fontSize: '13px' }}>
                         <div style={{
@@ -1009,14 +1036,14 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
 
           <button
             type="submit"
-            disabled={loading || !name.trim() || !period || totalBudget <= 0}
+            disabled={loading || !name.trim() || !period || totalBudget === '' || totalBudget <= 0}
             style={{
               padding: '10px 24px',
-              backgroundColor: loading || !name.trim() || !period || totalBudget <= 0 ? '#adb5bd' : '#007bff',
+              backgroundColor: loading || !name.trim() || !period || totalBudget === '' || totalBudget <= 0 ? '#adb5bd' : '#007bff',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
-              cursor: loading || !name.trim() || !period || totalBudget <= 0 ? 'not-allowed' : 'pointer',
+              cursor: loading || !name.trim() || !period || totalBudget === '' || totalBudget <= 0 ? 'not-allowed' : 'pointer',
               fontWeight: 600,
               fontSize: '14px',
             }}

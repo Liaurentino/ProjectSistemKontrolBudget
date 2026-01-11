@@ -11,17 +11,15 @@ import {
   type BudgetWithItems,
 } from '../lib/accurate';
 
-// Helper function untuk format currency
+// Helper: Get adaptive font size based on amount
+const getAdaptiveFontSize = (amount: number): number => {
+  if (amount >= 1_000_000_000_000) return 14; // >= 1 Triliun
+  if (amount >= 1_000_000_000) return 16;      // 1-999 Miliar
+  return 20;                                    // < 1 Miliar
+};
+
+// Helper: Format currency - NO abbreviations, full number
 const formatCurrency = (amount: number): string => {
-  if (amount >= 1_000_000_000_000) {
-    return `${(amount / 1_000_000_000_000).toFixed(1)} Trilliun`;
-  } else if (amount >= 1_000_000_000) {
-    return `${(amount / 1_000_000_000).toFixed(1)} Milliar`;
-  } else if (amount >= 1_000_000) {
-    return `${(amount / 1_000_000).toFixed(1)} Juta`;
-  } else if (amount >= 1_000) {
-    return `${(amount / 1_000).toFixed(0)} Ribu`;
-  }
   return amount.toLocaleString('id-ID');
 };
 
@@ -30,7 +28,7 @@ const BudgetPage: React.FC = () => {
 
   // State
   const [budgets, setBudgets] = useState<Budget[]>([]);
-  const [allBudgets, setAllBudgets] = useState<Budget[]>([]); // ← TAMBAH INI untuk simpan data asli
+  const [allBudgets, setAllBudgets] = useState<Budget[]>([]);
   const [expandedBudgets, setExpandedBudgets] = useState<Map<string, BudgetWithItems>>(new Map());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -317,7 +315,7 @@ const BudgetPage: React.FC = () => {
         </div>
       )}
 
-      {/* Filters - PAKSA WIDTH SAMA DENGAN TABLE TERLEBAR */}
+      {/* Filters - TETAP SEPERTI SEKARANG */}
       {activeEntity && !showForm && (
         <div style={{
           padding: '20px 24px',
@@ -326,10 +324,9 @@ const BudgetPage: React.FC = () => {
           borderRadius: '8px',
           marginBottom: '16px',
         }}>
-          {/* Paksa lebar sama dengan tabel di bawah */}
           <div style={{ 
             display: 'grid', 
-            gridTemplateColumns: '150px 250px 150px 200px 200px', // sama dengan kolom tabel
+            gridTemplateColumns: '150px 250px 150px 200px 200px',
             gap: '16px', 
             alignItems: 'end',
             marginBottom: '12px',
@@ -435,7 +432,7 @@ const BudgetPage: React.FC = () => {
                       overflow: 'hidden',
                     }}
                   >
-                    {/* Budget Header - FIXED WIDTH SAMA DENGAN EXPANDED STATE */}
+                    {/* Budget Header - FIXED WIDTH */}
                     <div
                       style={{
                         padding: '20px 24px',
@@ -445,14 +442,13 @@ const BudgetPage: React.FC = () => {
                       }}
                       onClick={() => toggleExpandBudget(budget.id)}
                     >
-                      {/* FIXED GRID LAYOUT - SAMA DENGAN TABEL */}
                       <div style={{
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center',
                         gap: '24px',
                       }}>
-                        {/* Budget Info - FLEX 1 */}
+                        {/* Budget Info */}
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
                             <h3 style={{
@@ -487,17 +483,21 @@ const BudgetPage: React.FC = () => {
                           </div>
                         </div>
 
-                        {/* Total Budget - FIXED 180px */}
+                        {/* Total Budget */}
                         <div style={{ width: '180px', textAlign: 'right', flexShrink: 0 }}>
                           <div style={{ fontSize: '11px', color: '#6c757d', marginBottom: '2px', textTransform: 'uppercase', fontWeight: 600 }}>
                             Total Budget
                           </div>
-                          <div style={{ fontSize: '18px', fontWeight: 600, color: '#212529' }}>
+                          <div style={{ 
+                            fontSize: `${getAdaptiveFontSize(budget.total_budget)}px`, 
+                            fontWeight: 600, 
+                            color: '#212529' 
+                          }}>
                             Rp {formatCurrency(budget.total_budget)}
                           </div>
                         </div>
 
-                        {/* Expand Button - FIXED 40px */}
+                        {/* Expand Button */}
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -552,7 +552,10 @@ const BudgetPage: React.FC = () => {
                               <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px', textTransform: 'uppercase', fontWeight: 600 }}>
                                 Total Budget
                               </div>
-                              <div style={{ fontSize: '18px', fontWeight: 600 }}>
+                              <div style={{ 
+                                fontSize: `${getAdaptiveFontSize(budgetDetails.total_budget)}px`, 
+                                fontWeight: 600 
+                              }}>
                                 Rp {formatCurrency(budgetDetails.total_budget)}
                               </div>
                             </div>
@@ -560,7 +563,10 @@ const BudgetPage: React.FC = () => {
                               <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px', textTransform: 'uppercase', fontWeight: 600 }}>
                                 Total Alokasi
                               </div>
-                              <div style={{ fontSize: '18px', fontWeight: 600 }}>
+                              <div style={{ 
+                                fontSize: `${getAdaptiveFontSize(budgetDetails.total_allocated)}px`, 
+                                fontWeight: 600 
+                              }}>
                                 Rp {formatCurrency(budgetDetails.total_allocated)}
                               </div>
                             </div>
@@ -569,7 +575,7 @@ const BudgetPage: React.FC = () => {
                                 Sisa
                               </div>
                               <div style={{
-                                fontSize: '18px',
+                                fontSize: `${getAdaptiveFontSize(Math.abs(budgetDetails.remaining_budget))}px`,
                                 fontWeight: 600,
                                 color:
                                   budgetDetails.status === 'OVER_BUDGET'
@@ -706,7 +712,11 @@ const BudgetPage: React.FC = () => {
                                       </span>
                                     </td>
                                     <td style={tableCellStyle}>
-                                      <strong>Rp {formatCurrency(item.allocated_amount)}</strong>
+                                      <strong style={{
+                                        fontSize: `${getAdaptiveFontSize(item.allocated_amount)}px`,
+                                      }}>
+                                        Rp {formatCurrency(item.allocated_amount)}
+                                      </strong>
                                     </td>
                                     <td style={tableCellStyle}>
                                       <div style={{
