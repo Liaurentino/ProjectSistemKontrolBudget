@@ -480,13 +480,26 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
               <input
                 type="number"
                 value={totalBudget}
-                onChange={(e) => setTotalBudget(e.target.value === '' ? '' : Number(e.target.value))}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Limit to 15 digits
+                  if (value === '' || value.replace(/\D/g, '').length <= 15) {
+                    setTotalBudget(value === '' ? '' : Number(value));
+                  }
+                }}
+                onKeyPress={(e) => {
+                  // Prevent input if already 15 digits
+                  const currentValue = (totalBudget || '').toString().replace(/\D/g, '');
+                  if (currentValue.length >= 15 && e.key !== 'Backspace' && e.key !== 'Delete') {
+                    e.preventDefault();
+                  }
+                }}
                 required
                 min={0}
                 max={999_999_999_999_999}
                 step={1}
                 disabled={loading}
-                placeholder="Masukkan nominal"
+                placeholder="Masukkan nominal (max 15 digit)"
                 style={{
                   width: '100%',
                   padding: '8px 12px',
@@ -495,6 +508,9 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
                   fontSize: '14px',
                 }}
               />
+              <div style={{ fontSize: '11px', color: '#6c757d', marginTop: '4px' }}>
+                Maksimal 15 digit (999 Triliun)
+              </div>
             </div>
           </div>
 
@@ -829,12 +845,25 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
                       <input
                         type="number"
                         value={itemAmount}
-                        onChange={(e) => setItemAmount(e.target.value === '' ? '' : Number(e.target.value))}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          // Limit to 15 digits
+                          if (value === '' || value.replace(/\D/g, '').length <= 15) {
+                            setItemAmount(value === '' ? '' : Number(value));
+                          }
+                        }}
+                        onKeyPress={(e) => {
+                          // Prevent input if already 15 digits
+                          const currentValue = (itemAmount || '').toString().replace(/\D/g, '');
+                          if (currentValue.length >= 15 && e.key !== 'Backspace' && e.key !== 'Delete') {
+                            e.preventDefault();
+                          }
+                        }}
                         min={0}
                         max={999_999_999_999_999}
                         step={1}
                         disabled={loading}
-                        placeholder="Masukkan nominal"
+                        placeholder="Masukkan nominal (max 15 digit)"
                         style={{
                           width: '100%',
                           padding: '8px 12px',
@@ -849,7 +878,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
                         fontSize: '11px',
                         color: '#6c757d',
                       }}>
-                        💡 Auto-fill dari balance
+                        💡 Auto-fill dari balance • Max 15 digit
                       </div>
                     </div>
 
