@@ -1,9 +1,8 @@
 import { Routes, Route, NavLink, Navigate } from "react-router-dom";
 import { useState } from "react";
 
-import { BudgetPage } from "./pages/BudgetPage";
+import BudgetPage  from "./pages/BudgetPage";
 import { RealisasiPage } from "./pages/RealisasiPage";
-import { AccurateSync } from "./pages/SettingsPage";
 import { LoginPage } from "./pages/LoginPage";
 import { ComparisonPage } from "./pages/DashboardPage";
 import { EntitasPage } from "./pages/EntitasPage";
@@ -182,10 +181,6 @@ export default function App() {
             <Route
               path="/comparison"
               element={user ? <ComparisonPage /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/settings"
-              element={user ? <AccurateSync /> : <Navigate to="/login" />}
             />
 
             <Route path="/" element={<Navigate to="/entitas" />} />

@@ -373,3 +373,446 @@ export const getEntitasList = async (
     success: result.success,
   };
 };
+
+// ============================================
+// BUDGET TYPES
+// ============================================
+
+export interface Budget {
+  id: string;
+  entity_id: string;
+  period: string; // Format: "YYYY-MM"
+  total_budget: number;
+  description?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface BudgetItem {
+  id: string;
+  budget_id: string;
+  account_id?: string;
+  accurate_id?: string;
+  account_code: string;
+  account_name: string;
+  account_type?: string;
+  allocated_amount: number;
+  description?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface BudgetWithItems extends Budget {
+  items: BudgetItem[];
+  total_allocated: number;
+  remaining_budget: number;
+  status: 'OVER_BUDGET' | 'FULLY_ALLOCATED' | 'UNDER_BUDGET';
+}
+
+export interface CreateBudgetData {
+  entity_id: string;
+  period: string;
+  total_budget: number;
+  description?: string;
+}
+
+export interface CreateBudgetItemData {
+  budget_id: string;
+  account_id?: string;
+  accurate_id?: string;
+  account_code: string;
+  account_name: string;
+  account_type?: string;
+  allocated_amount: number;
+  description?: string;
+}
+
+// ============================================
+// BUDGET CRUD OPERATIONS
+// ============================================
+
+/**
+ * Get all budgets for an entity
+ */
+export async function getBudgets(entityId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('budgets')
+      .select('*')
+      .eq('entity_id', entityId)
+      .order('period', { ascending: false });
+
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error) {
+    console.error('[getBudgets] Error:', error);
+    return { data: null, error };
+  }
+}
+
+/**
+ * Get budgets for a specific year
+ */
+export async function getBudgetsByYear(entityId: string, year: string) {
+  try {
+    const { data, error } = await supabase
+      .from('budgets')
+      .select('*')
+      .eq('entity_id', entityId)
+      .like('period', `${year}-%`)
+      .order('period', { ascending: false });
+
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error) {
+    console.error('[getBudgetsByYear] Error:', error);
+    return { data: null, error };
+  }
+}
+
+/**
+ * Get single budget with items
+ */
+export async function getBudgetById(budgetId: string): Promise<{ data: BudgetWithItems | null; error: any }> {
+  try {
+    // Get budget header
+    const { data: budget, error: budgetError } = await supabase
+      .from('budgets')
+      .select('*')
+      .eq('id', budgetId)
+      .single();
+
+    if (budgetError) throw budgetError;
+
+    // Get budget items
+    const { data: items, error: itemsError } = await supabase
+      .from('budget_items')
+      .select('*')
+      .eq('budget_id', budgetId)
+      .order('account_code', { ascending: true });
+
+    if (itemsError) throw itemsError;
+
+    // Calculate totals
+    const total_allocated = items?.reduce((sum, item) => sum + (item.allocated_amount || 0), 0) || 0;
+    const remaining_budget = budget.total_budget - total_allocated;
+    
+    let status: 'OVER_BUDGET' | 'FULLY_ALLOCATED' | 'UNDER_BUDGET';
+    if (total_allocated > budget.total_budget) {
+      status = 'OVER_BUDGET';
+    } else if (total_allocated === budget.total_budget) {
+      status = 'FULLY_ALLOCATED';
+    } else {
+      status = 'UNDER_BUDGET';
+    }
+
+    const budgetWithItems: BudgetWithItems = {
+      ...budget,
+      items: items || [],
+      total_allocated,
+      remaining_budget,
+      status,
+    };
+
+    return { data: budgetWithItems, error: null };
+  } catch (error) {
+    console.error('[getBudgetById] Error:', error);
+    return { data: null, error };
+  }
+}
+
+/**
+ * Create new budget
+ */
+export async function createBudget(budgetData: CreateBudgetData) {
+  try {
+    const { data, error } = await supabase
+      .from('budgets')
+      .insert({
+        entity_id: budgetData.entity_id,
+        period: budgetData.period,
+        total_budget: budgetData.total_budget,
+        description: budgetData.description,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    console.log('[createBudget] Created:', data);
+    return { data, error: null };
+  } catch (error) {
+    console.error('[createBudget] Error:', error);
+    return { data: null, error };
+  }
+}
+
+/**
+ * Update budget
+ */
+export async function updateBudget(budgetId: string, updates: Partial<Budget>) {
+  try {
+    const { data, error } = await supabase
+      .from('budgets')
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', budgetId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    console.log('[updateBudget] Updated:', data);
+    return { data, error: null };
+  } catch (error) {
+    console.error('[updateBudget] Error:', error);
+    return { data: null, error };
+  }
+}
+
+/**
+ * Delete budget (cascade delete items)
+ */
+export async function deleteBudget(budgetId: string) {
+  try {
+    const { error } = await supabase
+      .from('budgets')
+      .delete()
+      .eq('id', budgetId);
+
+    if (error) throw error;
+
+    console.log('[deleteBudget] Deleted budget:', budgetId);
+    return { error: null };
+  } catch (error) {
+    console.error('[deleteBudget] Error:', error);
+    return { error };
+  }
+}
+
+// ============================================
+// BUDGET ITEMS OPERATIONS
+// ============================================
+
+/**
+ * Get budget items for a budget
+ */
+export async function getBudgetItems(budgetId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('budget_items')
+      .select('*')
+      .eq('budget_id', budgetId)
+      .order('account_code', { ascending: true });
+
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error) {
+    console.error('[getBudgetItems] Error:', error);
+    return { data: null, error };
+  }
+}
+
+/**
+ * Add budget item
+ */
+export async function addBudgetItem(itemData: CreateBudgetItemData) {
+  try {
+    // Check duplicate account in same budget
+    const { data: existing } = await supabase
+      .from('budget_items')
+      .select('id')
+      .eq('budget_id', itemData.budget_id)
+      .eq('account_code', itemData.account_code)
+      .single();
+
+    if (existing) {
+      throw new Error(`Akun ${itemData.account_code} sudah ada di budget ini`);
+    }
+
+    const { data, error } = await supabase
+      .from('budget_items')
+      .insert(itemData)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    console.log('[addBudgetItem] Added:', data);
+    return { data, error: null };
+  } catch (error) {
+    console.error('[addBudgetItem] Error:', error);
+    return { data: null, error };
+  }
+}
+
+/**
+ * Update budget item
+ */
+export async function updateBudgetItem(itemId: string, updates: Partial<BudgetItem>) {
+  try {
+    const { data, error } = await supabase
+      .from('budget_items')
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', itemId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    console.log('[updateBudgetItem] Updated:', data);
+    return { data, error: null };
+  } catch (error) {
+    console.error('[updateBudgetItem] Error:', error);
+    return { data: null, error };
+  }
+}
+
+/**
+ * Delete budget item
+ */
+export async function deleteBudgetItem(itemId: string) {
+  try {
+    const { error } = await supabase
+      .from('budget_items')
+      .delete()
+      .eq('id', itemId);
+
+    if (error) throw error;
+
+    console.log('[deleteBudgetItem] Deleted item:', itemId);
+    return { error: null };
+  } catch (error) {
+    console.error('[deleteBudgetItem] Error:', error);
+    return { error };
+  }
+}
+
+// ============================================
+// VALIDATION & HELPERS
+// ============================================
+
+/**
+ * Validate budget allocation
+ */
+export async function validateBudgetAllocation(budgetId: string) {
+  try {
+    const { data: budget } = await getBudgetById(budgetId);
+    
+    if (!budget) {
+      return { isValid: false, message: 'Budget tidak ditemukan' };
+    }
+
+    if (budget.total_allocated > budget.total_budget) {
+      return {
+        isValid: false,
+        message: `Over budget: Rp ${(budget.total_allocated - budget.total_budget).toLocaleString('id-ID')}`,
+        status: 'OVER_BUDGET',
+        total_allocated: budget.total_allocated,
+        total_budget: budget.total_budget,
+        remaining: budget.remaining_budget,
+      };
+    }
+
+    return {
+      isValid: true,
+      message: 'Budget allocation valid',
+      status: budget.status,
+      total_allocated: budget.total_allocated,
+      total_budget: budget.total_budget,
+      remaining: budget.remaining_budget,
+    };
+  } catch (error) {
+    console.error('[validateBudgetAllocation] Error:', error);
+    return { isValid: false, message: 'Validation error' };
+  }
+}
+
+/**
+ * Check if account is already used in budget
+ */
+export async function isAccountUsedInBudget(budgetId: string, accountCode: string) {
+  try {
+    const { data, error } = await supabase
+      .from('budget_items')
+      .select('id')
+      .eq('budget_id', budgetId)
+      .eq('account_code', accountCode)
+      .single();
+
+    return !!data;
+  } catch (error) {
+    return false;
+  }
+}
+
+/**
+ * Get available accounts for budget (not yet used)
+ */
+export async function getAvailableAccountsForBudget(entityId: string, budgetId?: string) {
+  try {
+    // Get all active accounts
+    const { data: allAccounts, error: accountsError } = await supabase
+      .from('accurate_accounts')
+      .select('*')
+      .eq('entity_id', entityId)
+      .eq('is_active', true)
+      .order('account_code', { ascending: true });
+
+    if (accountsError) throw accountsError;
+
+    // If no budgetId, return all accounts
+    if (!budgetId) {
+      return { data: allAccounts, error: null };
+    }
+
+    // Get used accounts in this budget
+    const { data: usedItems, error: usedError } = await supabase
+      .from('budget_items')
+      .select('account_code')
+      .eq('budget_id', budgetId);
+
+    if (usedError) throw usedError;
+
+    const usedCodes = new Set(usedItems?.map(item => item.account_code) || []);
+    const availableAccounts = allAccounts?.filter(acc => !usedCodes.has(acc.account_code)) || [];
+
+    return { data: availableAccounts, error: null };
+  } catch (error) {
+    console.error('[getAvailableAccountsForBudget] Error:', error);
+    return { data: null, error };
+  }
+}
+
+/**
+ * Subscribe to budget changes
+ */
+export function subscribeBudgets(entityId: string, onChange: () => void) {
+  return supabase
+    .channel(`budgets_${entityId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'budgets',
+        filter: `entity_id=eq.${entityId}`,
+      },
+      () => onChange()
+    )
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'budget_items',
+      },
+      () => onChange()
+    )
+    .subscribe();
+}
