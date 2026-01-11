@@ -14,13 +14,13 @@ import {
 // Helper function untuk format currency
 const formatCurrency = (amount: number): string => {
   if (amount >= 1_000_000_000_000) {
-    return `${(amount / 1_000_000_000_000).toFixed(1)} T`;
+    return `${(amount / 1_000_000_000_000).toFixed(1)} Trilliun`;
   } else if (amount >= 1_000_000_000) {
-    return `${(amount / 1_000_000_000).toFixed(1)} M`;
+    return `${(amount / 1_000_000_000).toFixed(1)} Milliar`;
   } else if (amount >= 1_000_000) {
-    return `${(amount / 1_000_000).toFixed(1)} Jt`;
+    return `${(amount / 1_000_000).toFixed(1)} Juta`;
   } else if (amount >= 1_000) {
-    return `${(amount / 1_000).toFixed(0)} Rb`;
+    return `${(amount / 1_000).toFixed(0)} Ribu`;
   }
   return amount.toLocaleString('id-ID');
 };
