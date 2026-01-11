@@ -411,6 +411,7 @@ export interface BudgetWithItems extends Budget {
 
 export interface CreateBudgetData {
   entity_id: string;
+  name: string;
   period: string;
   total_budget: number;
   description?: string;
@@ -530,6 +531,7 @@ export async function createBudget(budgetData: CreateBudgetData) {
       .from('budgets')
       .insert({
         entity_id: budgetData.entity_id,
+        name: budgetData.name,
         period: budgetData.period,
         total_budget: budgetData.total_budget,
         description: budgetData.description,

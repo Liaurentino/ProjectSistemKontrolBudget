@@ -19,6 +19,20 @@ interface BudgetFormProps {
   onCancel: () => void;
 }
 
+// Helper function untuk format currency dengan singkatan
+const formatCurrency = (amount: number): string => {
+  if (amount >= 1_000_000_000_000) {
+    return `${(amount / 1_000_000_000_000).toFixed(1)} T`;
+  } else if (amount >= 1_000_000_000) {
+    return `${(amount / 1_000_000_000).toFixed(1)} M`;
+  } else if (amount >= 1_000_000) {
+    return `${(amount / 1_000_000).toFixed(1)} Jt`;
+  } else if (amount >= 1_000) {
+    return `${(amount / 1_000).toFixed(0)} Rb`;
+  }
+  return amount.toLocaleString('id-ID');
+};
+
 export const BudgetForm: React.FC<BudgetFormProps> = ({
   mode,
   budget,
@@ -294,31 +308,28 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
   return (
     <div style={{
       backgroundColor: 'white',
-      border: '2px solid #007bff',
-      borderRadius: '12px',
+      borderRadius: '8px',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
       overflow: 'hidden',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
     }}>
-      {/* ========== HEADER CONTAINER ========== */}
+      {/* Header */}
       <div style={{
-        padding: '20px 24px',
-        background: 'linear-gradient(135deg, #007bff 0%, #0056b3 100%)',
-        color: 'white',
+        padding: '16px 24px',
+        borderBottom: '1px solid #dee2e6',
+        backgroundColor: '#f8f9fa',
       }}>
         <h2 style={{
           margin: 0,
-          fontSize: '24px',
-          fontWeight: 700,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
+          fontSize: '20px',
+          fontWeight: 600,
+          color: '#212529',
         }}>
           {mode === 'create' ? '📝 Buat Budget Baru' : '✏️ Edit Budget'}
         </h2>
         <p style={{
-          margin: '8px 0 0',
+          margin: '4px 0 0',
           fontSize: '14px',
-          opacity: 0.9,
+          color: '#6c757d',
         }}>
           {mode === 'create' 
             ? 'Buat budget baru dan alokasikan ke akun-akun perkiraan'
@@ -326,55 +337,41 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
         </p>
       </div>
 
-      {/* ========== FORM CONTENT ========== */}
+      {/* Form Content */}
       <form onSubmit={handleSubmit} style={{ padding: '24px' }}>
         {/* Error Alert */}
         {error && (
           <div style={{
-            padding: '14px 16px',
-            backgroundColor: '#fff3cd',
-            border: '1px solid #ffc107',
-            borderLeft: '4px solid #ffc107',
+            padding: '12px 16px',
+            backgroundColor: '#f8d7da',
+            border: '1px solid #f5c6cb',
             borderRadius: '6px',
-            marginBottom: '24px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
+            marginBottom: '20px',
+            color: '#721c24',
+            fontSize: '14px',
           }}>
-            <span style={{ fontSize: '20px' }}>⚠️</span>
-            <span style={{ color: '#856404', fontSize: '14px', fontWeight: 500 }}>
-              {error}
-            </span>
+            ⚠️ {error}
           </div>
         )}
 
-        {/* ========== SECTION 1: INFORMASI BUDGET ========== */}
-        <div style={{
-          marginBottom: '28px',
-          padding: '20px',
-          backgroundColor: '#f8f9fa',
-          borderRadius: '8px',
-          border: '1px solid #dee2e6',
-        }}>
+        {/* Section: Informasi Budget */}
+        <div style={{ marginBottom: '24px' }}>
           <h3 style={{
             margin: '0 0 16px',
             fontSize: '16px',
             fontWeight: 600,
             color: '#495057',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
           }}>
-            📋 Informasi Budget
+            Informasi Budget
           </h3>
 
-          {/* Nama Budget - FULL WIDTH */}
+          {/* Nama Budget */}
           <div style={{ marginBottom: '16px' }}>
             <label style={{
               display: 'block',
               marginBottom: '6px',
               fontSize: '14px',
-              fontWeight: 600,
+              fontWeight: 500,
               color: '#212529',
             }}>
               Nama Budget <span style={{ color: '#dc3545' }}>*</span>
@@ -384,23 +381,27 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
+              maxLength={150}
               disabled={loading}
               placeholder="Contoh: Budget Operasional Q1 2026"
               style={{
                 width: '100%',
-                padding: '10px 12px',
-                border: '2px solid #ced4da',
-                borderRadius: '6px',
+                maxWidth: '100%',
+                padding: '8px 12px',
+                border: '1px solid #ced4da',
+                borderRadius: '4px',
                 fontSize: '14px',
-                fontWeight: 500,
-                transition: 'border-color 0.2s',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
               }}
-              onFocus={(e) => e.target.style.borderColor = '#007bff'}
-              onBlur={(e) => e.target.style.borderColor = '#ced4da'}
             />
+            <div style={{ fontSize: '11px', color: '#6c757d', marginTop: '4px' }}>
+              {name.length}/150 karakter
+            </div>
           </div>
 
-          {/* Periode & Total Budget - GRID */}
+          {/* Periode & Total Budget - Grid */}
           <div style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1fr',
@@ -412,7 +413,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
                 display: 'block',
                 marginBottom: '6px',
                 fontSize: '14px',
-                fontWeight: 600,
+                fontWeight: 500,
                 color: '#212529',
               }}>
                 Periode (Bulan) <span style={{ color: '#dc3545' }}>*</span>
@@ -425,11 +426,10 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
                 disabled={loading}
                 style={{
                   width: '100%',
-                  padding: '10px 12px',
-                  border: '2px solid #ced4da',
-                  borderRadius: '6px',
+                  padding: '8px 12px',
+                  border: '1px solid #ced4da',
+                  borderRadius: '4px',
                   fontSize: '14px',
-                  fontWeight: 500,
                 }}
               />
             </div>
@@ -439,7 +439,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
                 display: 'block',
                 marginBottom: '6px',
                 fontSize: '14px',
-                fontWeight: 600,
+                fontWeight: 500,
                 color: '#212529',
               }}>
                 Total Budget (IDR) <span style={{ color: '#dc3545' }}>*</span>
@@ -450,16 +450,19 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
                 onChange={(e) => setTotalBudget(Number(e.target.value))}
                 required
                 min={0}
+                max={999_999_999_999_999}
                 step={1000}
                 disabled={loading}
                 placeholder="0"
                 style={{
                   width: '100%',
-                  padding: '10px 12px',
-                  border: '2px solid #ced4da',
-                  borderRadius: '6px',
+                  maxWidth: '100%',
+                  padding: '8px 12px',
+                  border: '1px solid #ced4da',
+                  borderRadius: '4px',
                   fontSize: '14px',
-                  fontWeight: 500,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
                 }}
               />
             </div>
@@ -471,7 +474,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
               display: 'block',
               marginBottom: '6px',
               fontSize: '14px',
-              fontWeight: 600,
+              fontWeight: 500,
               color: '#212529',
             }}>
               Deskripsi
@@ -480,53 +483,55 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
+              maxLength={500}
               disabled={loading}
-              placeholder="Deskripsi detail tentang budget ini..."
+              placeholder="Deskripsi budget (opsional)..."
               style={{
                 width: '100%',
-                padding: '10px 12px',
-                border: '2px solid #ced4da',
-                borderRadius: '6px',
+                maxWidth: '100%',
+                padding: '8px 12px',
+                border: '1px solid #ced4da',
+                borderRadius: '4px',
                 fontSize: '14px',
                 resize: 'vertical',
                 fontFamily: 'inherit',
               }}
             />
+            <div style={{ fontSize: '11px', color: '#6c757d', marginTop: '4px' }}>
+              {description.length}/500 karakter
+            </div>
           </div>
         </div>
 
-        {/* ========== BUDGET SUMMARY ========== */}
+        {/* Budget Summary */}
         <div style={{
-          padding: '20px',
-          background: isOverBudget
-            ? 'linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%)'
-            : 'linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%)',
-          borderRadius: '8px',
-          marginBottom: '28px',
-          border: `2px solid ${isOverBudget ? '#ffc107' : '#17a2b8'}`,
+          padding: '16px',
+          backgroundColor: isOverBudget ? '#fff3cd' : '#d1ecf1',
+          border: `1px solid ${isOverBudget ? '#ffc107' : '#bee5eb'}`,
+          borderRadius: '6px',
+          marginBottom: '24px',
         }}>
           <div style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1fr 1fr',
-            gap: '20px',
+            gap: '16px',
           }}>
             <div>
               <div style={{
                 fontSize: '12px',
                 fontWeight: 600,
                 color: '#6c757d',
-                marginBottom: '6px',
+                marginBottom: '4px',
                 textTransform: 'uppercase',
-                letterSpacing: '0.5px',
               }}>
                 Total Budget
               </div>
               <div style={{
-                fontSize: '24px',
-                fontWeight: 700,
+                fontSize: '20px',
+                fontWeight: 600,
                 color: '#212529',
               }}>
-                Rp {totalBudget.toLocaleString('id-ID')}
+                Rp {formatCurrency(totalBudget)}
               </div>
             </div>
 
@@ -535,18 +540,17 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
                 fontSize: '12px',
                 fontWeight: 600,
                 color: '#6c757d',
-                marginBottom: '6px',
+                marginBottom: '4px',
                 textTransform: 'uppercase',
-                letterSpacing: '0.5px',
               }}>
                 Total Alokasi
               </div>
               <div style={{
-                fontSize: '24px',
-                fontWeight: 700,
+                fontSize: '20px',
+                fontWeight: 600,
                 color: isOverBudget ? '#dc3545' : '#28a745',
               }}>
-                Rp {totalAllocated.toLocaleString('id-ID')}
+                Rp {formatCurrency(totalAllocated)}
               </div>
             </div>
 
@@ -555,53 +559,38 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
                 fontSize: '12px',
                 fontWeight: 600,
                 color: '#6c757d',
-                marginBottom: '6px',
+                marginBottom: '4px',
                 textTransform: 'uppercase',
-                letterSpacing: '0.5px',
               }}>
                 Sisa Budget
               </div>
               <div style={{
-                fontSize: '24px',
-                fontWeight: 700,
+                fontSize: '20px',
+                fontWeight: 600,
                 color: isOverBudget ? '#dc3545' : '#0066cc',
               }}>
-                Rp {remaining.toLocaleString('id-ID')}
+                Rp {formatCurrency(remaining)}
               </div>
             </div>
           </div>
 
           {isOverBudget && (
             <div style={{
-              marginTop: '16px',
-              padding: '12px 16px',
+              marginTop: '12px',
+              padding: '8px 12px',
               backgroundColor: 'rgba(220, 53, 69, 0.1)',
-              borderRadius: '6px',
-              border: '1px solid rgba(220, 53, 69, 0.3)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
+              borderRadius: '4px',
+              fontSize: '13px',
+              fontWeight: 500,
+              color: '#721c24',
             }}>
-              <span style={{ fontSize: '20px' }}>⚠️</span>
-              <span style={{
-                fontSize: '14px',
-                fontWeight: 600,
-                color: '#721c24',
-              }}>
-                Total alokasi melebihi budget sebesar Rp {Math.abs(remaining).toLocaleString('id-ID')}
-              </span>
+              ⚠️ Total alokasi melebihi budget sebesar Rp {formatCurrency(Math.abs(remaining))}
             </div>
           )}
         </div>
 
-        {/* ========== SECTION 2: ALOKASI BUDGET KE AKUN ========== */}
-        <div style={{
-          marginBottom: '28px',
-          padding: '20px',
-          backgroundColor: '#f8f9fa',
-          borderRadius: '8px',
-          border: '1px solid #dee2e6',
-        }}>
+        {/* Section: Alokasi Budget */}
+        <div style={{ marginBottom: '24px' }}>
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',
@@ -613,11 +602,8 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
               fontSize: '16px',
               fontWeight: 600,
               color: '#495057',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
             }}>
-              💰 Alokasi Budget ke Akun ({budgetItems.length})
+              Alokasi Budget ke Akun ({budgetItems.length})
             </h3>
 
             <button
@@ -629,276 +615,347 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
                 backgroundColor: showAddItem ? '#6c757d' : '#28a745',
                 color: 'white',
                 border: 'none',
-                borderRadius: '6px',
+                borderRadius: '4px',
                 cursor: loading ? 'not-allowed' : 'pointer',
                 fontSize: '14px',
-                fontWeight: 600,
-                transition: 'background-color 0.2s',
+                fontWeight: 500,
               }}
             >
               {showAddItem ? '✕ Tutup' : '+ Tambah Akun'}
             </button>
           </div>
 
-          {/* ========== ADD ITEM FORM ========== */}
+          {/* Add Item Form */}
           {showAddItem && (
             <div style={{
-              padding: '20px',
-              backgroundColor: 'white',
-              border: '2px solid #28a745',
-              borderRadius: '8px',
-              marginBottom: '20px',
+              padding: '16px',
+              backgroundColor: '#f8f9fa',
+              border: '1px solid #dee2e6',
+              borderRadius: '6px',
+              marginBottom: '16px',
             }}>
               <h4 style={{
                 margin: '0 0 16px',
                 fontSize: '14px',
                 fontWeight: 600,
-                color: '#28a745',
+                color: '#495057',
               }}>
-                ➕ Tambah Akun ke Budget
+                Tambah Akun ke Budget
               </h4>
 
-              {/* Dropdown dengan built-in search */}
+              {/* Search/Filter Input */}
               <div style={{ marginBottom: '16px' }}>
                 <label style={{
                   display: 'block',
                   marginBottom: '6px',
                   fontSize: '13px',
-                  fontWeight: 600,
-                  color: '#212529',
+                  fontWeight: 500,
                 }}>
-                  Pilih Akun Perkiraan <span style={{ color: '#dc3545' }}>*</span>
+                  Cari Akun <span style={{ color: '#dc3545' }}>*</span>
                 </label>
-                
-                {/* Filter Input */}
                 <input
                   type="text"
                   value={accountFilter}
                   onChange={(e) => setAccountFilter(e.target.value)}
-                  placeholder="Ketik untuk filter akun..."
+                  placeholder="🔍 Ketik kode atau nama akun untuk mencari..."
                   style={{
                     width: '100%',
-                    padding: '8px 12px',
-                    border: '1px solid #ced4da',
-                    borderRadius: '6px 6px 0 0',
-                    fontSize: '13px',
-                    backgroundColor: '#f8f9fa',
-                  }}
-                />
-
-                {/* Dropdown */}
-                <select
-                  value={selectedAccountId}
-                  onChange={(e) => handleAccountSelect(e.target.value)}
-                  disabled={loading}
-                  size={Math.min(filteredAccounts.length + 1, 8)}
-                  style={{
-                    width: '100%',
-                    padding: '8px 12px',
-                    border: '1px solid #ced4da',
-                    borderTop: 'none',
-                    borderRadius: '0 0 6px 6px',
-                    fontSize: '13px',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <option value="">-- Pilih Akun --</option>
-                  {filteredAccounts.map((acc) => (
-                    <option key={acc.id} value={acc.id}>
-                      {acc.account_code} - {acc.account_name} | Rp {(acc.balance || 0).toLocaleString('id-ID')}
-                    </option>
-                  ))}
-                </select>
-
-                {filteredAccounts.length === 0 && accountFilter && (
-                  <div style={{
-                    marginTop: '8px',
-                    padding: '8px 12px',
-                    backgroundColor: '#fff3cd',
-                    border: '1px solid #ffc107',
+                    padding: '10px 12px',
+                    border: '2px solid #ced4da',
                     borderRadius: '4px',
-                    fontSize: '12px',
-                    color: '#856404',
+                    fontSize: '14px',
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#007bff'}
+                  onBlur={(e) => e.target.style.borderColor = '#ced4da'}
+                />
+              </div>
+
+              {/* Account List */}
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{
+                  display: 'block',
+                  marginBottom: '6px',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                }}>
+                  Pilih dari daftar ({filteredAccounts.length} akun tersedia)
+                </label>
+                
+                {filteredAccounts.length === 0 ? (
+                  <div style={{
+                    padding: '20px',
+                    textAlign: 'center',
+                    backgroundColor: 'white',
+                    border: '1px solid #dee2e6',
+                    borderRadius: '4px',
+                    color: '#6c757d',
+                    fontSize: '14px',
                   }}>
-                    ℹ️ Tidak ada akun yang cocok dengan "{accountFilter}"
+                    {accountFilter 
+                      ? `❌ Tidak ada akun yang cocok dengan "${accountFilter}"`
+                      : '📋 Semua akun sudah dialokasikan'}
+                  </div>
+                ) : (
+                  <div style={{
+                    maxHeight: '240px',
+                    overflowY: 'auto',
+                    border: '1px solid #dee2e6',
+                    borderRadius: '4px',
+                    backgroundColor: 'white',
+                  }}>
+                    {filteredAccounts.map((acc) => (
+                      <div
+                        key={acc.id}
+                        onClick={() => handleAccountSelect(acc.id)}
+                        style={{
+                          padding: '12px 16px',
+                          borderBottom: '1px solid #f0f0f0',
+                          cursor: 'pointer',
+                          backgroundColor: selectedAccountId === acc.id ? '#e7f3ff' : 'white',
+                          transition: 'background-color 0.2s',
+                        }}
+                        onMouseEnter={(e) => {
+                          if (selectedAccountId !== acc.id) {
+                            e.currentTarget.style.backgroundColor = '#f8f9fa';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (selectedAccountId !== acc.id) {
+                            e.currentTarget.style.backgroundColor = 'white';
+                          }
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                              <code style={{
+                                padding: '2px 6px',
+                                backgroundColor: '#e7f3ff',
+                                borderRadius: '3px',
+                                fontSize: '13px',
+                                fontWeight: 600,
+                                color: '#004085',
+                              }}>
+                                {acc.account_code}
+                              </code>
+                              <span style={{
+                                fontSize: '14px',
+                                fontWeight: 500,
+                                color: '#212529',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                              }}>
+                                {acc.account_name}
+                              </span>
+                            </div>
+                            <div style={{ fontSize: '12px', color: '#6c757d' }}>
+                              {acc.account_type_name || acc.account_type}
+                            </div>
+                          </div>
+                          <div style={{ textAlign: 'right', marginLeft: '16px', flexShrink: 0 }}>
+                            <div style={{ fontSize: '14px', fontWeight: 600, color: '#28a745' }}>
+                              Rp {formatCurrency(acc.balance || 0)}
+                            </div>
+                            <div style={{ fontSize: '11px', color: '#6c757d' }}>Balance</div>
+                          </div>
+                        </div>
+                        {selectedAccountId === acc.id && (
+                          <div style={{
+                            marginTop: '8px',
+                            padding: '6px 10px',
+                            backgroundColor: '#d1ecf1',
+                            borderRadius: '4px',
+                            fontSize: '12px',
+                            color: '#0c5460',
+                            fontWeight: 500,
+                          }}>
+                            ✓ Akun dipilih
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
 
-              {/* Amount & Description Grid */}
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: '200px 1fr',
-                gap: '16px',
-                marginBottom: '16px',
-              }}>
-                <div>
-                  <label style={{
-                    display: 'block',
-                    marginBottom: '6px',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    color: '#212529',
+              {/* Amount & Description */}
+              {selectedAccountId && (
+                <>
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: '200px 1fr',
+                    gap: '12px',
+                    marginBottom: '12px',
                   }}>
-                    Jumlah Budget (IDR) <span style={{ color: '#dc3545' }}>*</span>
-                  </label>
-                  <input
-                    type="number"
-                    value={itemAmount}
-                    onChange={(e) => setItemAmount(Number(e.target.value))}
-                    min={0}
-                    step={1000}
-                    disabled={loading}
-                    placeholder="0"
+                    <div>
+                      <label style={{
+                        display: 'block',
+                        marginBottom: '6px',
+                        fontSize: '13px',
+                        fontWeight: 500,
+                      }}>
+                        Jumlah (IDR) <span style={{ color: '#dc3545' }}>*</span>
+                      </label>
+                      <input
+                        type="number"
+                        value={itemAmount}
+                        onChange={(e) => setItemAmount(Number(e.target.value))}
+                        min={0}
+                        max={999_999_999_999_999}
+                        step={1000}
+                        disabled={loading}
+                        placeholder="0"
+                        style={{
+                          width: '100%',
+                          maxWidth: '100%',
+                          padding: '8px 12px',
+                          border: '1px solid #ced4da',
+                          borderRadius: '4px',
+                          fontSize: '14px',
+                          fontWeight: 600,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                      />
+                      <div style={{
+                        marginTop: '4px',
+                        fontSize: '11px',
+                        color: '#6c757d',
+                      }}>
+                        💡 Auto-fill dari balance
+                      </div>
+                    </div>
+
+                    <div>
+                      <label style={{
+                        display: 'block',
+                        marginBottom: '6px',
+                        fontSize: '13px',
+                        fontWeight: 500,
+                      }}>
+                        Catatan
+                      </label>
+                      <input
+                        type="text"
+                        value={itemDescription}
+                        onChange={(e) => setItemDescription(e.target.value)}
+                        maxLength={200}
+                        disabled={loading}
+                        placeholder="Catatan (opsional)..."
+                        style={{
+                          width: '100%',
+                          maxWidth: '100%',
+                          padding: '8px 12px',
+                          border: '1px solid #ced4da',
+                          borderRadius: '4px',
+                          fontSize: '13px',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Add Button */}
+                  <button
+                    type="button"
+                    onClick={mode === 'edit' && budget?.id ? handleAddItemToExistingBudget : handleAddItem}
+                    disabled={!selectedAccountId || itemAmount <= 0 || loading}
                     style={{
-                      width: '100%',
-                      padding: '8px 12px',
-                      border: '2px solid #ced4da',
-                      borderRadius: '6px',
+                      padding: '10px 20px',
+                      backgroundColor: !selectedAccountId || itemAmount <= 0 || loading ? '#adb5bd' : '#28a745',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: !selectedAccountId || itemAmount <= 0 || loading ? 'not-allowed' : 'pointer',
                       fontSize: '14px',
                       fontWeight: 600,
                     }}
-                  />
-                  <div style={{
-                    marginTop: '4px',
-                    fontSize: '11px',
-                    color: '#6c757d',
-                  }}>
-                    💡 Auto-fill dari balance akun
-                  </div>
-                </div>
-
-                <div>
-                  <label style={{
-                    display: 'block',
-                    marginBottom: '6px',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    color: '#212529',
-                  }}>
-                    Catatan Item
-                  </label>
-                  <input
-                    type="text"
-                    value={itemDescription}
-                    onChange={(e) => setItemDescription(e.target.value)}
-                    disabled={loading}
-                    placeholder="Catatan untuk item ini (opsional)..."
-                    style={{
-                      width: '100%',
-                      padding: '8px 12px',
-                      border: '1px solid #ced4da',
-                      borderRadius: '6px',
-                      fontSize: '13px',
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* Add Button */}
-              <button
-                type="button"
-                onClick={mode === 'edit' && budget?.id ? handleAddItemToExistingBudget : handleAddItem}
-                disabled={!selectedAccountId || itemAmount <= 0 || loading}
-                style={{
-                  padding: '10px 20px',
-                  backgroundColor: !selectedAccountId || itemAmount <= 0 || loading ? '#adb5bd' : '#28a745',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: !selectedAccountId || itemAmount <= 0 || loading ? 'not-allowed' : 'pointer',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                }}
-              >
-                ✓ Tambahkan ke Budget
-              </button>
+                  >
+                    ✓ Tambahkan ke Budget
+                  </button>
+                </>
+              )}
             </div>
           )}
 
-          {/* ========== ITEMS TABLE ========== */}
+          {/* Items Table */}
           {budgetItems.length === 0 ? (
             <div style={{
               padding: '40px 20px',
               textAlign: 'center',
-              backgroundColor: 'white',
-              border: '2px dashed #dee2e6',
-              borderRadius: '8px',
+              backgroundColor: '#f8f9fa',
+              border: '1px solid #dee2e6',
+              borderRadius: '6px',
               color: '#6c757d',
             }}>
-              <div style={{ fontSize: '48px', marginBottom: '12px' }}>📋</div>
-              <div style={{ fontSize: '16px', fontWeight: 600, marginBottom: '8px' }}>
-                Belum Ada Alokasi Akun
-              </div>
               <div style={{ fontSize: '14px' }}>
-                Klik tombol "Tambah Akun" untuk mulai mengalokasikan budget
+                📋 Belum ada alokasi akun. Klik "Tambah Akun" untuk mulai.
               </div>
             </div>
           ) : (
-            <div style={{
-              overflowX: 'auto',
-              backgroundColor: 'white',
-              borderRadius: '8px',
-              border: '1px solid #dee2e6',
-            }}>
-              <table style={{
-                width: '100%',
-                borderCollapse: 'collapse',
-                fontSize: '14px',
-              }}>
+            <div style={{ overflowX: 'auto', border: '1px solid #dee2e6', borderRadius: '6px' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr style={{ backgroundColor: '#e9ecef' }}>
+                  <tr style={{ backgroundColor: '#f8f9fa' }}>
                     <th style={tableHeaderStyle}>Kode Akun</th>
                     <th style={tableHeaderStyle}>Nama Akun</th>
                     <th style={tableHeaderStyle}>Tipe</th>
-                    <th style={tableHeaderStyle}>Alokasi Budget</th>
+                    <th style={tableHeaderStyle}>Alokasi</th>
                     <th style={tableHeaderStyle}>Catatan</th>
-                    <th style={tableHeaderStyle}>Aksi</th>
+                    <th style={{ ...tableHeaderStyle, textAlign: 'center' }}>Aksi</th>
                   </tr>
                 </thead>
                 <tbody>
                   {budgetItems.map((item, index) => (
-                    <tr
-                      key={item.id || index}
-                      style={{
-                        borderBottom: '1px solid #dee2e6',
-                        transition: 'background-color 0.2s',
-                      }}
-                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8f9fa'}
-                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                    >
+                    <tr key={item.id || index} style={{ borderBottom: '1px solid #dee2e6' }}>
                       <td style={tableCellStyle}>
                         <code style={{
                           padding: '4px 8px',
                           backgroundColor: '#e7f3ff',
                           borderRadius: '4px',
-                          fontWeight: 600,
+                          fontSize: '13px',
+                          fontWeight: 500,
                         }}>
                           {item.account_code}
                         </code>
                       </td>
-                      <td style={tableCellStyle}>{item.account_name}</td>
+                      <td style={tableCellStyle}>
+                        <div style={{
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          maxWidth: '300px',
+                        }}>
+                          {item.account_name}
+                        </div>
+                      </td>
                       <td style={tableCellStyle}>
                         <span style={{
-                          padding: '4px 10px',
-                          backgroundColor: '#d1ecf1',
-                          color: '#0c5460',
-                          borderRadius: '12px',
+                          padding: '4px 8px',
+                          backgroundColor: '#e7f3ff',
+                          color: '#004085',
+                          borderRadius: '4px',
                           fontSize: '12px',
-                          fontWeight: 600,
                         }}>
                           {item.account_type}
                         </span>
                       </td>
                       <td style={tableCellStyle}>
-                        <strong style={{ fontSize: '15px' }}>
-                          Rp {item.allocated_amount.toLocaleString('id-ID')}
-                        </strong>
+                        <strong>Rp {formatCurrency(item.allocated_amount)}</strong>
                       </td>
                       <td style={{ ...tableCellStyle, color: '#6c757d', fontSize: '13px' }}>
-                        {item.description || '-'}
+                        <div style={{
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          maxWidth: '200px',
+                        }}>
+                          {item.description || '-'}
+                        </div>
                       </td>
-                      <td style={tableCellStyle}>
+                      <td style={{ ...tableCellStyle, textAlign: 'center' }}>
                         <button
                           type="button"
                           onClick={() => handleDeleteItem(item.id, item.account_code)}
@@ -911,10 +968,9 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
                             borderRadius: '4px',
                             cursor: loading ? 'not-allowed' : 'pointer',
                             fontSize: '12px',
-                            fontWeight: 600,
                           }}
                         >
-                          🗑️ Hapus
+                          🗑️
                         </button>
                       </td>
                     </tr>
@@ -925,47 +981,47 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
           )}
         </div>
 
-        {/* ========== ACTION BUTTONS ========== */}
+        {/* Action Buttons */}
         <div style={{
           display: 'flex',
           gap: '12px',
           justifyContent: 'flex-end',
-          paddingTop: '20px',
-          borderTop: '2px solid #dee2e6',
+          paddingTop: '16px',
+          borderTop: '1px solid #dee2e6',
         }}>
           <button
             type="button"
             onClick={onCancel}
             disabled={loading}
             style={{
-              padding: '12px 24px',
+              padding: '10px 20px',
               backgroundColor: '#6c757d',
               color: 'white',
               border: 'none',
-              borderRadius: '6px',
+              borderRadius: '4px',
               cursor: loading ? 'not-allowed' : 'pointer',
-              fontWeight: 600,
+              fontWeight: 500,
               fontSize: '14px',
             }}
           >
-            ✕ Batal
+            Batal
           </button>
 
           <button
             type="submit"
             disabled={loading || !name.trim() || !period || totalBudget <= 0}
             style={{
-              padding: '12px 32px',
+              padding: '10px 24px',
               backgroundColor: loading || !name.trim() || !period || totalBudget <= 0 ? '#adb5bd' : '#007bff',
               color: 'white',
               border: 'none',
-              borderRadius: '6px',
+              borderRadius: '4px',
               cursor: loading || !name.trim() || !period || totalBudget <= 0 ? 'not-allowed' : 'pointer',
-              fontWeight: 700,
+              fontWeight: 600,
               fontSize: '14px',
             }}
           >
-            {loading ? '⏳ Menyimpan...' : mode === 'create' ? '✓ Simpan Budget' : '✓ Update Budget'}
+            {loading ? '⏳ Menyimpan...' : mode === 'create' ? 'Simpan Budget' : 'Update Budget'}
           </button>
         </div>
       </form>
@@ -976,15 +1032,18 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
 const tableHeaderStyle: React.CSSProperties = {
   padding: '14px 16px',
   textAlign: 'left',
-  fontSize: '12px',
-  fontWeight: 700,
+  fontSize: '13px',
+  fontWeight: 600,
   textTransform: 'uppercase',
   letterSpacing: '0.5px',
   color: '#495057',
   borderBottom: '2px solid #dee2e6',
+  borderRight: '1px solid #dee2e6',
 };
 
 const tableCellStyle: React.CSSProperties = {
   padding: '14px 16px',
   fontSize: '14px',
+  color: '#212529',
+  borderRight: '1px solid #dee2e6',
 };
