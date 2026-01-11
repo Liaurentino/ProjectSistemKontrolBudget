@@ -14,8 +14,8 @@ import {
 // Helper: Get adaptive font size based on amount
 const getAdaptiveFontSize = (amount: number): number => {
   if (amount >= 1_000_000_000_000) return 14; // >= 1 Triliun
-  if (amount >= 1_000_000_000) return 16;      // 1-999 Miliar
-  return 18;                                    // < 1 Miliar
+  if (amount >= 1_000_000_000) return 15;      // 1-999 Miliar
+  return 16;                                    // < 1 Miliar
 };
 
 // Helper: Format currency - NO abbreviations, full number
