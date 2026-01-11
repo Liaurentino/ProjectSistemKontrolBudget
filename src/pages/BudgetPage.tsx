@@ -30,6 +30,7 @@ const BudgetPage: React.FC = () => {
 
   // State
   const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [allBudgets, setAllBudgets] = useState<Budget[]>([]); // ← TAMBAH INI untuk simpan data asli
   const [expandedBudgets, setExpandedBudgets] = useState<Map<string, BudgetWithItems>>(new Map());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,9 +43,9 @@ const BudgetPage: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingBudget, setEditingBudget] = useState<BudgetWithItems | null>(null);
 
-  // Available years from budgets
+  // Available years from ALL budgets (not filtered)
   const availableYears = Array.from(
-    new Set(budgets.map((b) => b.period.split('-')[0]))
+    new Set(allBudgets.map((b) => b.period.split('-')[0]))
   ).sort((a, b) => b.localeCompare(a));
 
   /**
@@ -59,17 +60,22 @@ const BudgetPage: React.FC = () => {
     try {
       console.log('[BudgetPage] Loading budgets for entity:', activeEntity.id);
 
-      let result;
-      if (selectedYear === 'all') {
-        result = await getBudgets(activeEntity.id);
-      } else {
-        result = await getBudgetsByYear(activeEntity.id, selectedYear);
+      // ALWAYS load ALL budgets first
+      const allResult = await getBudgets(activeEntity.id);
+      
+      if (allResult.error) throw allResult.error;
+      
+      // Save ALL budgets untuk availableYears
+      setAllBudgets(allResult.data || []);
+
+      // Then filter by year if needed
+      let filteredData = allResult.data || [];
+      if (selectedYear !== 'all') {
+        filteredData = filteredData.filter(b => b.period.startsWith(selectedYear));
       }
 
-      if (result.error) throw result.error;
-
-      setBudgets(result.data || []);
-      console.log('[BudgetPage] Loaded', result.data?.length || 0, 'budgets');
+      setBudgets(filteredData);
+      console.log('[BudgetPage] Loaded', filteredData.length, 'budgets (filtered from', allResult.data?.length, 'total)');
     } catch (err: any) {
       console.error('[BudgetPage] Error loading budgets:', err);
       setError('Gagal memuat data budget: ' + err.message);
