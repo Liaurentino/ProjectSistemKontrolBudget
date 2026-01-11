@@ -69,12 +69,10 @@ const BudgetPage: React.FC = () => {
    */
   const toggleExpandBudget = async (budgetId: string) => {
     if (expandedBudgets.has(budgetId)) {
-      // Collapse
       const newExpanded = new Map(expandedBudgets);
       newExpanded.delete(budgetId);
       setExpandedBudgets(newExpanded);
     } else {
-      // Expand - load items
       try {
         console.log('[BudgetPage] Loading items for budget:', budgetId);
         const { data, error } = await getBudgetById(budgetId);
@@ -94,8 +92,8 @@ const BudgetPage: React.FC = () => {
   /**
    * Handle delete budget
    */
-  const handleDeleteBudget = async (budgetId: string, period: string) => {
-    if (!confirm(`Yakin ingin menghapus budget periode ${period}?\n\nSemua budget items akan ikut terhapus.`)) {
+  const handleDeleteBudget = async (budgetId: string, budgetName: string) => {
+    if (!confirm(`Yakin ingin menghapus budget "${budgetName}"?\n\nSemua alokasi akun akan ikut terhapus.`)) {
       return;
     }
 
@@ -107,7 +105,6 @@ const BudgetPage: React.FC = () => {
       console.log('[BudgetPage] Budget deleted');
       await loadBudgets();
 
-      // Remove from expanded if exists
       if (expandedBudgets.has(budgetId)) {
         const newExpanded = new Map(expandedBudgets);
         newExpanded.delete(budgetId);
@@ -191,6 +188,7 @@ const BudgetPage: React.FC = () => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
     return (
+      budget.name?.toLowerCase().includes(query) ||
       budget.period.toLowerCase().includes(query) ||
       budget.description?.toLowerCase().includes(query)
     );
@@ -199,16 +197,14 @@ const BudgetPage: React.FC = () => {
   return (
     <div style={{ padding: '24px', maxWidth: '1400px', margin: '0 auto' }}>
       {/* Header */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '24px',
-          flexWrap: 'wrap',
-          gap: '16px',
-        }}
-      >
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '24px',
+        flexWrap: 'wrap',
+        gap: '16px',
+      }}>
         <div>
           <h2 style={{ margin: 0, fontSize: '28px', fontWeight: 600 }}>Manajemen Budget</h2>
           {activeEntity ? (
@@ -245,16 +241,14 @@ const BudgetPage: React.FC = () => {
 
       {/* No Active Entity Warning */}
       {!activeEntity && (
-        <div
-          style={{
-            padding: '20px',
-            backgroundColor: '#fff3cd',
-            border: '1px solid #ffc107',
-            borderRadius: '8px',
-            marginBottom: '16px',
-            textAlign: 'center',
-          }}
-        >
+        <div style={{
+          padding: '20px',
+          backgroundColor: '#fff3cd',
+          border: '1px solid #ffc107',
+          borderRadius: '8px',
+          marginBottom: '16px',
+          textAlign: 'center',
+        }}>
           <h3 style={{ margin: '0 0 8px', color: '#856404' }}>⚠️ Belum Ada Entitas Aktif</h3>
           <p style={{ margin: '0 0 12px', color: '#856404' }}>
             Silakan pilih entitas terlebih dahulu di halaman <strong>Manajemen Entitas</strong>
@@ -278,16 +272,14 @@ const BudgetPage: React.FC = () => {
 
       {/* Error Alert */}
       {error && (
-        <div
-          style={{
-            padding: '12px 16px',
-            backgroundColor: '#f8d7da',
-            border: '1px solid #f5c6cb',
-            borderRadius: '6px',
-            color: '#721c24',
-            marginBottom: '16px',
-          }}
-        >
+        <div style={{
+          padding: '12px 16px',
+          backgroundColor: '#f8d7da',
+          border: '1px solid #f5c6cb',
+          borderRadius: '6px',
+          color: '#721c24',
+          marginBottom: '16px',
+        }}>
           <strong>Error:</strong> {error}
         </div>
       )}
@@ -307,15 +299,13 @@ const BudgetPage: React.FC = () => {
 
       {/* Filters */}
       {activeEntity && !showForm && (
-        <div
-          style={{
-            padding: '16px',
-            backgroundColor: 'white',
-            border: '1px solid #dee2e6',
-            borderRadius: '8px',
-            marginBottom: '16px',
-          }}
-        >
+        <div style={{
+          padding: '16px',
+          backgroundColor: 'white',
+          border: '1px solid #dee2e6',
+          borderRadius: '8px',
+          marginBottom: '16px',
+        }}>
           <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: '16px', alignItems: 'end' }}>
             <div>
               <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 500 }}>
@@ -350,7 +340,7 @@ const BudgetPage: React.FC = () => {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Cari periode atau deskripsi..."
+                placeholder="Cari nama, periode, atau deskripsi..."
                 disabled={loading}
                 style={{
                   width: '100%',
@@ -373,29 +363,25 @@ const BudgetPage: React.FC = () => {
       {activeEntity && !showForm && (
         <div>
           {loading && budgets.length === 0 ? (
-            <div
-              style={{
-                padding: '60px 20px',
-                textAlign: 'center',
-                backgroundColor: 'white',
-                border: '1px solid #dee2e6',
-                borderRadius: '8px',
-                color: '#6c757d',
-              }}
-            >
+            <div style={{
+              padding: '60px 20px',
+              textAlign: 'center',
+              backgroundColor: 'white',
+              border: '1px solid #dee2e6',
+              borderRadius: '8px',
+              color: '#6c757d',
+            }}>
               ⏳ Memuat data budget...
             </div>
           ) : filteredBudgets.length === 0 ? (
-            <div
-              style={{
-                padding: '60px 20px',
-                textAlign: 'center',
-                backgroundColor: 'white',
-                border: '1px solid #dee2e6',
-                borderRadius: '8px',
-                color: '#6c757d',
-              }}
-            >
+            <div style={{
+              padding: '60px 20px',
+              textAlign: 'center',
+              backgroundColor: 'white',
+              border: '1px solid #dee2e6',
+              borderRadius: '8px',
+              color: '#6c757d',
+            }}>
               {searchQuery ? (
                 <>
                   🔍 Tidak ada budget yang cocok dengan pencarian "<strong>{searchQuery}</strong>"
@@ -422,7 +408,7 @@ const BudgetPage: React.FC = () => {
                       overflow: 'hidden',
                     }}
                   >
-                    {/* Budget Header */}
+                    {/* ========== Budget Header (UPDATED with NAME) ========== */}
                     <div
                       style={{
                         padding: '16px 20px',
@@ -436,23 +422,30 @@ const BudgetPage: React.FC = () => {
                       onClick={() => toggleExpandBudget(budget.id)}
                     >
                       <div style={{ flex: 1 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600 }}>
-                            {budget.period}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '6px' }}>
+                          <h3 style={{
+                            margin: 0,
+                            fontSize: '20px',
+                            fontWeight: 700,
+                          }}>
+                            📊 {budget.name}
                           </h3>
-                          {budget.description && (
-                            <span
-                              style={{
-                                fontSize: '14px',
-                                opacity: 0.9,
-                              }}
-                            >
-                              {budget.description}
-                            </span>
-                          )}
+                          <span style={{
+                            padding: '4px 12px',
+                            backgroundColor: 'rgba(255,255,255,0.2)',
+                            borderRadius: '12px',
+                            fontSize: '13px',
+                            fontWeight: 600,
+                          }}>
+                            {budget.period}
+                          </span>
                         </div>
-                        <div style={{ marginTop: '4px', fontSize: '13px', opacity: 0.9 }}>
-                          {budgetDetails ? `${budgetDetails.items.length} akun perkiraan` : 'Klik untuk melihat detail'}
+                        <div style={{
+                          fontSize: '13px',
+                          opacity: 0.9,
+                        }}>
+                          {budget.description || 'Tidak ada deskripsi'}
+                          {budgetDetails && ` • ${budgetDetails.items.length} akun perkiraan`}
                         </div>
                       </div>
 
@@ -490,19 +483,17 @@ const BudgetPage: React.FC = () => {
                     {isExpanded && budgetDetails && (
                       <div style={{ padding: '20px' }}>
                         {/* Summary */}
-                        <div
-                          style={{
-                            padding: '16px',
-                            backgroundColor:
-                              budgetDetails.status === 'OVER_BUDGET'
-                                ? '#fff3cd'
-                                : budgetDetails.status === 'FULLY_ALLOCATED'
-                                ? '#d4edda'
-                                : '#d1ecf1',
-                            borderRadius: '6px',
-                            marginBottom: '16px',
-                          }}
-                        >
+                        <div style={{
+                          padding: '16px',
+                          backgroundColor:
+                            budgetDetails.status === 'OVER_BUDGET'
+                              ? '#fff3cd'
+                              : budgetDetails.status === 'FULLY_ALLOCATED'
+                              ? '#d4edda'
+                              : '#d1ecf1',
+                          borderRadius: '6px',
+                          marginBottom: '16px',
+                        }}>
                           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '16px' }}>
                             <div>
                               <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>Total Budget</div>
@@ -518,39 +509,35 @@ const BudgetPage: React.FC = () => {
                             </div>
                             <div>
                               <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>Remaining</div>
-                              <div
-                                style={{
-                                  fontSize: '18px',
-                                  fontWeight: 600,
-                                  color:
-                                    budgetDetails.status === 'OVER_BUDGET'
-                                      ? '#dc3545'
-                                      : budgetDetails.status === 'FULLY_ALLOCATED'
-                                      ? '#28a745'
-                                      : '#0066cc',
-                                }}
-                              >
+                              <div style={{
+                                fontSize: '18px',
+                                fontWeight: 600,
+                                color:
+                                  budgetDetails.status === 'OVER_BUDGET'
+                                    ? '#dc3545'
+                                    : budgetDetails.status === 'FULLY_ALLOCATED'
+                                    ? '#28a745'
+                                    : '#0066cc',
+                              }}>
                                 Rp {budgetDetails.remaining_budget.toLocaleString('id-ID')}
                               </div>
                             </div>
                             <div>
                               <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>Status</div>
-                              <div
-                                style={{
-                                  fontSize: '14px',
-                                  fontWeight: 600,
-                                  padding: '4px 12px',
-                                  borderRadius: '12px',
-                                  display: 'inline-block',
-                                  backgroundColor:
-                                    budgetDetails.status === 'OVER_BUDGET'
-                                      ? '#dc3545'
-                                      : budgetDetails.status === 'FULLY_ALLOCATED'
-                                      ? '#28a745'
-                                      : '#17a2b8',
-                                  color: 'white',
-                                }}
-                              >
+                              <div style={{
+                                fontSize: '14px',
+                                fontWeight: 600,
+                                padding: '4px 12px',
+                                borderRadius: '12px',
+                                display: 'inline-block',
+                                backgroundColor:
+                                  budgetDetails.status === 'OVER_BUDGET'
+                                    ? '#dc3545'
+                                    : budgetDetails.status === 'FULLY_ALLOCATED'
+                                    ? '#28a745'
+                                    : '#17a2b8',
+                                color: 'white',
+                              }}>
                                 {budgetDetails.status === 'OVER_BUDGET'
                                   ? '⚠️ Over Budget'
                                   : budgetDetails.status === 'FULLY_ALLOCATED'
@@ -581,7 +568,7 @@ const BudgetPage: React.FC = () => {
                           </button>
 
                           <button
-                            onClick={() => handleDeleteBudget(budget.id, budget.period)}
+                            onClick={() => handleDeleteBudget(budget.id, budget.name)}
                             disabled={loading}
                             style={{
                               padding: '8px 16px',
@@ -600,16 +587,14 @@ const BudgetPage: React.FC = () => {
 
                         {/* Items Table */}
                         {budgetDetails.items.length === 0 ? (
-                          <div
-                            style={{
-                              padding: '40px 20px',
-                              textAlign: 'center',
-                              backgroundColor: '#f8f9fa',
-                              borderRadius: '6px',
-                              color: '#6c757d',
-                            }}
-                          >
-                            Belum ada budget items. Klik "Edit" untuk menambahkan.
+                          <div style={{
+                            padding: '40px 20px',
+                            textAlign: 'center',
+                            backgroundColor: '#f8f9fa',
+                            borderRadius: '6px',
+                            color: '#6c757d',
+                          }}>
+                            Belum ada alokasi akun. Klik "Edit" untuk menambahkan.
                           </div>
                         ) : (
                           <div style={{ overflowX: 'auto', border: '1px solid #dee2e6', borderRadius: '6px' }}>
@@ -620,7 +605,7 @@ const BudgetPage: React.FC = () => {
                                   <th style={tableHeaderStyle}>Nama Akun</th>
                                   <th style={tableHeaderStyle}>Tipe</th>
                                   <th style={tableHeaderStyle}>Jumlah Budget</th>
-                                  <th style={tableHeaderStyle}>Deskripsi</th>
+                                  <th style={tableHeaderStyle}>Catatan</th>
                                 </tr>
                               </thead>
                               <tbody>
@@ -631,16 +616,14 @@ const BudgetPage: React.FC = () => {
                                     </td>
                                     <td style={tableCellStyle}>{item.account_name}</td>
                                     <td style={tableCellStyle}>
-                                      <span
-                                        style={{
-                                          padding: '4px 10px',
-                                          backgroundColor: '#e7f3ff',
-                                          color: '#0066cc',
-                                          borderRadius: '12px',
-                                          fontSize: '12px',
-                                          fontWeight: 500,
-                                        }}
-                                      >
+                                      <span style={{
+                                        padding: '4px 10px',
+                                        backgroundColor: '#e7f3ff',
+                                        color: '#0066cc',
+                                        borderRadius: '12px',
+                                        fontSize: '12px',
+                                        fontWeight: 500,
+                                      }}>
                                         {item.account_type}
                                       </span>
                                     </td>
