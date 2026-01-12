@@ -224,14 +224,14 @@ const BudgetPage: React.FC = () => {
         gap: '16px',
       }}>
         <div>
-          <h2 style={{ margin: 0, fontSize: '28px', fontWeight: 600 }}>💰 Manajemen Budget</h2>
+          <h2 style={{ margin: 0, fontSize: '28px', fontWeight: 600 }}>Manajemen Budget</h2>
           {activeEntity ? (
             <p style={{ margin: '4px 0 0', fontSize: '14px', color: '#6c757d' }}>
               Entitas: <strong>{activeEntity.entity_name || activeEntity.name || 'Unknown'}</strong>
             </p>
           ) : (
             <p style={{ margin: '4px 0 0', fontSize: '14px', color: '#dc3545' }}>
-              ⚠️ Tidak ada entitas yang aktif
+              Tidak ada entitas yang aktif
             </p>
           )}
         </div>
@@ -267,7 +267,7 @@ const BudgetPage: React.FC = () => {
           marginBottom: '16px',
           textAlign: 'center',
         }}>
-          <h3 style={{ margin: '0 0 8px', color: '#856404' }}>⚠️ Belum Ada Entitas Aktif</h3>
+          <h3 style={{ margin: '0 0 8px', color: '#856404' }}>Belum Ada Entitas Aktif</h3>
           <p style={{ margin: '0 0 12px', color: '#856404' }}>
             Silakan pilih entitas terlebih dahulu di halaman <strong>Manajemen Entitas</strong>
           </p>
@@ -457,7 +457,7 @@ const BudgetPage: React.FC = () => {
                               fontWeight: 600,
                               color: '#212529',
                             }}>
-                              📊 {budget.name}
+                              {budget.name}
                             </h3>
                             <span style={{
                               padding: '4px 10px',
@@ -606,7 +606,7 @@ const BudgetPage: React.FC = () => {
                                 color: 'white',
                               }}>
                                 {budgetDetails.status === 'OVER_BUDGET'
-                                  ? '⚠️ Over'
+                                  ? 'Over'
                                   : budgetDetails.status === 'FULLY_ALLOCATED'
                                   ? '✓ Penuh'
                                   : '○ Tersedia'}
@@ -631,7 +631,7 @@ const BudgetPage: React.FC = () => {
                               fontWeight: 500,
                             }}
                           >
-                            ✏️ Edit
+                            Edit
                           </button>
 
                           <button
@@ -648,7 +648,7 @@ const BudgetPage: React.FC = () => {
                               fontWeight: 500,
                             }}
                           >
-                            🗑️ Hapus
+                            Hapus
                           </button>
                         </div>
 

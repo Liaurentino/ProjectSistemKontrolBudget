@@ -63,7 +63,7 @@ export const useCoaForm = () => {
 
       if (!data || data.length === 0) {
         setAccounts([]);
-        setSyncStatus('ℹ️ Belum ada data COA. Klik "Tarik dari Accurate" untuk sync.');
+        setSyncStatus('Belum ada data COA. Klik "Tarik dari Accurate" untuk sync.');
         return;
       }
 
@@ -112,7 +112,7 @@ export const useCoaForm = () => {
     try {
       setSyncing(true);
       setError(null);
-      setSyncStatus('🔄 Mengambil data COA dari Accurate API...');
+      setSyncStatus('Mengambil data COA dari Accurate API...');
 
       const result = await fetchCoaFromAccurate(activeEntity.id, activeEntity.api_token);
 
@@ -120,13 +120,13 @@ export const useCoaForm = () => {
         throw new Error(result.error || 'Gagal mengambil data COA');
       }
 
-      setSyncStatus('✅ Data berhasil disimpan. Memuat dari database...');
+      setSyncStatus('Data berhasil disimpan. Memuat dari database...');
       
       setTimeout(() => {
         loadCoaFromDatabase();
       }, 500);
 
-      setSyncStatus(`✅ Berhasil sync ${result.total} akun COA`);
+      setSyncStatus(`Berhasil sync ${result.total} akun COA`);
       setTimeout(() => setSyncStatus(null), 5000);
     } catch (err: any) {
       console.error('[CoaForm] Error syncing:', err);
@@ -211,7 +211,7 @@ export const useCoaForm = () => {
         throw new Error(result.error || 'Gagal mengedit account');
       }
 
-      setSyncStatus('✅ Account berhasil diupdate');
+      setSyncStatus('Account berhasil diupdate');
       setEditModalOpen(false);
       
       // Reload data
@@ -256,7 +256,7 @@ export const useCoaForm = () => {
         throw new Error(result.error || 'Gagal menghapus account');
       }
 
-      setSyncStatus('✅ Account berhasil dihapus');
+      setSyncStatus('Account berhasil dihapus');
       setDeleteModalOpen(false);
       
       // Reload data
@@ -286,7 +286,7 @@ export const useCoaForm = () => {
     const subscription = subscribeAccounts(activeEntity.id, () => {
       console.log('[CoaForm] Real-time update detected');
       loadCoaFromDatabase();
-      setSyncStatus('🔔 Data diperbarui via webhook!');
+      setSyncStatus('Data diperbarui via webhook!');
       setTimeout(() => setSyncStatus(null), 3000);
     });
 

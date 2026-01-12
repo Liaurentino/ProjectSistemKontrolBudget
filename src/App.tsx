@@ -38,7 +38,6 @@ export default function App() {
           {/* Sidebar Header */}
           <div className="sidebar-header">
             <div className="sidebar-logo">
-              <span className="sidebar-logo-icon">📊</span>
               <div className="sidebar-logo-text">
                 <h3>Sistem Kontrol Budget</h3>
                 <p>Budget vs Realisasi Multi Entitas</p>
@@ -55,7 +54,6 @@ export default function App() {
                 `sidebar-menu-item ${isActive ? "active" : ""}`
               }
             >
-              <span className="sidebar-menu-icon">📊</span>
               <span className="sidebar-menu-label">Dashboard</span>
             </NavLink>
 
@@ -65,7 +63,7 @@ export default function App() {
                 onClick={() => toggleMenu('master-data')}
                 className="sidebar-menu-item"
               >
-                <span className="sidebar-menu-icon">📁</span>
+
                 <span className="sidebar-menu-label">Master Data</span>
                 <span className={`sidebar-menu-arrow ${expandedMenu === 'master-data' ? 'expanded' : ''}`}>
                   ▼
@@ -80,7 +78,7 @@ export default function App() {
                       `sidebar-menu-item child ${isActive ? "active" : ""}`
                     }
                   >
-                    <span className="sidebar-menu-icon">🏢</span>
+
                     <span className="sidebar-menu-label">List Entitas</span>
                   </NavLink>
 
@@ -90,7 +88,7 @@ export default function App() {
                       `sidebar-menu-item child ${isActive ? "active" : ""}`
                     }
                   >
-                    <span className="sidebar-menu-icon">👥</span>
+  
                     <span className="sidebar-menu-label">List Akun</span>
                   </NavLink>
 
@@ -100,40 +98,12 @@ export default function App() {
                       `sidebar-menu-item child ${isActive ? "active" : ""}`
                     }
                   >
-                    <span className="sidebar-menu-icon">💰</span>
                     <span className="sidebar-menu-label">Budget Entry</span>
                   </NavLink>
                 </div>
               )}
             </div>
 
-            {/* Realisasi Transaksi */}
-            <NavLink
-              to="/realisasi"
-              className={({ isActive }) => 
-                `sidebar-menu-item ${isActive ? "active" : ""}`
-              }
-            >
-              <span className="sidebar-menu-icon">📈</span>
-              <span className="sidebar-menu-label">Realisasi Transaksi</span>
-            </NavLink>
-
-            {/* Laporan Detail */}
-            <div className="sidebar-menu-item disabled">
-              <span className="sidebar-menu-icon">📄</span>
-              <span className="sidebar-menu-label">Laporan Detail</span>
-            </div>
-
-            {/* Dokumentasi */}
-            <NavLink
-              to="/settings"
-              className={({ isActive }) => 
-                `sidebar-menu-item ${isActive ? "active" : ""}`
-              }
-            >
-              <span className="sidebar-menu-icon">📚</span>
-              <span className="sidebar-menu-label">Dokumentasi</span>
-            </NavLink>
           </nav>
 
           {/* Sidebar Footer */}

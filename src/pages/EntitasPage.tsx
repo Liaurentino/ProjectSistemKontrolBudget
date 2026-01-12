@@ -132,7 +132,7 @@ export const EntitasPage: React.FC = () => {
     <div className="app-container fade-in">
       {/* HEADER */}
       <div className="app-header">
-        <h1>🏢 Manajemen Entitas</h1>
+        <h1>Manajemen Entitas</h1>
         <p>Kelola koneksi entitas perusahaan Anda dengan Accurate</p>
       </div>
 
@@ -147,7 +147,7 @@ export const EntitasPage: React.FC = () => {
             marginBottom: '1rem',
           }}
         >
-          ⚠️ {error}
+          Error{error}
         </div>
       )}
 
@@ -161,7 +161,7 @@ export const EntitasPage: React.FC = () => {
             disabled={refreshing || loading}
             style={{ marginLeft: 'auto' }}
           >
-            {refreshing ? '⏳ Refresh...' : '🔄 Cek Status'}
+            {refreshing ? 'Refresh...' : 'Cek Status'}
           </button>
         </div>
 
@@ -306,15 +306,6 @@ export const EntitasPage: React.FC = () => {
                           </button>
 
                           <button
-                            className="btn btn-secondary btn-sm"
-                            onClick={() => checkEntityStatus(e)}
-                            disabled={loading || refreshing}
-                            title="Cek koneksi entitas ini"
-                          >
-                            🔍
-                          </button>
-
-                          <button
                             className="btn btn-danger btn-sm"
                             onClick={() => handleDeleteEntity(e.id, e.entity_name)}
                             disabled={loading}
@@ -349,7 +340,7 @@ export const EntitasPage: React.FC = () => {
               <span style={{ color: '#f44336', fontWeight: 'bold' }}>✗ Invalid</span> - Token tidak valid
             </div>
             <div>
-              <span style={{ fontWeight: 'bold' }}>💡 Tips:</span> Pilih satu entitas sebagai aktif untuk digunakan di seluruh aplikasi
+              <span style={{ fontWeight: 'bold' }}>Penting! :</span> Pilih satu entitas sebagai aktif untuk digunakan di seluruh aplikasi
             </div>
           </div>
         </div>

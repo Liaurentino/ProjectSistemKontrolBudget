@@ -341,7 +341,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
           fontWeight: 600,
           color: '#212529',
         }}>
-          {mode === 'create' ? '📝 Buat Budget Baru' : '✏️ Edit Budget'}
+          {mode === 'create' ? '📝 Buat Budget Baru' : 'Edit Budget'}
         </h2>
         <p style={{
           margin: '4px 0 0',
@@ -737,8 +737,8 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
                     fontSize: '14px',
                   }}>
                     {accountFilter 
-                      ? `❌ Tidak ada akun yang cocok dengan "${accountFilter}"`
-                      : '📋 Semua akun sudah dialokasikan'}
+                      ? `Tidak ada akun yang cocok dengan "${accountFilter}"`
+                      : 'Semua akun sudah dialokasikan'}
                   </div>
                 ) : (
                   <div style={{
@@ -878,7 +878,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
                         fontSize: '11px',
                         color: '#6c757d',
                       }}>
-                        💡 Auto-fill dari balance • Max 15 digit
+                        Auto-fill dari balance • Max 15 digit
                       </div>
                     </div>
 
@@ -943,7 +943,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
               color: '#6c757d',
             }}>
               <div style={{ fontSize: '14px' }}>
-                📋 Belum ada alokasi akun. Klik "Tambah Akun" untuk mulai.
+                Belum ada alokasi akun. Klik "Tambah Akun" untuk mulai.
               </div>
             </div>
           ) : (
@@ -1026,7 +1026,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
                             fontSize: '12px',
                           }}
                         >
-                          🗑️
+                          Hapus
                         </button>
                       </td>
                     </tr>
@@ -1077,7 +1077,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
               fontSize: '14px',
             }}
           >
-            {loading ? '⏳ Menyimpan...' : mode === 'create' ? 'Simpan Budget' : 'Update Budget'}
+            {loading ? 'Menyimpan...' : mode === 'create' ? 'Simpan Budget' : 'Update Budget'}
           </button>
         </div>
       </form>

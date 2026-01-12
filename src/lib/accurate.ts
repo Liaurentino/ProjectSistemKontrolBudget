@@ -296,7 +296,7 @@ export async function editAccount(
       throw new Error(data?.error || 'Failed to edit account');
     }
 
-    console.log('[editAccount] ✅ Account updated successfully');
+    console.log('[editAccount] Account updated successfully');
     return { success: true, data: data.data };
   } catch (error) {
     console.error('[editAccount] Error:', error);
@@ -340,7 +340,7 @@ export async function deleteAccount(entityId: string, accountId: number) {
       throw new Error(data?.error || 'Failed to delete account');
     }
 
-    console.log('[deleteAccount] ✅ Account deleted successfully');
+    console.log('[deleteAccount] Account deleted successfully');
     return { success: true, message: data.message };
   } catch (error) {
     console.error('[deleteAccount] Error:', error);

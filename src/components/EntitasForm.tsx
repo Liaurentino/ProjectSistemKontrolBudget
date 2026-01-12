@@ -135,7 +135,7 @@ export const EntitasForm: React.FC<Props> = ({
       // Check duplikasi token
       if (tokenDuplicate && formData.api_token !== initialData?.api_token) {
         setError(
-          `❌ API Token ini sudah digunakan oleh "${tokenDuplicateEntity}". Gunakan token yang berbeda.`
+          `API Token ini sudah digunakan oleh "${tokenDuplicateEntity}". Gunakan token yang berbeda.`
         );
         setValidating(false);
         return;
@@ -197,13 +197,13 @@ export const EntitasForm: React.FC<Props> = ({
     try {
       // Validasi input
       if (!formData.entity_name.trim()) {
-        setError('❌ Nama Entitas tidak boleh kosong. Silakan validasi token terlebih dahulu.');
+        setError('Nama Entitas tidak boleh kosong. Silakan validasi token terlebih dahulu.');
         setLoading(false);
         return;
       }
 
       if (!formData.api_token.trim()) {
-        setError('❌ API Token tidak boleh kosong');
+        setError('API Token tidak boleh kosong');
         setLoading(false);
         return;
       }
@@ -211,7 +211,7 @@ export const EntitasForm: React.FC<Props> = ({
       // Cek duplikasi token
       if (tokenDuplicate && formData.api_token !== initialData?.api_token) {
         setError(
-          `❌ API Token ini sudah digunakan oleh "${tokenDuplicateEntity}". Gunakan token yang berbeda.`
+          `API Token ini sudah digunakan oleh "${tokenDuplicateEntity}". Gunakan token yang berbeda.`
         );
         setLoading(false);
         return;
@@ -220,8 +220,8 @@ export const EntitasForm: React.FC<Props> = ({
       // PENTING: Cek apakah token sudah divalidasi
       if (!tokenValidated) {
         setError(
-          '⚠️ PERINGATAN: Anda belum memvalidasi API Token!\n\n' +
-          'Silakan klik tombol "🔍 Validasi Token" terlebih dahulu untuk:\n' +
+          'PERINGATAN: Anda belum memvalidasi API Token!\n\n' +
+          'Silakan klik tombol "Validasi Token" terlebih dahulu untuk:\n' +
           '• Memastikan token valid dan dapat diakses\n' +
           '• Mengecek koneksi ke Accurate\n' +
           '• Memverifikasi database yang terhubung\n' +
@@ -249,14 +249,14 @@ export const EntitasForm: React.FC<Props> = ({
 
       setSuccess(
         mode === 'create'
-          ? '✅ Entitas berhasil ditambahkan'
-          : '✅ Entitas berhasil diubah'
+          ? 'Entitas berhasil ditambahkan'
+          : 'Entitas berhasil diubah'
       );
 
       setTimeout(onSuccess, 1500);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Gagal menyimpan entitas';
-      setError(`❌ Error: ${message}`);
+      setError(`Error: ${message}`);
       console.error(err);
     } finally {
       setLoading(false);
@@ -387,7 +387,7 @@ export const EntitasForm: React.FC<Props> = ({
               ? '⏳ Validasi Token...'
               : tokenValidated
               ? '✅ Token Valid'
-              : '🔍 Validasi Token'}
+              : 'Validasi Token'}
           </button>
 
           <small style={{ color: '#666', marginTop: '0.25rem', display: 'block' }}>
@@ -416,7 +416,7 @@ export const EntitasForm: React.FC<Props> = ({
                 Token Belum Divalidasi
               </strong>
               <small>
-                Silakan klik tombol "🔍 Validasi Token" di atas untuk memverifikasi token
+                Silakan klik tombol "Validasi Token" di atas untuk memverifikasi token
                 dan mengambil nama entitas dari Accurate.
               </small>
             </div>
@@ -531,7 +531,7 @@ export const EntitasForm: React.FC<Props> = ({
             fontSize: '0.8rem',
           }}
         >
-          🔒 <strong>Keamanan:</strong> API Token akan disimpan terenkripsi di database. Jangan
+          <strong>Penting! :</strong> API Token akan disimpan terenkripsi di database. Jangan
           bagikan dengan orang lain.
         </div>
       </div>
@@ -555,7 +555,7 @@ export const EntitasForm: React.FC<Props> = ({
             cursor: !tokenValidated && formData.api_token ? 'not-allowed' : 'pointer',
           }}
         >
-          {loading ? '⏳ Menyimpan...' : '✓ Simpan'}
+          {loading ? 'Menyimpan...' : 'Berhasil Disimpan'}
         </button>
       </div>
     </form>

@@ -247,5 +247,5 @@ export const deleteRealisasi = async (id: string) => {
 if (typeof window !== 'undefined') {
   // @ts-ignore
   window.supabase = supabase;
-  console.log('✅ Supabase exposed to window for debugging');
+  console.log('Supabase exposed to window for debugging');
 }

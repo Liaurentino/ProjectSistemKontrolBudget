@@ -44,7 +44,7 @@ const CoaPage: React.FC = () => {
       {/* Header */}
       <div style={{ marginBottom: '24px' }}>
         <div style={{ marginBottom: '16px' }}>
-          <h1 style={{ fontSize: '28px', fontWeight: 600, margin: 0 }}>📊 Chart of Accounts</h1>
+          <h1 style={{ fontSize: '28px', fontWeight: 600, margin: 0 }}>Chart of Accounts</h1>
           <p style={{ margin: '8px 0 0 0', color: '#6c757d', fontSize: '14px' }}>
             Kelola Chart of Accounts dari Accurate Online
           </p>
@@ -69,7 +69,7 @@ const CoaPage: React.FC = () => {
       {/* No Active Entity Warning */}
       {!activeEntity && (
         <div style={{ padding: '24px', backgroundColor: '#fff3cd', border: '1px solid #ffc107', borderRadius: '8px', marginBottom: '20px' }}>
-          <h3 style={{ margin: '0 0 12px 0', color: '#856404' }}>⚠️ Belum Ada Entitas Aktif</h3>
+          <h3 style={{ margin: '0 0 12px 0', color: '#856404' }}>Belum Ada Entitas Aktif</h3>
           <p style={{ margin: '0 0 16px 0', color: '#856404' }}>
             Silakan pilih entitas terlebih dahulu di halaman Manajemen Entitas
           </p>
@@ -94,7 +94,7 @@ const CoaPage: React.FC = () => {
       {/* Error Alert */}
       {error && (
         <div style={{ padding: '16px', backgroundColor: '#f8d7da', border: '1px solid #f5c6cb', borderRadius: '6px', marginBottom: '20px', color: '#721c24' }}>
-          ⚠️ {error}
+          {error}
         </div>
       )}
 
@@ -135,7 +135,7 @@ const CoaPage: React.FC = () => {
                   Loading...
                 </>
               ) : (
-                <>🔄 Refresh</>
+                <>Refresh</>
               )}
             </button>
             <button
@@ -162,7 +162,7 @@ const CoaPage: React.FC = () => {
                   Syncing...
                 </>
               ) : (
-                <>☁️ Tarik dari Accurate</>
+                <>Tarik dari Accurate</>
               )}
             </button>
           </div>
@@ -185,13 +185,13 @@ const CoaPage: React.FC = () => {
               {loading ? (
                 <tr>
                   <td colSpan={6} style={{ ...tableCellStyle, textAlign: 'center', padding: '40px' }}>
-                    ⏳ Memuat data COA...
+                    Memuat data COA...
                   </td>
                 </tr>
               ) : accounts.length === 0 ? (
                 <tr>
                   <td colSpan={6} style={{ ...tableCellStyle, textAlign: 'center', padding: '40px', color: '#6c757d' }}>
-                    📋 Belum ada data COA.{' '}
+                    Belum ada data COA.{' '}
                     {activeEntity
                       ? 'Klik tombol "Tarik dari Accurate" untuk mengambil data.'
                       : 'Pilih entitas terlebih dahulu.'}
@@ -258,7 +258,7 @@ const CoaPage: React.FC = () => {
                           }}
                           title="Edit"
                         >
-                          ✏️
+                          Edit
                         </button>
                         <button
                           onClick={() => handleDelete(acc)}
@@ -273,7 +273,7 @@ const CoaPage: React.FC = () => {
                           }}
                           title="Delete"
                         >
-                          🗑️
+                          Hapus
                         </button>
                       </div>
                     </td>
@@ -444,7 +444,7 @@ const CoaPage: React.FC = () => {
             maxWidth: '400px',
             width: '100%',
           }}>
-            <h3 style={{ margin: '0 0 16px 0', color: '#dc3545' }}>⚠️ Konfirmasi Hapus</h3>
+            <h3 style={{ margin: '0 0 16px 0', color: '#dc3545' }}> Konfirmasi Hapus</h3>
             <p style={{ margin: '0 0 16px 0', fontSize: '14px' }}>
               Apakah Anda yakin ingin menghapus account berikut?
             </p>
@@ -462,7 +462,7 @@ const CoaPage: React.FC = () => {
               </div>
             </div>
             <p style={{ margin: '0 0 16px 0', fontSize: '13px', color: '#6c757d' }}>
-              ⚠️ Account akan dihapus dari Accurate dan database lokal.
+              Account akan dihapus dari Accurate dan database lokal.
             </p>
 
             <div style={{ display: 'flex', gap: '12px' }}>
