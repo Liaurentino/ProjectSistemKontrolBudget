@@ -2,7 +2,7 @@ import { Routes, Route, NavLink, Navigate } from "react-router-dom";
 import { useState } from "react";
 
 import BudgetPage  from "./pages/BudgetPage";
-import { RealisasiPage } from "./pages/RealisasiPage";
+import BudgetRealizationPage from "./pages/BudgetRealisasiPage";
 import { LoginPage } from "./pages/LoginPage";
 import { ComparisonPage } from "./pages/DashboardPage";
 import { EntitasPage } from "./pages/EntitasPage";
@@ -91,6 +91,7 @@ export default function App() {
   
                     <span className="sidebar-menu-label">List Akun</span>
                   </NavLink>
+                  
 
                   <NavLink
                     to="/budget"
@@ -100,9 +101,18 @@ export default function App() {
                   >
                     <span className="sidebar-menu-label">Budget Entry</span>
                   </NavLink>
-                </div>
+
+                </div>                
               )}
             </div>
+               <NavLink
+              to="/realisasi"
+              className={({ isActive }) => 
+                `sidebar-menu-item ${isActive ? "active" : ""}`
+              }
+            >
+              <span className="sidebar-menu-label">Realisasi</span>
+            </NavLink>
 
           </nav>
 
@@ -146,7 +156,7 @@ export default function App() {
             />
             <Route
               path="/realisasi"
-              element={user ? <RealisasiPage /> : <Navigate to="/login" />}
+              element={user ? <BudgetRealizationPage /> : <Navigate to="/login" />}
             />
             <Route
               path="/comparison"

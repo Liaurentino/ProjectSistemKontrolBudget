@@ -818,3 +818,337 @@ export function subscribeBudgets(entityId: string, onChange: () => void) {
     )
     .subscribe();
 }
+
+// ============================================
+// BUDGET REALIZATION TYPES
+// ============================================
+
+export interface BudgetRealization {
+  id: string;
+  budget_id: string;
+  budget_item_id: string;
+  entity_id: string;
+  period: string;
+  account_id?: string;
+  accurate_id?: string;
+  account_code: string;
+  account_name: string;
+  account_type?: string;
+  budget_allocated: number;
+  realisasi: number;
+  variance: number;
+  variance_percentage: number;
+  status: 'ON_TRACK' | 'OVER_BUDGET';
+  notes?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface BudgetRealizationSummary {
+  entity_id: string;
+  entity_name: string;
+  period: string;
+  total_accounts: number;
+  total_budgets: number;
+  total_budget: number;
+  total_realisasi: number;
+  total_variance: number;
+  variance_percentage: number;
+  overall_status: 'ON_TRACK' | 'OVER_BUDGET';
+  on_track_count: number;
+  over_budget_count: number;
+  last_updated?: string;
+}
+
+export interface SyncRealizationResult {
+  synced_count: number;
+  message: string;
+}
+
+// ============================================
+// GET BUDGET REALIZATIONS
+// ============================================
+
+/**
+ * Get budget realizations with filters
+ */
+export async function getBudgetRealizations(
+  entityId?: string,
+  period?: string,
+  accountType?: string
+) {
+  try {
+    let query = supabase
+      .from('budget_realizations')
+      .select('*')
+      .order('account_code', { ascending: true });
+
+    if (entityId) {
+      query = query.eq('entity_id', entityId);
+    }
+
+    if (period) {
+      query = query.eq('period', period);
+    }
+
+    if (accountType) {
+      query = query.eq('account_type', accountType);
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+
+    console.log('[getBudgetRealizations] Loaded', data?.length || 0, 'realizations');
+    return { data, error: null };
+  } catch (error) {
+    console.error('[getBudgetRealizations] Error:', error);
+    return { data: null, error };
+  }
+}
+
+/**
+ * Get realization summary (from view)
+ */
+export async function getRealizationSummary(
+  entityId?: string,
+  period?: string
+) {
+  try {
+    let query = supabase
+      .from('budget_realization_summary')
+      .select('*')
+      .order('period', { ascending: false });
+
+    if (entityId) {
+      query = query.eq('entity_id', entityId);
+    }
+
+    if (period) {
+      query = query.eq('period', period);
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+
+    console.log('[getRealizationSummary] Loaded summary');
+    return { data: data?.[0] || null, error: null };
+  } catch (error) {
+    console.error('[getRealizationSummary] Error:', error);
+    return { data: null, error };
+  }
+}
+
+/**
+ * Get available periods for realization (distinct periods)
+ */
+export async function getAvailableRealizationPeriods(entityId?: string) {
+  try {
+    let query = supabase
+      .from('budget_realizations')
+      .select('period')
+      .order('period', { ascending: false });
+
+    if (entityId) {
+      query = query.eq('entity_id', entityId);
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+
+    // Get unique periods
+    const periods = [...new Set(data?.map(item => item.period) || [])];
+
+    return { data: periods, error: null };
+  } catch (error) {
+    console.error('[getAvailableRealizationPeriods] Error:', error);
+    return { data: null, error };
+  }
+}
+
+/**
+ * Get available account types (distinct)
+ */
+export async function getAvailableAccountTypes(entityId?: string, period?: string) {
+  try {
+    let query = supabase
+      .from('budget_realizations')
+      .select('account_type')
+      .order('account_type', { ascending: true });
+
+    if (entityId) {
+      query = query.eq('entity_id', entityId);
+    }
+
+    if (period) {
+      query = query.eq('period', period);
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+
+    // Get unique account types
+    const types = [...new Set(data?.map(item => item.account_type).filter(Boolean) || [])];
+
+    return { data: types, error: null };
+  } catch (error) {
+    console.error('[getAvailableAccountTypes] Error:', error);
+    return { data: null, error };
+  }
+}
+
+// ============================================
+// SYNC REALIZATIONS
+// ============================================
+
+/**
+ * Sync budget realizations from accurate_accounts balance
+ * Calls PostgreSQL function sync_budget_realizations
+ */
+export async function syncBudgetRealizations(
+  entityId: string,
+  period: string
+): Promise<{ data: SyncRealizationResult | null; error: any }> {
+  try {
+    console.log('[syncBudgetRealizations] Syncing for entity:', entityId, 'period:', period);
+
+    const { data, error } = await supabase.rpc('sync_budget_realizations', {
+      p_entity_id: entityId,
+      p_period: period,
+    });
+
+    if (error) throw error;
+
+    console.log('[syncBudgetRealizations] Result:', data);
+    return { data: data?.[0] || null, error: null };
+  } catch (error) {
+    console.error('[syncBudgetRealizations] Error:', error);
+    return { data: null, error };
+  }
+}
+
+/**
+ * Auto-sync all budgets for current entity and period
+ * Finds all budgets for entity/period and syncs their realizations
+ */
+export async function autoSyncAllBudgets(entityId: string) {
+  try {
+    console.log('[autoSyncAllBudgets] Auto-syncing for entity:', entityId);
+
+    // Get all budgets for this entity
+    const { data: budgets, error: budgetsError } = await getBudgets(entityId);
+
+    if (budgetsError) throw budgetsError;
+
+    if (!budgets || budgets.length === 0) {
+      return { 
+        data: { synced_count: 0, message: 'No budgets found' }, 
+        error: null 
+      };
+    }
+
+    // Get unique periods
+    const periods = [...new Set(budgets.map(b => b.period))];
+
+    // Sync each period
+    let totalSynced = 0;
+    for (const period of periods) {
+      const { data: syncResult } = await syncBudgetRealizations(entityId, period);
+      if (syncResult) {
+        totalSynced += syncResult.synced_count;
+      }
+    }
+
+    const message = `Auto-synced ${totalSynced} realizations across ${periods.length} periods`;
+    console.log('[autoSyncAllBudgets]', message);
+
+    return {
+      data: { synced_count: totalSynced, message },
+      error: null,
+    };
+  } catch (error) {
+    console.error('[autoSyncAllBudgets] Error:', error);
+    return { data: null, error };
+  }
+}
+
+// ============================================
+// SUBSCRIBE TO CHANGES
+// ============================================
+
+/**
+ * Subscribe to budget realization changes
+ */
+export function subscribeBudgetRealizations(
+  entityId: string,
+  onChange: () => void
+) {
+  return supabase
+    .channel(`budget_realizations_${entityId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'budget_realizations',
+        filter: `entity_id=eq.${entityId}`,
+      },
+      () => {
+        console.log('[subscribeBudgetRealizations] Change detected');
+        onChange();
+      }
+    )
+    .subscribe();
+}
+
+// ============================================
+// CRUD OPERATIONS
+// ============================================
+
+/**
+ * Update realization manually
+ */
+export async function updateRealization(
+  realizationId: string,
+  updates: Partial<BudgetRealization>
+) {
+  try {
+    const { data, error } = await supabase
+      .from('budget_realizations')
+      .update(updates)
+      .eq('id', realizationId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    console.log('[updateRealization] Updated:', data);
+    return { data, error: null };
+  } catch (error) {
+    console.error('[updateRealization] Error:', error);
+    return { data: null, error };
+  }
+}
+
+/**
+ * Delete realization
+ */
+export async function deleteRealization(realizationId: string) {
+  try {
+    const { error } = await supabase
+      .from('budget_realizations')
+      .delete()
+      .eq('id', realizationId);
+
+    if (error) throw error;
+
+    console.log('[deleteRealization] Deleted:', realizationId);
+    return { error: null };
+  } catch (error) {
+    console.error('[deleteRealization] Error:', error);
+    return { error };
+  }
+}
