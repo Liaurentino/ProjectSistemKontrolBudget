@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useEntity } from '../contexts/EntityContext';
 import {
-  getBudgetRealizations,
-  getRealizationSummary,
-  syncBudgetRealizations,
-  autoSyncAllBudgets,
-  subscribeBudgetRealizations,
+  getBudgetRealizationsLive,
   getAvailableRealizationPeriods,
   getAvailableAccountTypes,
+  getAvailableBudgetGroups,
+  subscribeBudgetItems,
   type BudgetRealization,
   type BudgetRealizationSummary,
 } from '../lib/accurate';
@@ -31,17 +29,18 @@ const BudgetRealizationPage: React.FC = () => {
   const [realizations, setRealizations] = useState<BudgetRealization[]>([]);
   const [summary, setSummary] = useState<BudgetRealizationSummary | null>(null);
   const [loading, setLoading] = useState(false);
-  const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Filters
   const [selectedPeriod, setSelectedPeriod] = useState<string>('all');
   const [selectedAccountType, setSelectedAccountType] = useState<string>('all');
+  const [selectedBudgetGroup, setSelectedBudgetGroup] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
   // Available options
   const [availablePeriods, setAvailablePeriods] = useState<string[]>([]);
   const [availableTypes, setAvailableTypes] = useState<string[]>([]);
+  const [availableBudgetGroups, setAvailableBudgetGroups] = useState<string[]>([]);
 
   // Load available filters
   useEffect(() => {
@@ -55,9 +54,11 @@ const BudgetRealizationPage: React.FC = () => {
 
     const { data: periods } = await getAvailableRealizationPeriods(activeEntity.id);
     const { data: types } = await getAvailableAccountTypes(activeEntity.id);
+    const { data: groups } = await getAvailableBudgetGroups(activeEntity.id);
 
     setAvailablePeriods(periods || []);
     setAvailableTypes(types || []);
+    setAvailableBudgetGroups(groups || []);
   };
 
   // Load data
@@ -68,7 +69,7 @@ const BudgetRealizationPage: React.FC = () => {
       setRealizations([]);
       setSummary(null);
     }
-  }, [activeEntity?.id, selectedPeriod, selectedAccountType]);
+  }, [activeEntity?.id, selectedPeriod, selectedAccountType, selectedBudgetGroup]);
 
   const loadData = async () => {
     if (!activeEntity) return;
@@ -79,23 +80,20 @@ const BudgetRealizationPage: React.FC = () => {
     try {
       const period = selectedPeriod === 'all' ? undefined : selectedPeriod;
       const accountType = selectedAccountType === 'all' ? undefined : selectedAccountType;
+      const budgetName = selectedBudgetGroup === 'all' ? undefined : selectedBudgetGroup;
 
-      // Load realizations
-      const { data: realizationsData, error: realizationsError } = await getBudgetRealizations(
+      // Load realizations with live data from accurate_accounts
+      const { data: realizationsData, error: realizationsError } = await getBudgetRealizationsLive(
         activeEntity.id,
         period,
-        accountType
+        accountType,
+        budgetName
       );
 
       if (realizationsError) throw realizationsError;
 
-      // Load summary
-      const { data: summaryData, error: summaryError } = await getRealizationSummary(
-        activeEntity.id,
-        period
-      );
-
-      if (summaryError) throw summaryError;
+      // Calculate summary from loaded data
+      const summaryData = calculateSummary(realizationsData || [], activeEntity, period);
 
       setRealizations(realizationsData || []);
       setSummary(summaryData);
@@ -109,33 +107,37 @@ const BudgetRealizationPage: React.FC = () => {
     }
   };
 
-  // Handle sync
-  const handleSync = async () => {
-    if (!activeEntity) return;
+  // Calculate summary from realizations data
+  const calculateSummary = (
+    data: BudgetRealization[], 
+    entity: any, 
+    period?: string
+  ): BudgetRealizationSummary | null => {
+    if (!data || data.length === 0) return null;
 
-    if (!confirm('Sinkronisasi akan mengambil data balance terbaru dari akun. Lanjutkan?')) {
-      return;
-    }
+    const totalBudget = data.reduce((sum, item) => sum + item.budget_allocated, 0);
+    const totalRealisasi = data.reduce((sum, item) => sum + item.realisasi, 0);
+    const totalVariance = totalBudget - totalRealisasi;
+    const variancePercentage = totalBudget > 0 ? (totalVariance / totalBudget) * 100 : 0;
+    const overallStatus = totalRealisasi <= totalBudget ? 'ON_TRACK' : 'OVER_BUDGET';
+    const onTrackCount = data.filter(item => item.status === 'ON_TRACK').length;
+    const overBudgetCount = data.filter(item => item.status === 'OVER_BUDGET').length;
 
-    setSyncing(true);
-    setError(null);
-
-    try {
-      const { data, error: syncError } = await autoSyncAllBudgets(activeEntity.id);
-
-      if (syncError) throw syncError;
-
-      console.log('[BudgetRealizationPage] Sync result:', data);
-      alert(data?.message || 'Sinkronisasi berhasil!');
-
-      await loadData();
-      await loadAvailableFilters();
-    } catch (err: any) {
-      console.error('[BudgetRealizationPage] Sync error:', err);
-      setError('Gagal sinkronisasi: ' + err.message);
-    } finally {
-      setSyncing(false);
-    }
+    return {
+      entity_id: entity.id,
+      entity_name: entity.entity_name || entity.name,
+      period: period || 'all',
+      total_accounts: data.length,
+      total_budgets: [...new Set(data.map(item => item.budget_id))].length,
+      total_budget: totalBudget,
+      total_realisasi: totalRealisasi,
+      total_variance: totalVariance,
+      variance_percentage: variancePercentage,
+      overall_status: overallStatus,
+      on_track_count: onTrackCount,
+      over_budget_count: overBudgetCount,
+      last_updated: new Date().toISOString(),
+    };
   };
 
   // Setup real-time subscription
@@ -144,7 +146,7 @@ const BudgetRealizationPage: React.FC = () => {
 
     console.log('[BudgetRealizationPage] Setting up subscription...');
 
-    const subscription = subscribeBudgetRealizations(activeEntity.id, () => {
+    const subscription = subscribeBudgetItems(activeEntity.id, () => {
       console.log('[BudgetRealizationPage] Real-time update detected');
       loadData();
     });
@@ -190,20 +192,20 @@ const BudgetRealizationPage: React.FC = () => {
         </div>
 
         <button
-          onClick={handleSync}
-          disabled={!activeEntity || syncing || loading}
+          onClick={loadData}
+          disabled={!activeEntity || loading}
           style={{
             padding: '10px 20px',
-            backgroundColor: activeEntity && !syncing && !loading ? '#28a745' : '#adb5bd',
+            backgroundColor: activeEntity && !loading ? '#007bff' : '#adb5bd',
             color: 'white',
             border: 'none',
             borderRadius: '6px',
-            cursor: activeEntity && !syncing && !loading ? 'pointer' : 'not-allowed',
+            cursor: activeEntity && !loading ? 'pointer' : 'not-allowed',
             fontWeight: 600,
             fontSize: '14px',
           }}
         >
-          {syncing ? '⏳ Sinkronisasi...' : '🔄 Sinkronisasi Data'}
+          {loading ? '⏳ Memuat...' : '🔄 Refresh Data'}
         </button>
       </div>
 
@@ -253,15 +255,15 @@ const BudgetRealizationPage: React.FC = () => {
             gap: '8px',
             marginBottom: '16px',
           }}>
-            <span style={{ fontSize: '18px' }}>🔍</span>
+
             <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>Filter Laporan</h3>
           </div>
 
           <div style={{
             display: 'grid',
-            gridTemplateColumns: '200px 200px 1fr',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
             gap: '16px',
-            alignItems: 'end',
+            marginBottom: '16px',
           }}>
             {/* Periode */}
             <div>
@@ -288,6 +290,35 @@ const BudgetRealizationPage: React.FC = () => {
                 <option value="all">Semua Periode</option>
                 {availablePeriods.map((period) => (
                   <option key={period} value={period}>{period}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Nama Budget */}
+            <div>
+              <label style={{
+                display: 'block',
+                marginBottom: '6px',
+                fontSize: '13px',
+                fontWeight: 500,
+              }}>
+                Nama Budget
+              </label>
+              <select
+                value={selectedBudgetGroup}
+                onChange={(e) => setSelectedBudgetGroup(e.target.value)}
+                disabled={loading}
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  border: '1px solid #ced4da',
+                  borderRadius: '4px',
+                  fontSize: '14px',
+                }}
+              >
+                <option value="all">Semua Budget</option>
+                {availableBudgetGroups.map((group) => (
+                  <option key={group} value={group}>{group}</option>
                 ))}
               </select>
             </div>
@@ -348,7 +379,7 @@ const BudgetRealizationPage: React.FC = () => {
             </div>
           </div>
 
-          <div style={{ fontSize: '13px', color: '#6c757d', marginTop: '12px' }}>
+          <div style={{ fontSize: '13px', color: '#6c757d' }}>
             Menampilkan <strong>{filteredRealizations.length}</strong> dari {realizations.length} akun
           </div>
         </div>
@@ -358,7 +389,7 @@ const BudgetRealizationPage: React.FC = () => {
       {activeEntity && summary && (
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
           gap: '16px',
           marginBottom: '24px',
         }}>
@@ -457,7 +488,7 @@ const BudgetRealizationPage: React.FC = () => {
               {summary.variance_percentage.toFixed(2)}%
             </div>
             <div style={{ fontSize: '11px', marginTop: '4px', opacity: 0.9 }}>
-              {summary.overall_status === 'OVER_BUDGET' ? 'Sisa Budget' : 'Sisa Budget'}
+              Sisa Budget
             </div>
           </div>
         </div>
@@ -488,7 +519,7 @@ const BudgetRealizationPage: React.FC = () => {
               {searchQuery ? (
                 <>🔍 Tidak ada data yang cocok dengan pencarian "<strong>{searchQuery}</strong>"</>
               ) : (
-                <>📋 Belum ada data realisasi. Klik "Sinkronisasi Data" untuk memulai.</>
+                <>📋 Belum ada data realisasi. Pastikan sudah ada budget dan akun accurate tersedia.</>
               )}
             </div>
           ) : (

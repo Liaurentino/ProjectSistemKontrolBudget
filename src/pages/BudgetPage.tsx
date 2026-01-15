@@ -3,25 +3,18 @@ import { useEntity } from '../contexts/EntityContext';
 import { BudgetForm } from '../components/BudgetForm';
 import {
   getBudgets,
-  getBudgetsByYear,
   getBudgetById,
   deleteBudget,
   subscribeBudgets,
   type Budget,
   type BudgetWithItems,
 } from '../lib/accurate';
-
-// Helper: Get adaptive font size based on amount
-const getAdaptiveFontSize = (amount: number): number => {
-  if (amount >= 1_000_000_000_000) return 14; // >= 1 Triliun
-  if (amount >= 1_000_000_000) return 15;      // 1-999 Miliar
-  return 16;                                    // < 1 Miliar
-};
-
-// Helper: Format currency - NO abbreviations, full number
-const formatCurrency = (amount: number): string => {
-  return amount.toLocaleString('id-ID');
-};
+import {
+  getAdaptiveFontSize,
+  formatCurrency,
+  tableHeaderStyle,
+  tableCellStyle,
+} from '../services/budgetHelpers';
 
 const BudgetPage: React.FC = () => {
   const { activeEntity } = useEntity();
@@ -315,7 +308,7 @@ const BudgetPage: React.FC = () => {
         </div>
       )}
 
-      {/* Filters - TETAP SEPERTI SEKARANG */}
+      {/* Filters */}
       {activeEntity && !showForm && (
         <div style={{
           padding: '20px 24px',
@@ -432,7 +425,7 @@ const BudgetPage: React.FC = () => {
                       overflow: 'hidden',
                     }}
                   >
-                    {/* Budget Header - FIXED WIDTH */}
+                    {/* Budget Header */}
                     <div
                       style={{
                         padding: '20px 24px',
@@ -550,17 +543,6 @@ const BudgetPage: React.FC = () => {
                           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '16px' }}>
                             <div>
                               <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px', textTransform: 'uppercase', fontWeight: 600 }}>
-                                Total Budget
-                              </div>
-                              <div style={{ 
-                                fontSize: `${getAdaptiveFontSize(budgetDetails.total_budget)}px`, 
-                                fontWeight: 600 
-                              }}>
-                                Rp {formatCurrency(budgetDetails.total_budget)}
-                              </div>
-                            </div>
-                            <div>
-                              <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px', textTransform: 'uppercase', fontWeight: 600 }}>
                                 Total Alokasi
                               </div>
                               <div style={{ 
@@ -570,23 +552,7 @@ const BudgetPage: React.FC = () => {
                                 Rp {formatCurrency(budgetDetails.total_allocated)}
                               </div>
                             </div>
-                            <div>
-                              <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px', textTransform: 'uppercase', fontWeight: 600 }}>
-                                Sisa
-                              </div>
-                              <div style={{
-                                fontSize: `${getAdaptiveFontSize(Math.abs(budgetDetails.remaining_budget))}px`,
-                                fontWeight: 600,
-                                color:
-                                  budgetDetails.status === 'OVER_BUDGET'
-                                    ? '#dc3545'
-                                    : budgetDetails.status === 'FULLY_ALLOCATED'
-                                    ? '#28a745'
-                                    : '#0066cc',
-                              }}>
-                                Rp {formatCurrency(budgetDetails.remaining_budget)}
-                              </div>
-                            </div>
+            
                             <div>
                               <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px', textTransform: 'uppercase', fontWeight: 600 }}>
                                 Status
@@ -747,25 +713,6 @@ const BudgetPage: React.FC = () => {
       )}
     </div>
   );
-};
-
-const tableHeaderStyle: React.CSSProperties = {
-  padding: '14px 16px',
-  textAlign: 'left',
-  fontSize: '13px',
-  fontWeight: 600,
-  textTransform: 'uppercase',
-  letterSpacing: '0.5px',
-  color: '#495057',
-  borderBottom: '2px solid #dee2e6',
-  borderRight: '1px solid #dee2e6',
-};
-
-const tableCellStyle: React.CSSProperties = {
-  padding: '14px 16px',
-  fontSize: '14px',
-  color: '#212529',
-  borderRight: '1px solid #dee2e6',
 };
 
 export default BudgetPage;

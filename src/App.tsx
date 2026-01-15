@@ -3,12 +3,12 @@ import { useState } from "react";
 
 import BudgetPage  from "./pages/BudgetPage";
 import BudgetRealizationPage from "./pages/BudgetRealisasiPage";
-import { LoginPage } from "./pages/LoginPage";
 import { ComparisonPage } from "./pages/DashboardPage";
 import { EntitasPage } from "./pages/EntitasPage";
 import CoaPage from "./pages/CoaPage";
 
 import { useAuth } from "./contexts/AuthContext";
+import AuthPage from "./pages/AuthPage";
 
 export default function App() {
   const { user, loading, signOut } = useAuth();
@@ -140,8 +140,8 @@ export default function App() {
         {/* Page Content */}
         <main className="app-container">
           <Routes>
-            <Route path="/login" element={<LoginPage />} />
-
+            <Route path="/login" element={<AuthPage />} />
+           
             <Route
               path="/entitas"
               element={user ? <EntitasPage /> : <Navigate to="/login" />}
@@ -161,8 +161,9 @@ export default function App() {
             <Route
               path="/comparison"
               element={user ? <ComparisonPage /> : <Navigate to="/login" />}
-            />
 
+              
+            />
             <Route path="/" element={<Navigate to="/entitas" />} />
             <Route path="*" element={<Navigate to="/entitas" />} />
           </Routes>

@@ -380,6 +380,7 @@ export const getEntitasList = async (
 
 export interface Budget {
   id: string;
+  name: string;
   entity_id: string;
   period: string; // Format: "YYYY-MM"
   total_budget: number;
@@ -820,133 +821,160 @@ export function subscribeBudgets(entityId: string, onChange: () => void) {
 }
 
 // ============================================
-// BUDGET REALIZATION TYPES
-// ============================================
-
-export interface BudgetRealization {
-  id: string;
-  budget_id: string;
-  budget_item_id: string;
-  entity_id: string;
-  period: string;
-  account_id?: string;
-  accurate_id?: string;
-  account_code: string;
-  account_name: string;
-  account_type?: string;
-  budget_allocated: number;
-  realisasi: number;
-  variance: number;
-  variance_percentage: number;
-  status: 'ON_TRACK' | 'OVER_BUDGET';
-  notes?: string;
-  created_at?: string;
-  updated_at?: string;
-}
-
-export interface BudgetRealizationSummary {
-  entity_id: string;
-  entity_name: string;
-  period: string;
-  total_accounts: number;
-  total_budgets: number;
-  total_budget: number;
-  total_realisasi: number;
-  total_variance: number;
-  variance_percentage: number;
-  overall_status: 'ON_TRACK' | 'OVER_BUDGET';
-  on_track_count: number;
-  over_budget_count: number;
-  last_updated?: string;
-}
-
-export interface SyncRealizationResult {
-  synced_count: number;
-  message: string;
-}
-
-// ============================================
-// GET BUDGET REALIZATIONS
+// GET BUDGET REALIZATIONS LIVE (No Sync Required)
 // ============================================
 
 /**
- * Get budget realizations with filters
+ * Get budget realizations with live data from accurate_accounts
+ * This directly joins budget_items with accurate_accounts to get real-time balance
  */
-export async function getBudgetRealizations(
+export async function getBudgetRealizationsLive(
   entityId?: string,
   period?: string,
-  accountType?: string
+  accountType?: string,
+  budgetName?: string
 ) {
   try {
+    // Build query to get budget items with their accounts
     let query = supabase
-      .from('budget_realizations')
-      .select('*')
+      .from('budget_items')
+      .select(`
+        id,
+        budget_id,
+        account_id,
+        accurate_id,
+        account_code,
+        account_name,
+        account_type,
+        allocated_amount,
+        budgets!inner(
+          id,
+          name,
+          period,
+          entity_id
+        ),
+        accurate_accounts(
+          id,
+          balance
+        )
+      `)
       .order('account_code', { ascending: true });
 
+    // Apply filters
     if (entityId) {
-      query = query.eq('entity_id', entityId);
+      query = query.eq('budgets.entity_id', entityId);
     }
 
     if (period) {
-      query = query.eq('period', period);
+      query = query.eq('budgets.period', period);
     }
 
     if (accountType) {
       query = query.eq('account_type', accountType);
     }
 
+    if (budgetName) {
+      query = query.eq('budgets.name', budgetName);
+    }
+
     const { data, error } = await query;
 
     if (error) throw error;
 
-    console.log('[getBudgetRealizations] Loaded', data?.length || 0, 'realizations');
-    return { data, error: null };
+    // Transform data to BudgetRealization format
+    const realizations: BudgetRealization[] = (data || []).map((item: any) => {
+      const budgetAllocated = item.allocated_amount || 0;
+      const realisasi = item.accurate_accounts?.balance || 0;
+      const variance = budgetAllocated - realisasi;
+      const variancePercentage = budgetAllocated > 0 ? (variance / budgetAllocated) * 100 : 0;
+      const status = realisasi <= budgetAllocated ? 'ON_TRACK' : 'OVER_BUDGET';
+
+      return {
+        id: item.id,
+        budget_id: item.budget_id,
+        budget_item_id: item.id,
+        entity_id: item.budgets.entity_id,
+        period: item.budgets.period,
+        account_id: item.account_id,
+        accurate_id: item.accurate_id,
+        account_code: item.account_code,
+        account_name: item.account_name,
+        account_type: item.account_type,
+        budget_allocated: budgetAllocated,
+        realisasi: realisasi,
+        variance: variance,
+        variance_percentage: variancePercentage,
+        status: status,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        budgets: {
+          name: item.budgets.name,
+        },
+      };
+    });
+
+    console.log('[getBudgetRealizationsLive] Loaded', realizations.length, 'realizations');
+    return { data: realizations, error: null };
   } catch (error) {
-    console.error('[getBudgetRealizations] Error:', error);
+    console.error('[getBudgetRealizationsLive] Error:', error);
     return { data: null, error };
   }
 }
 
 /**
- * Get realization summary (from view)
+ * Get realization summary (calculated from live data, no view needed)
  */
-export async function getRealizationSummary(
+export async function getRealizationSummaryLive(
   entityId?: string,
   period?: string
 ) {
   try {
-    let query = supabase
-      .from('budget_realization_summary')
-      .select('*')
-      .order('period', { ascending: false });
-
-    if (entityId) {
-      query = query.eq('entity_id', entityId);
-    }
-
-    if (period) {
-      query = query.eq('period', period);
-    }
-
-    const { data, error } = await query;
+    const { data: realizations, error } = await getBudgetRealizationsLive(
+      entityId,
+      period
+    );
 
     if (error) throw error;
+    if (!realizations || realizations.length === 0) return { data: null, error: null };
 
-    console.log('[getRealizationSummary] Loaded summary');
-    return { data: data?.[0] || null, error: null };
+    // Calculate summary
+    const totalBudget = realizations.reduce((sum, item) => sum + item.budget_allocated, 0);
+    const totalRealisasi = realizations.reduce((sum, item) => sum + item.realisasi, 0);
+    const totalVariance = totalBudget - totalRealisasi;
+    const variancePercentage = totalBudget > 0 ? (totalVariance / totalBudget) * 100 : 0;
+    const overallStatus = totalRealisasi <= totalBudget ? 'ON_TRACK' : 'OVER_BUDGET';
+
+    const summary = {
+      entity_id: entityId || '',
+      entity_name: '',
+      period: period || 'all',
+      total_accounts: realizations.length,
+      total_budgets: [...new Set(realizations.map(item => item.budget_id))].length,
+      total_budget: totalBudget,
+      total_realisasi: totalRealisasi,
+      total_variance: totalVariance,
+      variance_percentage: variancePercentage,
+      overall_status: overallStatus,
+      on_track_count: realizations.filter(item => item.status === 'ON_TRACK').length,
+      over_budget_count: realizations.filter(item => item.status === 'OVER_BUDGET').length,
+      last_updated: new Date().toISOString(),
+    };
+
+    console.log('[getRealizationSummaryLive] Calculated summary');
+    return { data: summary, error: null };
   } catch (error) {
-    console.error('[getRealizationSummary] Error:', error);
+    console.error('[getRealizationSummaryLive] Error:', error);
     return { data: null, error };
   }
 }
 
 /**
- * Get available periods for realization (distinct periods)
+ * Get available periods from budgets
  */
 export async function getAvailableRealizationPeriods(entityId?: string) {
   try {
     let query = supabase
-      .from('budget_realizations')
+      .from('budgets')
       .select('period')
       .order('period', { ascending: false });
 
@@ -969,21 +997,21 @@ export async function getAvailableRealizationPeriods(entityId?: string) {
 }
 
 /**
- * Get available account types (distinct)
+ * Get available account types from budget_items
  */
 export async function getAvailableAccountTypes(entityId?: string, period?: string) {
   try {
     let query = supabase
-      .from('budget_realizations')
-      .select('account_type')
+      .from('budget_items')
+      .select('account_type, budgets!inner(entity_id, period)')
       .order('account_type', { ascending: true });
 
     if (entityId) {
-      query = query.eq('entity_id', entityId);
+      query = query.eq('budgets.entity_id', entityId);
     }
 
     if (period) {
-      query = query.eq('period', period);
+      query = query.eq('budgets.period', period);
     }
 
     const { data, error } = await query;
@@ -1000,77 +1028,33 @@ export async function getAvailableAccountTypes(entityId?: string, period?: strin
   }
 }
 
-// ============================================
-// SYNC REALIZATIONS
-// ============================================
-
 /**
- * Sync budget realizations from accurate_accounts balance
- * Calls PostgreSQL function sync_budget_realizations
+ * Get available budget names from budgets
  */
-export async function syncBudgetRealizations(
-  entityId: string,
-  period: string
-): Promise<{ data: SyncRealizationResult | null; error: any }> {
+export async function getAvailableBudgetGroups(entityId?: string) {
   try {
-    console.log('[syncBudgetRealizations] Syncing for entity:', entityId, 'period:', period);
+    let query = supabase
+      .from('budgets')
+      .select('name')
+      .order('name', { ascending: true });
 
-    const { data, error } = await supabase.rpc('sync_budget_realizations', {
-      p_entity_id: entityId,
-      p_period: period,
-    });
+    if (entityId) {
+      query = query.eq('entity_id', entityId);
+    }
+
+    const { data, error } = await query;
 
     if (error) throw error;
 
-    console.log('[syncBudgetRealizations] Result:', data);
-    return { data: data?.[0] || null, error: null };
+    // Get unique budget names and filter out null/undefined values
+    const groups = [...new Set(
+      data?.map(item => item.name).filter(Boolean) || []
+    )].sort();
+
+    console.log('[getAvailableBudgetGroups] Found', groups.length, 'unique budget names');
+    return { data: groups, error: null };
   } catch (error) {
-    console.error('[syncBudgetRealizations] Error:', error);
-    return { data: null, error };
-  }
-}
-
-/**
- * Auto-sync all budgets for current entity and period
- * Finds all budgets for entity/period and syncs their realizations
- */
-export async function autoSyncAllBudgets(entityId: string) {
-  try {
-    console.log('[autoSyncAllBudgets] Auto-syncing for entity:', entityId);
-
-    // Get all budgets for this entity
-    const { data: budgets, error: budgetsError } = await getBudgets(entityId);
-
-    if (budgetsError) throw budgetsError;
-
-    if (!budgets || budgets.length === 0) {
-      return { 
-        data: { synced_count: 0, message: 'No budgets found' }, 
-        error: null 
-      };
-    }
-
-    // Get unique periods
-    const periods = [...new Set(budgets.map(b => b.period))];
-
-    // Sync each period
-    let totalSynced = 0;
-    for (const period of periods) {
-      const { data: syncResult } = await syncBudgetRealizations(entityId, period);
-      if (syncResult) {
-        totalSynced += syncResult.synced_count;
-      }
-    }
-
-    const message = `Auto-synced ${totalSynced} realizations across ${periods.length} periods`;
-    console.log('[autoSyncAllBudgets]', message);
-
-    return {
-      data: { synced_count: totalSynced, message },
-      error: null,
-    };
-  } catch (error) {
-    console.error('[autoSyncAllBudgets] Error:', error);
+    console.error('[getAvailableBudgetGroups] Error:', error);
     return { data: null, error };
   }
 }
@@ -1080,75 +1064,91 @@ export async function autoSyncAllBudgets(entityId: string) {
 // ============================================
 
 /**
- * Subscribe to budget realization changes
+ * Subscribe to budget items and accounts changes for real-time updates
  */
-export function subscribeBudgetRealizations(
+export function subscribeBudgetItems(
   entityId: string,
   onChange: () => void
 ) {
-  return supabase
-    .channel(`budget_realizations_${entityId}`)
-    .on(
-      'postgres_changes',
-      {
-        event: '*',
-        schema: 'public',
-        table: 'budget_realizations',
-        filter: `entity_id=eq.${entityId}`,
-      },
-      () => {
-        console.log('[subscribeBudgetRealizations] Change detected');
-        onChange();
-      }
-    )
-    .subscribe();
+  const channel = supabase.channel(`budget_items_${entityId}`);
+
+  // Subscribe to budget_items changes
+  channel.on(
+    'postgres_changes',
+    {
+      event: '*',
+      schema: 'public',
+      table: 'budget_items',
+    },
+    (payload) => {
+      console.log('[subscribeBudgetItems] Budget items change detected', payload);
+      onChange();
+    }
+  );
+
+  // Subscribe to accurate_accounts changes (for balance updates)
+  channel.on(
+    'postgres_changes',
+    {
+      event: '*',
+      schema: 'public',
+      table: 'accurate_accounts',
+    },
+    (payload) => {
+      console.log('[subscribeBudgetItems] Account balance change detected', payload);
+      onChange();
+    }
+  );
+
+  return channel.subscribe();
 }
 
+
 // ============================================
-// CRUD OPERATIONS
+// TYPE DEFINITIONS
 // ============================================
 
-/**
- * Update realization manually
- */
-export async function updateRealization(
-  realizationId: string,
-  updates: Partial<BudgetRealization>
-) {
-  try {
-    const { data, error } = await supabase
-      .from('budget_realizations')
-      .update(updates)
-      .eq('id', realizationId)
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    console.log('[updateRealization] Updated:', data);
-    return { data, error: null };
-  } catch (error) {
-    console.error('[updateRealization] Error:', error);
-    return { data: null, error };
-  }
+export interface BudgetRealization {
+  id: string;
+  budget_id: string;
+  budget_item_id: string;
+  entity_id: string;
+  period: string;
+  account_id?: string;
+  accurate_id?: string;
+  account_code: string;
+  account_name: string;
+  account_type?: string;
+  budget_allocated: number;
+  realisasi: number;
+  variance: number;
+  variance_percentage: number;
+  status: 'ON_TRACK' | 'OVER_BUDGET';
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+  budgets?: {
+    name: string;
+  };
 }
 
-/**
- * Delete realization
- */
-export async function deleteRealization(realizationId: string) {
-  try {
-    const { error } = await supabase
-      .from('budget_realizations')
-      .delete()
-      .eq('id', realizationId);
+export interface BudgetRealizationSummary {
+  entity_id: string;
+  entity_name: string;
+  period: string;
+  total_accounts: number;
+  total_budgets: number;
+  total_budget: number;
+  total_realisasi: number;
+  total_variance: number;
+  variance_percentage: number;
+  overall_status: 'ON_TRACK' | 'OVER_BUDGET';
+  on_track_count: number;
+  over_budget_count: number;
+  last_updated: string;
+}
 
-    if (error) throw error;
-
-    console.log('[deleteRealization] Deleted:', realizationId);
-    return { error: null };
-  } catch (error) {
-    console.error('[deleteRealization] Error:', error);
-    return { error };
-  }
+export interface SyncRealizationResult {
+  synced_count: number;
+  message: string;
 }

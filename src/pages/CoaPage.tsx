@@ -116,7 +116,7 @@ const CoaPage: React.FC = () => {
               disabled={loading || !activeEntity}
               style={{
                 padding: '8px 16px',
-                backgroundColor: '#6c757d',
+                backgroundColor: '#28a745',
                 color: 'white',
                 border: 'none',
                 borderRadius: '6px',
