@@ -17,26 +17,48 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
 });
 
 // ============================================
-// ENTITY FUNCTIONS (UPDATED WITH WEBHOOK SUPPORT)
+// ENTITY FUNCTIONS (UPDATED WITH user_id)
 // ============================================
 
 export const getEntities = async () => {
-  const { data, error } = await supabase
-    .from('entity')
-    .select('*')
-    .order('entity_name');
-  
-  return { data, error };
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      return { data: null, error: 'User not authenticated' };
+    }
+
+    const { data, error } = await supabase
+      .from('entity')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('entity_name');
+    
+    return { data, error };
+  } catch (err) {
+    return { data: null, error: err };
+  }
 };
 
 export const getEntityById = async (entityId: string) => {
-  const { data, error } = await supabase
-    .from('entity')
-    .select('*')
-    .eq('id', entityId)
-    .single();
-  
-  return { data, error };
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      return { data: null, error: 'User not authenticated' };
+    }
+
+    const { data, error } = await supabase
+      .from('entity')
+      .select('*')
+      .eq('id', entityId)
+      .eq('user_id', user.id)
+      .single();
+    
+    return { data, error };
+  } catch (err) {
+    return { data: null, error: err };
+  }
 };
 
 export const insertEntity = async (entityData: {
@@ -45,9 +67,18 @@ export const insertEntity = async (entityData: {
   accurate_database_id?: number | null;
 }) => {
   try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      return { data: null, error: 'User not authenticated' };
+    }
+
     const { data, error } = await supabase
       .from('entity')
-      .insert([entityData])
+      .insert([{
+        ...entityData,
+        user_id: user.id, // Automatically set user_id
+      }])
       .select();
     
     if (error) throw error;
@@ -65,10 +96,17 @@ export const updateEntity = async (id: string, entityData: {
   accurate_database_id?: number | null;
 }) => {
   try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      return { data: null, error: 'User not authenticated' };
+    }
+
     const { data, error } = await supabase
       .from('entity')
       .update(entityData)
       .eq('id', id)
+      .eq('user_id', user.id) // Ensure ownership
       .select();
     
     if (error) throw error;
@@ -82,10 +120,17 @@ export const updateEntity = async (id: string, entityData: {
 
 export const deleteEntity = async (id: string) => {
   try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      return { error: 'User not authenticated' };
+    }
+
     const { error } = await supabase
       .from('entity')
       .delete()
-      .eq('id', id);
+      .eq('id', id)
+      .eq('user_id', user.id); // Ensure ownership
     
     if (error) throw error;
     
@@ -98,6 +143,8 @@ export const deleteEntity = async (id: string) => {
 
 /**
  * Get entity by Accurate Database ID (for webhook)
+ * Note: Untuk webhook dari Accurate, kita perlu cari entity berdasarkan accurate_database_id
+ * tanpa filter user_id karena webhook bisa datang tanpa context user
  */
 export const getEntityByAccurateDatabaseId = async (databaseId: number) => {
   const { data, error } = await supabase

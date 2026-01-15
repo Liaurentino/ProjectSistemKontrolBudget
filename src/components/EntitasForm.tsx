@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { insertEntity, updateEntity, getEntities } from '../lib/supabase';
+import { validateAccurateTokenOwnership } from '../lib/accurateValidate';
 import { validateAccurateApiToken } from '../services/accurateValidation';
 import type { AccurateValidationResult, AccurateDatabase } from '../lib/accurate';
 
@@ -29,6 +30,7 @@ export const EntitasForm: React.FC<Props> = ({
   const [success, setSuccess] = useState('');
   const [showToken, setShowToken] = useState(false);
   const [tokenValidated, setTokenValidated] = useState(false);
+  const [ownershipValidated, setOwnershipValidated] = useState(false);
 
   // Validation result
   const [validationResult, setValidationResult] = useState<AccurateValidationResult | null>(null);
@@ -53,6 +55,7 @@ export const EntitasForm: React.FC<Props> = ({
       });
       if (initialData.api_token) {
         setTokenValidated(true);
+        setOwnershipValidated(true); // Assume already validated in edit mode
       }
     }
   }, [mode, initialData]);
@@ -88,6 +91,7 @@ export const EntitasForm: React.FC<Props> = ({
     // Check duplikasi token saat user mengetik
     if (name === 'api_token') {
       setTokenValidated(false);
+      setOwnershipValidated(false);
       setValidationResult(null);
       setDatabases([]);
       setTokenDuplicate(false);
@@ -118,7 +122,9 @@ export const EntitasForm: React.FC<Props> = ({
   };
 
   /**
-   * Validasi API Token
+   * Validasi API Token - 2 STEP VALIDATION
+   * Step 1: Validate ownership (email match via Edge Function)
+   * Step 2: Validate token & get database info (existing validation)
    */
   const handleValidateToken = async () => {
     setError('');
@@ -141,13 +147,41 @@ export const EntitasForm: React.FC<Props> = ({
         return;
       }
 
-      console.log('Validating token in component...');
+      // STEP 1: Validate ownership (email match)
+      console.log('Step 1: Validating token ownership...');
+      const ownershipResult = await validateAccurateTokenOwnership(formData.api_token);
+
+      if (!ownershipResult.isValid) {
+        setError(
+          ownershipResult.error || 
+          'Token ini bukan milik akun Anda. Silakan gunakan token dari akun Accurate yang sesuai dengan email login Anda.'
+        );
+        setOwnershipValidated(false);
+        setTokenValidated(false);
+        setDatabases([]);
+        setFormData(prev => ({
+          ...prev,
+          entity_name: '',
+        }));
+        setValidating(false);
+        return;
+      }
+
+      // Ownership validated!
+      setOwnershipValidated(true);
+      console.log('✓ Ownership validated:', ownershipResult.accurateUserInfo);
+
+      // STEP 2: Validate token & get database info
+      console.log('Step 2: Validating token and fetching database info...');
       const result = await validateAccurateApiToken(formData.api_token);
 
       setValidationResult(result);
 
       if (result.isValid) {
-        setSuccess(result.message);
+        setSuccess(
+          `✓ Token valid dan milik akun Anda (${ownershipResult.accurateUserInfo?.email})\n` +
+          result.message
+        );
         setTokenValidated(true);
 
         // AUTO-FILL: Set nama entitas dari primary database
@@ -165,6 +199,7 @@ export const EntitasForm: React.FC<Props> = ({
       } else {
         setError(result.message);
         setTokenValidated(false);
+        setOwnershipValidated(false);
         setDatabases([]);
         // Reset nama entitas jika validasi gagal
         setFormData(prev => ({
@@ -176,6 +211,7 @@ export const EntitasForm: React.FC<Props> = ({
       const message = err instanceof Error ? err.message : 'Gagal validasi token';
       setError(message);
       setTokenValidated(false);
+      setOwnershipValidated(false);
       setFormData(prev => ({
         ...prev,
         entity_name: '',
@@ -217,16 +253,26 @@ export const EntitasForm: React.FC<Props> = ({
         return;
       }
 
-      // PENTING: Cek apakah token sudah divalidasi
-      if (!tokenValidated) {
+      // PENTING: Cek apakah token sudah divalidasi (untuk create mode)
+      if (mode === 'create' && !tokenValidated) {
         setError(
           'PERINGATAN: Anda belum memvalidasi API Token!\n\n' +
           'Silakan klik tombol "Validasi Token" terlebih dahulu untuk:\n' +
+          '• Memverifikasi bahwa token milik akun Anda\n' +
           '• Memastikan token valid dan dapat diakses\n' +
           '• Mengecek koneksi ke Accurate\n' +
           '• Memverifikasi database yang terhubung\n' +
           '• Mengambil nama entitas dari Accurate\n\n' +
           'Setelah validasi berhasil, barulah Anda bisa menyimpan.'
+        );
+        setLoading(false);
+        return;
+      }
+
+      // PENTING: Cek ownership validation (untuk create mode)
+      if (mode === 'create' && !ownershipValidated) {
+        setError(
+          'Token belum divalidasi kepemilikannya. Silakan validasi token terlebih dahulu.'
         );
         setLoading(false);
         return;
@@ -302,6 +348,8 @@ export const EntitasForm: React.FC<Props> = ({
               marginBottom: '1rem',
               fontSize: '0.875rem',
               border: '2px solid #66bb6a',
+              whiteSpace: 'pre-wrap',
+              lineHeight: '1.5',
             }}
           >
             {success}
@@ -377,16 +425,16 @@ export const EntitasForm: React.FC<Props> = ({
             style={{
               width: '100%',
               marginBottom: '0.5rem',
-              backgroundColor: tokenValidated ? '#4caf50' : undefined,
-              color: tokenValidated ? '#fff' : undefined,
+              backgroundColor: tokenValidated && ownershipValidated ? '#4caf50' : undefined,
+              color: tokenValidated && ownershipValidated ? '#fff' : undefined,
               border: !tokenValidated && formData.api_token ? '2px solid #ff9800' : undefined,
               fontWeight: !tokenValidated && formData.api_token ? 'bold' : 'normal',
             }}
           >
             {validating
               ? '⏳ Validasi Token...'
-              : tokenValidated
-              ? '✅ Token Valid'
+              : tokenValidated && ownershipValidated
+              ? '✅ Token Valid & Milik Anda'
               : 'Validasi Token'}
           </button>
 
@@ -396,7 +444,7 @@ export const EntitasForm: React.FC<Props> = ({
         </div>
 
         {/* WARNING: Token Belum Divalidasi */}
-        {formData.api_token && !tokenValidated && !tokenDuplicate && (
+        {mode === 'create' && formData.api_token && !tokenValidated && !tokenDuplicate && (
           <div
             style={{
               padding: '0.75rem',
@@ -416,8 +464,10 @@ export const EntitasForm: React.FC<Props> = ({
                 Token Belum Divalidasi
               </strong>
               <small>
-                Silakan klik tombol "Validasi Token" di atas untuk memverifikasi token
-                dan mengambil nama entitas dari Accurate.
+                Silakan klik tombol "Validasi Token" di atas untuk:
+                <br />• Memverifikasi bahwa token milik akun Anda
+                <br />• Memastikan koneksi ke Accurate
+                <br />• Mengambil nama entitas dari database
               </small>
             </div>
           </div>
@@ -549,13 +599,18 @@ export const EntitasForm: React.FC<Props> = ({
         <button
           type="submit"
           className="btn btn-primary"
-          disabled={loading || validating || !tokenValidated || tokenDuplicate}
+          disabled={
+            loading || 
+            validating || 
+            (mode === 'create' && (!tokenValidated || !ownershipValidated)) ||
+            tokenDuplicate
+          }
           style={{
-            opacity: !tokenValidated && formData.api_token ? 0.5 : 1,
-            cursor: !tokenValidated && formData.api_token ? 'not-allowed' : 'pointer',
+            opacity: mode === 'create' && (!tokenValidated || !ownershipValidated) && formData.api_token ? 0.5 : 1,
+            cursor: mode === 'create' && (!tokenValidated || !ownershipValidated) && formData.api_token ? 'not-allowed' : 'pointer',
           }}
         >
-          {loading ? 'Menyimpan...' : 'Berhasil Disimpan'}
+          {loading ? 'Menyimpan...' : mode === 'create' ? 'Simpan' : 'Update'}
         </button>
       </div>
     </form>
