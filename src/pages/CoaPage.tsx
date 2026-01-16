@@ -48,23 +48,8 @@ const CoaPage: React.FC = () => {
           <p style={{ margin: '8px 0 0 0', color: '#6c757d', fontSize: '14px' }}>
             Kelola Chart of Accounts dari Accurate Online
           </p>
-        </div>
-        
-        {activeEntity ? (
-          <div style={{ fontSize: '14px', color: '#6c757d' }}>
-            <strong>Entitas:</strong> {activeEntity.entity_name || activeEntity.name || 'Unknown'}
-            {lastSync && (
-              <span style={{ marginLeft: '16px', fontSize: '12px' }}>
-                Last sync: {lastSync}
-              </span>
-            )}
+       </div>
           </div>
-        ) : (
-          <div style={{ marginTop: '8px', color: '#dc3545', fontSize: '14px' }}>
-            ⚠️ Tidak ada entitas yang aktif
-          </div>
-        )}
-      </div>
 
       {/* No Active Entity Warning */}
       {!activeEntity && (

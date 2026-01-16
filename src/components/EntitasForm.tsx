@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { insertEntity, updateEntity, getEntities } from '../lib/supabase';
-import { validateAccurateTokenOwnership } from '../lib/accurateValidate';
+import { validateAccurateTokenOwnership, quickValidateTokenFormat } from '../lib/accurateValidate';
 import { validateAccurateApiToken } from '../services/accurateValidation';
 import type { AccurateValidationResult, AccurateDatabase } from '../lib/accurate';
 
@@ -32,6 +32,9 @@ export const EntitasForm: React.FC<Props> = ({
   const [tokenValidated, setTokenValidated] = useState(false);
   const [ownershipValidated, setOwnershipValidated] = useState(false);
 
+  // ✅ NEW: Format validation error (real-time)
+  const [formatError, setFormatError] = useState('');
+
   // Validation result
   const [validationResult, setValidationResult] = useState<AccurateValidationResult | null>(null);
   const [databases, setDatabases] = useState<AccurateDatabase[]>([]);
@@ -55,7 +58,7 @@ export const EntitasForm: React.FC<Props> = ({
       });
       if (initialData.api_token) {
         setTokenValidated(true);
-        setOwnershipValidated(true); // Assume already validated in edit mode
+        setOwnershipValidated(true);
       }
     }
   }, [mode, initialData]);
@@ -97,6 +100,14 @@ export const EntitasForm: React.FC<Props> = ({
       setTokenDuplicate(false);
       setTokenDuplicateEntity('');
       
+      // ✅ NEW: Real-time format validation
+      if (value.trim()) {
+        const formatErr = quickValidateTokenFormat(value);
+        setFormatError(formatErr || '');
+      } else {
+        setFormatError('');
+      }
+      
       // Reset nama entitas karena token berubah
       setFormData(prev => ({
         ...prev,
@@ -134,6 +145,13 @@ export const EntitasForm: React.FC<Props> = ({
     try {
       if (!formData.api_token.trim()) {
         setError('API Token tidak boleh kosong');
+        setValidating(false);
+        return;
+      }
+
+      // ✅ NEW: Check format error sebelum validasi
+      if (formatError) {
+        setError(formatError);
         setValidating(false);
         return;
       }
@@ -201,7 +219,6 @@ export const EntitasForm: React.FC<Props> = ({
         setTokenValidated(false);
         setOwnershipValidated(false);
         setDatabases([]);
-        // Reset nama entitas jika validasi gagal
         setFormData(prev => ({
           ...prev,
           entity_name: '',
@@ -240,6 +257,13 @@ export const EntitasForm: React.FC<Props> = ({
 
       if (!formData.api_token.trim()) {
         setError('API Token tidak boleh kosong');
+        setLoading(false);
+        return;
+      }
+
+      // ✅ NEW: Check format error
+      if (formatError) {
+        setError(formatError);
         setLoading(false);
         return;
       }
@@ -366,12 +390,12 @@ export const EntitasForm: React.FC<Props> = ({
               value={formData.api_token}
               onChange={handleChange}
               className="form-control"
-              placeholder="Masukkan API Token dari Accurate"
+              placeholder="Masukkan API Token dari Accurate (contoh: aat.NTA.eyJ2Ijo...)"
               required
               disabled={validating || loading}
               style={{
-                borderColor: tokenDuplicate ? '#f44336' : undefined,
-                backgroundColor: tokenDuplicate ? '#ffebee' : undefined,
+                borderColor: (tokenDuplicate || formatError) ? '#f44336' : undefined,
+                backgroundColor: (tokenDuplicate || formatError) ? '#ffebee' : undefined,
               }}
             />
             <button
@@ -392,6 +416,26 @@ export const EntitasForm: React.FC<Props> = ({
               {showToken ? '👁️' : '👁️‍🗨️'}
             </button>
           </div>
+
+          {/* ✅ NEW: Format Error - Real-time */}
+          {formatError && !tokenDuplicate && (
+            <div
+              style={{
+                padding: '0.75rem',
+                backgroundColor: '#ffebee',
+                color: '#c62828',
+                borderRadius: '4px',
+                marginBottom: '0.5rem',
+                fontSize: '0.85rem',
+                border: '1px solid #ef5350',
+                display: 'flex',
+                gap: '0.5rem',
+              }}
+            >
+              <span>⚠️</span>
+              <span>{formatError}</span>
+            </div>
+          )}
 
           {/* WARNING: Token Duplikasi */}
           {tokenDuplicate && formData.api_token !== initialData?.api_token && (
@@ -421,7 +465,7 @@ export const EntitasForm: React.FC<Props> = ({
             type="button"
             className="btn btn-sm"
             onClick={handleValidateToken}
-            disabled={validating || loading || !formData.api_token.trim() || tokenDuplicate}
+            disabled={validating || loading || !formData.api_token.trim() || tokenDuplicate || !!formatError}
             style={{
               width: '100%',
               marginBottom: '0.5rem',
@@ -439,12 +483,12 @@ export const EntitasForm: React.FC<Props> = ({
           </button>
 
           <small style={{ color: '#666', marginTop: '0.25rem', display: 'block' }}>
-            Token untuk autentikasi API Accurate (akan dienkripsi dan disimpan)
+            Token untuk autentikasi API Accurate (Lihat Panduan Lengkap Cara Mendapatkan API Token)
           </small>
         </div>
 
         {/* WARNING: Token Belum Divalidasi */}
-        {mode === 'create' && formData.api_token && !tokenValidated && !tokenDuplicate && (
+        {mode === 'create' && formData.api_token && !tokenValidated && !tokenDuplicate && !formatError && (
           <div
             style={{
               padding: '0.75rem',
@@ -467,7 +511,7 @@ export const EntitasForm: React.FC<Props> = ({
                 Silakan klik tombol "Validasi Token" di atas untuk:
                 <br />• Memverifikasi bahwa token milik akun Anda
                 <br />• Memastikan koneksi ke Accurate
-                <br />• Mengambil nama entitas dari database
+                <br />• Mengecek kepastian data usaha di database
               </small>
             </div>
           </div>
@@ -581,7 +625,7 @@ export const EntitasForm: React.FC<Props> = ({
             fontSize: '0.8rem',
           }}
         >
-          <strong>Penting! :</strong> API Token akan disimpan terenkripsi di database. Jangan
+          <strong>Penting! :</strong> API Token Anda Bersifat Rahasia. Jangan
           bagikan dengan orang lain.
         </div>
       </div>
@@ -603,7 +647,8 @@ export const EntitasForm: React.FC<Props> = ({
             loading || 
             validating || 
             (mode === 'create' && (!tokenValidated || !ownershipValidated)) ||
-            tokenDuplicate
+            tokenDuplicate ||
+            !!formatError
           }
           style={{
             opacity: mode === 'create' && (!tokenValidated || !ownershipValidated) && formData.api_token ? 0.5 : 1,
@@ -615,4 +660,4 @@ export const EntitasForm: React.FC<Props> = ({
       </div>
     </form>
   );
-};
+};  

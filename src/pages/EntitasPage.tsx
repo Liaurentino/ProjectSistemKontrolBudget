@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { getEntities, deleteEntity } from '../lib/supabase';
 import { EntitasForm } from '../components/EntitasForm';
+import { AccurateGuide } from '../components/AccurateGuide'; // ← IMPORT PANDUAN
 import { useEntity } from '../contexts/EntityContext';
 import { validateEntitasToken } from '../lib/accurate';
 import type { AccurateValidationResult } from '../lib/accurate';
@@ -130,10 +131,22 @@ export const EntitasPage: React.FC = () => {
 
   return (
     <div className="app-container fade-in">
-      {/* HEADER */}
-      <div className="app-header">
-        <h1>Manajemen Entitas</h1>
-        <p>Kelola koneksi entitas perusahaan Anda dengan Accurate</p>
+      {/* HEADER - DENGAN TOMBOL PANDUAN */}
+      <div className="app-header" style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'flex-start',
+        gap: '1rem',
+      }}>
+        <div style={{ flex: 1 }}>
+          <h1>Manajemen Entitas</h1>
+          <p>Kelola koneksi entitas perusahaan Anda dengan Accurate</p>
+        </div>
+        
+        {/* TOMBOL PANDUAN - DI LUAR CONTAINER */}
+        <div style={{ flexShrink: 0, paddingTop: '0.25rem' }}>
+          <AccurateGuide />
+        </div>
       </div>
 
       {/* ERROR */}
@@ -147,7 +160,7 @@ export const EntitasPage: React.FC = () => {
             marginBottom: '1rem',
           }}
         >
-          Error{error}
+          Error: {error}
         </div>
       )}
 
@@ -241,7 +254,7 @@ export const EntitasPage: React.FC = () => {
 
                   return (
                     <tr key={e.id}>
-                      {/* AKTIF - CHANGED TO RADIO */}
+                      {/* AKTIF - RADIO */}
                       <td style={{ textAlign: 'center' }}>
                         <input
                           type="radio"
