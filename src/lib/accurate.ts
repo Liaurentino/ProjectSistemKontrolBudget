@@ -882,9 +882,10 @@ export async function getBudgetRealizationsLive(
     if (error) throw error;
 
     // Transform data to BudgetRealization format
+    // IMPORTANT FIX: allocated_amount contains realisasi, balance contains budget
     const realizations: BudgetRealization[] = (data || []).map((item: any) => {
-      const budgetAllocated = item.allocated_amount || 0;
-      const realisasi = item.accurate_accounts?.balance || 0;
+      const budgetAllocated = item.accurate_accounts?.balance || 0;  // Budget from COA balance
+      const realisasi = item.allocated_amount || 0;  // Actual realisasi from budget_items
       const variance = budgetAllocated - realisasi;
       const variancePercentage = budgetAllocated > 0 ? (variance / budgetAllocated) * 100 : 0;
       const status = realisasi <= budgetAllocated ? 'ON_TRACK' : 'OVER_BUDGET';

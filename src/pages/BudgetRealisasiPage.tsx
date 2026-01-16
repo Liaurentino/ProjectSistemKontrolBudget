@@ -22,14 +22,31 @@ const getAdaptiveFontSize = (amount: number): number => {
   return 16;
 };
 
+// Interface untuk grouped data
+interface GroupedBudgetRealization {
+  budget_group_name: string;
+  period: string;
+  total_budget: number;
+  total_realisasi: number;
+  total_variance: number;
+  variance_percentage: number;
+  status: 'ON_TRACK' | 'OVER_BUDGET';
+  accounts: BudgetRealization[]; // Detail akun-akun dalam group ini
+}
+
 const BudgetRealizationPage: React.FC = () => {
   const { activeEntity } = useEntity();
 
   // State
   const [realizations, setRealizations] = useState<BudgetRealization[]>([]);
+  const [groupedData, setGroupedData] = useState<GroupedBudgetRealization[]>([]);
   const [summary, setSummary] = useState<BudgetRealizationSummary | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Modal state
+  const [selectedGroup, setSelectedGroup] = useState<GroupedBudgetRealization | null>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
 
   // Filters
   const [selectedPeriod, setSelectedPeriod] = useState<string>('all');
@@ -67,6 +84,7 @@ const BudgetRealizationPage: React.FC = () => {
       loadData();
     } else {
       setRealizations([]);
+      setGroupedData([]);
       setSummary(null);
     }
   }, [activeEntity?.id, selectedPeriod, selectedAccountType, selectedBudgetGroup]);
@@ -92,19 +110,65 @@ const BudgetRealizationPage: React.FC = () => {
 
       if (realizationsError) throw realizationsError;
 
+      setRealizations(realizationsData || []);
+
+      // Group data by budget_group_name and period
+      const grouped = groupRealizationsByBudgetGroup(realizationsData || []);
+      setGroupedData(grouped);
+
       // Calculate summary from loaded data
       const summaryData = calculateSummary(realizationsData || [], activeEntity, period);
-
-      setRealizations(realizationsData || []);
       setSummary(summaryData);
 
       console.log('[BudgetRealizationPage] Loaded', realizationsData?.length || 0, 'realizations');
+      console.log('[BudgetRealizationPage] Grouped into', grouped.length, 'budget groups');
     } catch (err: any) {
       console.error('[BudgetRealizationPage] Error loading data:', err);
       setError('Gagal memuat data realisasi: ' + err.message);
     } finally {
       setLoading(false);
     }
+  };
+
+  // Group realizations by budget name (from budgets.name) and period
+  const groupRealizationsByBudgetGroup = (data: BudgetRealization[]): GroupedBudgetRealization[] => {
+    const groupMap = new Map<string, BudgetRealization[]>();
+
+    // Group by budgets.name + period
+    data.forEach(item => {
+      // Get budget name from budgets.name
+      const budgetName = item.budgets?.name || 'Unknown Budget';
+      const key = `${budgetName}|||${item.period}`;
+      if (!groupMap.has(key)) {
+        groupMap.set(key, []);
+      }
+      groupMap.get(key)!.push(item);
+    });
+
+    // Convert to array and calculate totals
+    const grouped: GroupedBudgetRealization[] = [];
+    groupMap.forEach((accounts, key) => {
+      const [budgetGroupName, period] = key.split('|||');
+      
+      const totalBudget = accounts.reduce((sum, acc) => sum + acc.budget_allocated, 0);
+      const totalRealisasi = accounts.reduce((sum, acc) => sum + acc.realisasi, 0);
+      const totalVariance = totalBudget - totalRealisasi;
+      const variancePercentage = totalBudget > 0 ? (totalVariance / totalBudget) * 100 : 0;
+      const status = totalRealisasi <= totalBudget ? 'ON_TRACK' : 'OVER_BUDGET';
+
+      grouped.push({
+        budget_group_name: budgetGroupName,
+        period,
+        total_budget: totalBudget,
+        total_realisasi: totalRealisasi,
+        total_variance: totalVariance,
+        variance_percentage: variancePercentage,
+        status,
+        accounts,
+      });
+    });
+
+    return grouped;
   };
 
   // Calculate summary from realizations data
@@ -157,16 +221,24 @@ const BudgetRealizationPage: React.FC = () => {
     };
   }, [activeEntity?.id]);
 
-  // Filter by search
-  const filteredRealizations = realizations.filter((item) => {
+  // Filter by search (search in budget name from budgets.name)
+  const filteredGroupedData = groupedData.filter((item) => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
-    return (
-      item.account_code.toLowerCase().includes(query) ||
-      item.account_name.toLowerCase().includes(query) ||
-      item.account_type?.toLowerCase().includes(query)
-    );
+    return item.budget_group_name.toLowerCase().includes(query);
   });
+
+  // Open detail modal
+  const handleOpenDetail = (group: GroupedBudgetRealization) => {
+    setSelectedGroup(group);
+    setShowDetailModal(true);
+  };
+
+  // Close detail modal
+  const handleCloseDetail = () => {
+    setShowDetailModal(false);
+    setSelectedGroup(null);
+  };
 
   return (
     <div style={{ padding: '24px', maxWidth: '1400px', margin: '0 auto' }}>
@@ -182,7 +254,7 @@ const BudgetRealizationPage: React.FC = () => {
         <div>
           <h2 style={{ margin: 0, fontSize: '28px', fontWeight: 600 }}>Laporan Perbandingan</h2>
           <p style={{ margin: '4px 0 0', fontSize: '14px', color: '#6c757d' }}>
-            Budget vs Realisasi per Akun Perkiraan
+            Budget vs Realisasi per Budget Group
           </p>
           {activeEntity && (
             <p style={{ margin: '4px 0 0', fontSize: '14px', color: '#6c757d' }}>
@@ -255,7 +327,6 @@ const BudgetRealizationPage: React.FC = () => {
             gap: '8px',
             marginBottom: '16px',
           }}>
-
             <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>Filter Laporan</h3>
           </div>
 
@@ -360,13 +431,13 @@ const BudgetRealizationPage: React.FC = () => {
                 fontSize: '13px',
                 fontWeight: 500,
               }}>
-                Cari Akun
+                Cari Budget Group
               </label>
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Cari kode, nama, atau tipe akun..."
+                placeholder="Cari nama budget group..."
                 disabled={loading}
                 style={{
                   width: '100%',
@@ -380,7 +451,7 @@ const BudgetRealizationPage: React.FC = () => {
           </div>
 
           <div style={{ fontSize: '13px', color: '#6c757d' }}>
-            Menampilkan <strong>{filteredRealizations.length}</strong> dari {realizations.length} akun
+            Menampilkan <strong>{filteredGroupedData.length}</strong> dari {groupedData.length} budget group
           </div>
         </div>
       )}
@@ -461,7 +532,7 @@ const BudgetRealizationPage: React.FC = () => {
               fontSize: `${getAdaptiveFontSize(Math.abs(summary.total_variance))}px`,
               fontWeight: 600,
             }}>
-              Rp{formatCurrency(summary.total_variance)}
+              Rp{formatCurrency(Math.abs(summary.total_variance))}
             </div>
             <div style={{ fontSize: '11px', marginTop: '4px', opacity: 0.9 }}>
               {summary.overall_status === 'OVER_BUDGET' ? 'Over Budget' : 'Under Budget'}
@@ -485,7 +556,7 @@ const BudgetRealizationPage: React.FC = () => {
               Variance %
             </div>
             <div style={{ fontSize: '24px', fontWeight: 600 }}>
-              {summary.variance_percentage.toFixed(2)}%
+              {Math.abs(summary.variance_percentage).toFixed(2)}%
             </div>
             <div style={{ fontSize: '11px', marginTop: '4px', opacity: 0.9 }}>
               Sisa Budget
@@ -494,7 +565,7 @@ const BudgetRealizationPage: React.FC = () => {
         </div>
       )}
 
-      {/* Data Table */}
+      {/* Grouped Data Table */}
       {activeEntity && (
         <div style={{
           backgroundColor: 'white',
@@ -502,7 +573,7 @@ const BudgetRealizationPage: React.FC = () => {
           borderRadius: '8px',
           overflow: 'hidden',
         }}>
-          {loading && realizations.length === 0 ? (
+          {loading && groupedData.length === 0 ? (
             <div style={{
               padding: '60px 20px',
               textAlign: 'center',
@@ -510,7 +581,7 @@ const BudgetRealizationPage: React.FC = () => {
             }}>
               ⏳ Memuat data...
             </div>
-          ) : filteredRealizations.length === 0 ? (
+          ) : filteredGroupedData.length === 0 ? (
             <div style={{
               padding: '60px 20px',
               textAlign: 'center',
@@ -529,19 +600,18 @@ const BudgetRealizationPage: React.FC = () => {
                   <tr style={{ backgroundColor: '#f8f9fa' }}>
                     <th style={tableHeaderStyle}>Entitas</th>
                     <th style={tableHeaderStyle}>Periode</th>
-                    <th style={tableHeaderStyle}>Kode Akun</th>
-                    <th style={tableHeaderStyle}>Nama Akun</th>
-                    <th style={tableHeaderStyle}>Tipe</th>
-                    <th style={tableHeaderStyle}>Budget</th>
-                    <th style={tableHeaderStyle}>Realisasi</th>
+                    <th style={tableHeaderStyle}>Nama Budget Group</th>
+                    <th style={tableHeaderStyle}>Total Budget</th>
+                    <th style={tableHeaderStyle}>Total Realisasi</th>
                     <th style={tableHeaderStyle}>Variance</th>
                     <th style={tableHeaderStyle}>Variance %</th>
                     <th style={{ ...tableHeaderStyle, textAlign: 'center' }}>Status</th>
+                    <th style={{ ...tableHeaderStyle, textAlign: 'center' }}>Aksi</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredRealizations.map((item) => (
-                    <tr key={item.id} style={{ borderBottom: '1px solid #dee2e6' }}>
+                  {filteredGroupedData.map((group, index) => (
+                    <tr key={`${group.budget_group_name}-${group.period}-${index}`} style={{ borderBottom: '1px solid #dee2e6' }}>
                       <td style={tableCellStyle}>
                         {activeEntity.entity_name || activeEntity.name}
                       </td>
@@ -552,82 +622,83 @@ const BudgetRealizationPage: React.FC = () => {
                           borderRadius: '4px',
                           fontSize: '13px',
                         }}>
-                          {item.period}
-                        </code>
-                      </td>
-                      <td style={tableCellStyle}>
-                        <code style={{
-                          padding: '4px 8px',
-                          backgroundColor: '#e7f3ff',
-                          borderRadius: '4px',
-                          fontSize: '13px',
-                          fontWeight: 500,
-                        }}>
-                          {item.account_code}
+                          {group.period}
                         </code>
                       </td>
                       <td style={tableCellStyle}>
                         <div style={{
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                          maxWidth: '250px',
+                          fontWeight: 600,
+                          color: '#007bff',
                         }}>
-                          {item.account_name}
+                          {group.budget_group_name}
+                        </div>
+                        <div style={{
+                          fontSize: '12px',
+                          color: '#6c757d',
+                          marginTop: '2px',
+                        }}>
+                          {group.accounts.length} akun
                         </div>
                       </td>
                       <td style={tableCellStyle}>
-                        <span style={{
-                          padding: '4px 8px',
-                          backgroundColor: '#f0f0f0',
-                          borderRadius: '4px',
-                          fontSize: '12px',
-                        }}>
-                          {item.account_type || '-'}
-                        </span>
-                      </td>
-                      <td style={tableCellStyle}>
                         <strong style={{
-                          fontSize: `${getAdaptiveFontSize(item.budget_allocated)}px`,
+                          fontSize: `${getAdaptiveFontSize(group.total_budget)}px`,
                         }}>
-                          Rp{formatCurrency(item.budget_allocated)}
+                          Rp{formatCurrency(group.total_budget)}
                         </strong>
                       </td>
                       <td style={tableCellStyle}>
                         <strong style={{
-                          fontSize: `${getAdaptiveFontSize(item.realisasi)}px`,
+                          fontSize: `${getAdaptiveFontSize(group.total_realisasi)}px`,
                           color: '#28a745',
                         }}>
-                          Rp{formatCurrency(item.realisasi)}
+                          Rp{formatCurrency(group.total_realisasi)}
                         </strong>
                       </td>
                       <td style={tableCellStyle}>
                         <strong style={{
-                          fontSize: `${getAdaptiveFontSize(Math.abs(item.variance))}px`,
-                          color: item.variance >= 0 ? '#28a745' : '#dc3545',
+                          fontSize: `${getAdaptiveFontSize(Math.abs(group.total_variance))}px`,
+                          color: group.total_variance >= 0 ? '#28a745' : '#dc3545',
                         }}>
-                          Rp{formatCurrency(item.variance)}
+                          Rp{formatCurrency(Math.abs(group.total_variance))}
                         </strong>
                       </td>
                       <td style={tableCellStyle}>
                         <strong style={{
                           fontSize: '14px',
-                          color: item.variance >= 0 ? '#28a745' : '#dc3545',
+                          color: group.total_variance >= 0 ? '#28a745' : '#dc3545',
                         }}>
-                          {item.variance_percentage.toFixed(2)}%
+                          {Math.abs(group.variance_percentage).toFixed(2)}%
                         </strong>
                       </td>
                       <td style={{ ...tableCellStyle, textAlign: 'center' }}>
                         <span style={{
                           padding: '6px 12px',
-                          backgroundColor: item.status === 'ON_TRACK' ? '#d4edda' : '#f8d7da',
-                          color: item.status === 'ON_TRACK' ? '#155724' : '#721c24',
+                          backgroundColor: group.status === 'ON_TRACK' ? '#d4edda' : '#f8d7da',
+                          color: group.status === 'ON_TRACK' ? '#155724' : '#721c24',
                           borderRadius: '12px',
                           fontSize: '12px',
                           fontWeight: 600,
                         }}>
-                          {item.status === 'ON_TRACK' ? '✓ On Track' : '⚠ Over Budget'}
+                          {group.status === 'ON_TRACK' ? '✓ On Track' : '⚠ Over Budget'}
                         </span>
+                      </td>
+                      <td style={{ ...tableCellStyle, textAlign: 'center' }}>
+                        <button
+                          onClick={() => handleOpenDetail(group)}
+                          style={{
+                            padding: '6px 16px',
+                            backgroundColor: '#007bff',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontSize: '13px',
+                            fontWeight: 600,
+                          }}
+                        >
+                          📋 Detail
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -635,6 +706,243 @@ const BudgetRealizationPage: React.FC = () => {
               </table>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Detail Modal */}
+      {showDetailModal && selectedGroup && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '20px',
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            maxWidth: '1200px',
+            width: '100%',
+            maxHeight: '90vh',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+          }}>
+            {/* Modal Header */}
+            <div style={{
+              padding: '20px 24px',
+              borderBottom: '1px solid #dee2e6',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 600 }}>
+                  Detail Akun - {selectedGroup.budget_group_name}
+                </h3>
+                <p style={{ margin: '4px 0 0', fontSize: '14px', color: '#6c757d' }}>
+                  Periode: {selectedGroup.period} • {selectedGroup.accounts.length} akun
+                </p>
+              </div>
+              <button
+                onClick={handleCloseDetail}
+                style={{
+                  padding: '8px 12px',
+                  backgroundColor: '#f8f9fa',
+                  border: '1px solid #dee2e6',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '18px',
+                  fontWeight: 600,
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div style={{
+              padding: '20px 24px',
+              overflowY: 'auto',
+              flex: 1,
+            }}>
+              {/* Summary Cards for this group */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                gap: '12px',
+                marginBottom: '20px',
+              }}>
+                <div style={{
+                  padding: '16px',
+                  backgroundColor: '#007bff',
+                  color: 'white',
+                  borderRadius: '6px',
+                }}>
+                  <div style={{ fontSize: '11px', marginBottom: '6px', opacity: 0.9 }}>
+                    TOTAL BUDGET
+                  </div>
+                  <div style={{ fontSize: '18px', fontWeight: 600 }}>
+                    Rp{formatCurrency(selectedGroup.total_budget)}
+                  </div>
+                </div>
+                <div style={{
+                  padding: '16px',
+                  backgroundColor: '#28a745',
+                  color: 'white',
+                  borderRadius: '6px',
+                }}>
+                  <div style={{ fontSize: '11px', marginBottom: '6px', opacity: 0.9 }}>
+                    TOTAL REALISASI
+                  </div>
+                  <div style={{ fontSize: '18px', fontWeight: 600 }}>
+                    Rp{formatCurrency(selectedGroup.total_realisasi)}
+                  </div>
+                </div>
+                <div style={{
+                  padding: '16px',
+                  backgroundColor: selectedGroup.status === 'OVER_BUDGET' ? '#dc3545' : '#17a2b8',
+                  color: 'white',
+                  borderRadius: '6px',
+                }}>
+                  <div style={{ fontSize: '11px', marginBottom: '6px', opacity: 0.9 }}>
+                    VARIANCE
+                  </div>
+                  <div style={{ fontSize: '18px', fontWeight: 600 }}>
+                    Rp{formatCurrency(Math.abs(selectedGroup.total_variance))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Detail Table */}
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ backgroundColor: '#f8f9fa' }}>
+                      <th style={tableHeaderStyle}>Kode Akun</th>
+                      <th style={tableHeaderStyle}>Nama Akun</th>
+                      <th style={tableHeaderStyle}>Tipe</th>
+                      <th style={tableHeaderStyle}>Budget</th>
+                      <th style={tableHeaderStyle}>Realisasi</th>
+                      <th style={tableHeaderStyle}>Variance</th>
+                      <th style={tableHeaderStyle}>Variance %</th>
+                      <th style={{ ...tableHeaderStyle, textAlign: 'center' }}>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedGroup.accounts.map((account) => (
+                      <tr key={account.id} style={{ borderBottom: '1px solid #dee2e6' }}>
+                        <td style={tableCellStyle}>
+                          <code style={{
+                            padding: '4px 8px',
+                            backgroundColor: '#e7f3ff',
+                            borderRadius: '4px',
+                            fontSize: '13px',
+                            fontWeight: 500,
+                          }}>
+                            {account.account_code}
+                          </code>
+                        </td>
+                        <td style={tableCellStyle}>
+                          <div style={{
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            maxWidth: '250px',
+                          }}>
+                            {account.account_name}
+                          </div>
+                        </td>
+                        <td style={tableCellStyle}>
+                          <span style={{
+                            padding: '4px 8px',
+                            backgroundColor: '#f0f0f0',
+                            borderRadius: '4px',
+                            fontSize: '12px',
+                          }}>
+                            {account.account_type || '-'}
+                          </span>
+                        </td>
+                        <td style={tableCellStyle}>
+                          <strong style={{
+                            fontSize: `${getAdaptiveFontSize(account.budget_allocated)}px`,
+                          }}>
+                            Rp{formatCurrency(account.budget_allocated)}
+                          </strong>
+                        </td>
+                        <td style={tableCellStyle}>
+                          <strong style={{
+                            fontSize: `${getAdaptiveFontSize(account.realisasi)}px`,
+                            color: '#28a745',
+                          }}>
+                            Rp{formatCurrency(account.realisasi)}
+                          </strong>
+                        </td>
+                        <td style={tableCellStyle}>
+                          <strong style={{
+                            fontSize: `${getAdaptiveFontSize(Math.abs(account.variance))}px`,
+                            color: account.variance >= 0 ? '#28a745' : '#dc3545',
+                          }}>
+                            Rp{formatCurrency(Math.abs(account.variance))}
+                          </strong>
+                        </td>
+                        <td style={tableCellStyle}>
+                          <strong style={{
+                            fontSize: '14px',
+                            color: account.variance >= 0 ? '#28a745' : '#dc3545',
+                          }}>
+                            {Math.abs(account.variance_percentage).toFixed(2)}%
+                          </strong>
+                        </td>
+                        <td style={{ ...tableCellStyle, textAlign: 'center' }}>
+                          <span style={{
+                            padding: '6px 12px',
+                            backgroundColor: account.status === 'ON_TRACK' ? '#d4edda' : '#f8d7da',
+                            color: account.status === 'ON_TRACK' ? '#155724' : '#721c24',
+                            borderRadius: '12px',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                          }}>
+                            {account.status === 'ON_TRACK' ? '✓ On Track' : '⚠ Over Budget'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div style={{
+              padding: '16px 24px',
+              borderTop: '1px solid #dee2e6',
+              display: 'flex',
+              justifyContent: 'flex-end',
+            }}>
+              <button
+                onClick={handleCloseDetail}
+                style={{
+                  padding: '10px 24px',
+                  backgroundColor: '#6c757d',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                }}
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
