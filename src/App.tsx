@@ -1,9 +1,9 @@
 import { Routes, Route, NavLink, Navigate } from "react-router-dom";
 import { useState } from "react";
 
-import BudgetPage  from "./pages/BudgetPage";
+import BudgetPage from "./pages/BudgetPage";
 import BudgetRealizationPage from "./pages/BudgetRealisasiPage";
-import { ComparisonPage } from "./pages/DashboardPage";
+import DashboardPage from "./pages/DashboardPage";
 import { EntitasPage } from "./pages/EntitasPage";
 import CoaPage from "./pages/CoaPage";
 
@@ -12,7 +12,9 @@ import AuthPage from "./pages/AuthPage";
 
 export default function App() {
   const { user, loading, signOut } = useAuth();
-  const [expandedMenu, setExpandedMenu] = useState<string | null>("master-data");
+  const [expandedMenu, setExpandedMenu] = useState<string | null>(
+    "master-data"
+  );
 
   const handleLogout = async () => {
     await signOut();
@@ -23,11 +25,7 @@ export default function App() {
   };
 
   if (loading) {
-    return (
-      <div className="app-loading">
-        Loading...
-      </div>
-    );
+    return <div className="app-loading">Loading...</div>;
   }
 
   return (
@@ -49,8 +47,8 @@ export default function App() {
           <nav className="sidebar-nav">
             {/* Dashboard */}
             <NavLink
-              to="/comparison"
-              className={({ isActive }) => 
+              to="/dashboard"
+              className={({ isActive }) =>
                 `sidebar-menu-item ${isActive ? "active" : ""}`
               }
             >
@@ -60,60 +58,58 @@ export default function App() {
             {/* Master Data */}
             <div>
               <button
-                onClick={() => toggleMenu('master-data')}
+                onClick={() => toggleMenu("master-data")}
                 className="sidebar-menu-item"
               >
-
                 <span className="sidebar-menu-label">Master Data</span>
-                <span className={`sidebar-menu-arrow ${expandedMenu === 'master-data' ? 'expanded' : ''}`}>
+                <span
+                  className={`sidebar-menu-arrow ${
+                    expandedMenu === "master-data" ? "expanded" : ""
+                  }`}
+                >
                   ▼
                 </span>
               </button>
-              
-              {expandedMenu === 'master-data' && (
+
+              {expandedMenu === "master-data" && (
                 <div className="sidebar-submenu">
                   <NavLink
                     to="/entitas"
-                    className={({ isActive }) => 
+                    className={({ isActive }) =>
                       `sidebar-menu-item child ${isActive ? "active" : ""}`
                     }
                   >
-
                     <span className="sidebar-menu-label">List Entitas</span>
                   </NavLink>
 
                   <NavLink
                     to="/akun"
-                    className={({ isActive }) => 
+                    className={({ isActive }) =>
                       `sidebar-menu-item child ${isActive ? "active" : ""}`
                     }
                   >
-  
                     <span className="sidebar-menu-label">List Akun</span>
                   </NavLink>
-                  
 
                   <NavLink
                     to="/budget"
-                    className={({ isActive }) => 
+                    className={({ isActive }) =>
                       `sidebar-menu-item child ${isActive ? "active" : ""}`
                     }
                   >
                     <span className="sidebar-menu-label">Budget Entry</span>
                   </NavLink>
-
-                </div>                
+                </div>
               )}
             </div>
-               <NavLink
+            <NavLink
               to="/realisasi"
-              className={({ isActive }) => 
+              className={({ isActive }) =>
                 `sidebar-menu-item ${isActive ? "active" : ""}`
               }
             >
               <span className="sidebar-menu-label">Realisasi</span>
             </NavLink>
-
           </nav>
 
           {/* Sidebar Footer */}
@@ -122,7 +118,7 @@ export default function App() {
               <span className="sidebar-status-indicator"></span>
               <span className="sidebar-status-text">Sistem Aktif</span>
             </div>
-            
+
             {user && (
               <button
                 onClick={handleLogout}
@@ -136,12 +132,12 @@ export default function App() {
       )}
 
       {/* Main Content */}
-      <div className={`app-main-content ${!user ? 'no-sidebar' : ''}`}>
+      <div className={`app-main-content ${!user ? "no-sidebar" : ""}`}>
         {/* Page Content */}
         <main className="app-container">
           <Routes>
             <Route path="/login" element={<AuthPage />} />
-           
+
             <Route
               path="/entitas"
               element={user ? <EntitasPage /> : <Navigate to="/login" />}
@@ -156,13 +152,13 @@ export default function App() {
             />
             <Route
               path="/realisasi"
-              element={user ? <BudgetRealizationPage /> : <Navigate to="/login" />}
+              element={
+                user ? <BudgetRealizationPage /> : <Navigate to="/login" />
+              }
             />
             <Route
-              path="/comparison"
-              element={user ? <ComparisonPage /> : <Navigate to="/login" />}
-
-              
+              path="/dashboard"
+              element={user ? <DashboardPage /> : <Navigate to="/login" />}
             />
             <Route path="/" element={<Navigate to="/entitas" />} />
             <Route path="*" element={<Navigate to="/entitas" />} />
