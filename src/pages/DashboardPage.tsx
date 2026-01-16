@@ -289,7 +289,7 @@ const DashboardPage: React.FC = () => {
       {/* Main Content */}
       {activeEntity && (
         <>
-          {/* LINE CHART Section */}
+          {/* COMBINATION CHART Section (Bar + Line) */}
           <div style={{
             backgroundColor: 'white',
             border: '1px solid #dee2e6',
@@ -303,7 +303,7 @@ const DashboardPage: React.FC = () => {
               fontWeight: 600,
               color: '#495057',
             }}>
-              Trend Budget vs Realisasi
+              Budget vs Realisasi
             </h3>
 
             {loading ? (
@@ -353,16 +353,54 @@ const DashboardPage: React.FC = () => {
                     );
                   })}
                   
-                  {/* Budget line (blue) */}
-                  <path
-                    d={generateLinePath(chartData, 'budget', 700, 220)}
-                    fill="none"
-                    stroke="#007bff"
-                    strokeWidth="3"
-                    transform="translate(80, 40)"
-                  />
+                  {/* Budget Bars */}
+                  {chartData.map((point, index) => {
+                    const barWidth = 40;
+                    const x = 80 + (index * 700 / chartData.length) + (700 / chartData.length - barWidth) / 2;
+                    const barHeight = maxChartValue > 0 ? (point.budget / maxChartValue) * 220 : 0;
+                    const y = 40 + (220 - barHeight);
+                    
+                    return (
+                      <rect
+                        key={`bar-${index}`}
+                        x={x}
+                        y={y}
+                        width={barWidth}
+                        height={barHeight}
+                        fill="#007bff"
+                        opacity="0.7"
+                        rx="3"
+                      />
+                    );
+                  })}
                   
-                  {/* Realisasi line (green/red based on status) */}
+                  {/* Variance Shaded Areas */}
+                  {chartData.map((point, index) => {
+                    const barWidth = 40;
+                    const x = 80 + (index * 700 / chartData.length) + (700 / chartData.length - barWidth) / 2;
+                    const budgetHeight = maxChartValue > 0 ? (point.budget / maxChartValue) * 220 : 0;
+                    const realisasiHeight = maxChartValue > 0 ? (point.realisasi / maxChartValue) * 220 : 0;
+                    const budgetY = 40 + (220 - budgetHeight);
+                    const realisasiY = 40 + (220 - realisasiHeight);
+                    
+                    const isOver = point.realisasi > point.budget;
+                    const rectY = isOver ? budgetY : realisasiY;
+                    const rectHeight = Math.abs(budgetHeight - realisasiHeight);
+                    
+                    return (
+                      <rect
+                        key={`variance-${index}`}
+                        x={x}
+                        y={rectY}
+                        width={barWidth}
+                        height={rectHeight}
+                        fill={isOver ? '#dc3545' : '#28a745'}
+                        opacity="0.25"
+                      />
+                    );
+                  })}
+                  
+                  {/* Realisasi Line */}
                   <path
                     d={generateLinePath(chartData, 'realisasi', 700, 220)}
                     fill="none"
@@ -370,23 +408,6 @@ const DashboardPage: React.FC = () => {
                     strokeWidth="3"
                     transform="translate(80, 40)"
                   />
-                  
-                  {/* Data points - Budget */}
-                  {chartData.map((point, index) => {
-                    const x = 80 + (index * 700 / (chartData.length - 1 || 1));
-                    const y = 40 + (220 - (maxChartValue > 0 ? (point.budget / maxChartValue) * 220 : 0));
-                    return (
-                      <circle
-                        key={`budget-${index}`}
-                        cx={x}
-                        cy={y}
-                        r="4"
-                        fill="#007bff"
-                        stroke="white"
-                        strokeWidth="2"
-                      />
-                    );
-                  })}
                   
                   {/* Data points - Realisasi */}
                   {chartData.map((point, index) => {
@@ -398,7 +419,7 @@ const DashboardPage: React.FC = () => {
                         key={`real-${index}`}
                         cx={x}
                         cy={y}
-                        r="4"
+                        r="5"
                         fill={isOver ? '#dc3545' : '#28a745'}
                         stroke="white"
                         strokeWidth="2"
@@ -408,7 +429,7 @@ const DashboardPage: React.FC = () => {
                   
                   {/* X-axis labels */}
                   {chartData.map((point, index) => {
-                    const x = 80 + (index * 700 / (chartData.length - 1 || 1));
+                    const x = 80 + (index * 700 / chartData.length) + (700 / chartData.length) / 2;
                     return (
                       <text
                         key={`label-${index}`}
@@ -439,10 +460,12 @@ const DashboardPage: React.FC = () => {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <div style={{
                       width: '24px',
-                      height: '3px',
+                      height: '12px',
                       backgroundColor: '#007bff',
+                      opacity: '0.7',
+                      borderRadius: '2px',
                     }} />
-                    <span style={{ fontSize: '14px', color: '#495057' }}>Budget</span>
+                    <span style={{ fontSize: '14px', color: '#495057' }}>Budget (Bar)</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <div style={{
@@ -450,7 +473,17 @@ const DashboardPage: React.FC = () => {
                       height: '3px',
                       backgroundColor: '#28a745',
                     }} />
-                    <span style={{ fontSize: '14px', color: '#495057' }}>Realisasi</span>
+                    <span style={{ fontSize: '14px', color: '#495057' }}>Realisasi (Line)</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{
+                      width: '16px',
+                      height: '12px',
+                      backgroundColor: '#dc3545',
+                      opacity: '0.25',
+                      borderRadius: '2px',
+                    }} />
+                    <span style={{ fontSize: '14px', color: '#495057' }}>Over Budget</span>
                   </div>
                 </div>
               </div>
