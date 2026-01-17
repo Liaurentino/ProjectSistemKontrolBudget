@@ -1,4 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import {
+  ComposedChart,
+  Bar,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts';
 import { useEntity } from '../contexts/EntityContext';
 import {
   getBudgetRealizationsLive,
@@ -37,13 +48,12 @@ const DashboardPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // BETTER STATISTICS
   const [stats, setStats] = useState({
     totalBudget: 0,
     totalRealisasi: 0,
-    averageUtilization: 0, // Average per item (lebih akurat!)
-    totalUnutilized: 0, // Total sisa budget yang belum terpakai
-    totalOverBudget: 0, // Total yang over budget
+    averageUtilization: 0,
+    totalUnutilized: 0,
+    totalOverBudget: 0,
     overBudgetCount: 0,
     onTrackCount: 0,
     underUtilizedCount: 0,
@@ -159,29 +169,24 @@ const DashboardPage: React.FC = () => {
     setOverBudgetItems(overBudget);
   };
 
-  // BETTER STATISTICS CALCULATION
   const calculateBetterStatistics = (data: BudgetRealization[]) => {
     const totalBudget = data.reduce((sum, item) => sum + item.budget_allocated, 0);
     const totalRealisasi = data.reduce((sum, item) => sum + item.realisasi, 0);
     
-    // Calculate utilization per item
     const utilizationRates = data.map(item => {
       if (item.budget_allocated === 0) return 0;
       return (item.realisasi / item.budget_allocated) * 100;
     });
     
-    // Average utilization (lebih akurat!)
     const averageUtilization = utilizationRates.length > 0
       ? utilizationRates.reduce((sum, rate) => sum + rate, 0) / utilizationRates.length
       : 0;
     
-    // Total unutilized (budget yang belum terpakai)
     const totalUnutilized = data.reduce((sum, item) => {
       const unutilized = item.budget_allocated - item.realisasi;
       return sum + (unutilized > 0 ? unutilized : 0);
     }, 0);
     
-    // Total over budget (total yang melebihi budget)
     const totalOverBudget = data.reduce((sum, item) => {
       const over = item.realisasi - item.budget_allocated;
       return sum + (over > 0 ? over : 0);
@@ -208,37 +213,37 @@ const DashboardPage: React.FC = () => {
     });
   };
 
-  const maxChartValue = Math.max(
-    ...chartData.flatMap(d => [d.budget, d.realisasi]),
-    0
-  );
-
-  // Generate SVG path for line chart
-  const generateLinePath = (points: ChartDataPoint[], key: 'budget' | 'realisasi', width: number, height: number) => {
-    if (points.length === 0) return '';
-    
-    const xStep = width / (points.length - 1 || 1);
-    
-    const pathPoints = points.map((point, index) => {
-      const x = index * xStep;
-      const value = point[key];
-      const y = height - (maxChartValue > 0 ? (value / maxChartValue) * height : 0);
-      return { x, y };
-    });
-    
-    // Create smooth curve using quadratic bezier
-    let path = `M ${pathPoints[0].x} ${pathPoints[0].y}`;
-    
-    for (let i = 1; i < pathPoints.length; i++) {
-      const prev = pathPoints[i - 1];
-      const curr = pathPoints[i];
-      const midX = (prev.x + curr.x) / 2;
-      
-      path += ` Q ${prev.x} ${prev.y} ${midX} ${(prev.y + curr.y) / 2}`;
-      path += ` Q ${curr.x} ${curr.y} ${curr.x} ${curr.y}`;
+  // Custom Tooltip for Recharts
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div style={{
+          backgroundColor: 'white',
+          padding: '12px',
+          border: '1px solid #dee2e6',
+          borderRadius: '6px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+        }}>
+          <p style={{ margin: '0 0 8px', fontWeight: 600, color: '#495057' }}>
+            {payload[0].payload.period}
+          </p>
+          {payload.map((entry: any, index: number) => (
+            <p key={index} style={{ margin: '4px 0', fontSize: '13px', color: entry.color }}>
+              <strong>{entry.name}:</strong> Rp{formatCurrency(entry.value)}
+            </p>
+          ))}
+        </div>
+      );
     }
-    
-    return path;
+    return null;
+  };
+
+  // Format Y-axis
+  const formatYAxis = (value: number) => {
+    if (value >= 1000000000) return `${(value / 1000000000).toFixed(1)}M`;
+    if (value >= 1000000) return `${(value / 1000000).toFixed(1)}jt`;
+    if (value >= 1000) return `${(value / 1000).toFixed(0)}rb`;
+    return value.toString();
   };
 
   return (
@@ -289,13 +294,14 @@ const DashboardPage: React.FC = () => {
       {/* Main Content */}
       {activeEntity && (
         <>
-          {/* COMBINATION CHART Section (Bar + Line) */}
+          {/* RECHARTS Section */}
           <div style={{
             backgroundColor: 'white',
             border: '1px solid #dee2e6',
             borderRadius: '8px',
             padding: '24px',
             marginBottom: '16px',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
           }}>
             <h3 style={{ 
               margin: '0 0 20px', 
@@ -315,182 +321,49 @@ const DashboardPage: React.FC = () => {
                 📋 Belum ada data budget. Silakan buat budget terlebih dahulu.
               </div>
             ) : (
-              <div style={{ width: '100%', overflowX: 'auto' }}>
-                <svg 
-                  width="100%" 
-                  height="320" 
-                  style={{ minWidth: '600px' }}
-                  viewBox="0 0 800 320"
-                  preserveAspectRatio="xMidYMid meet"
+              <ResponsiveContainer width="100%" height={400}>
+                <ComposedChart
+                  data={chartData}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
                 >
-                  {/* Grid lines */}
-                  {[0, 1, 2, 3, 4].map(i => (
-                    <line
-                      key={i}
-                      x1="80"
-                      y1={40 + i * 55}
-                      x2="780"
-                      y2={40 + i * 55}
-                      stroke="#e9ecef"
-                      strokeWidth="1"
-                    />
-                  ))}
-                  
-                  {/* Y-axis labels */}
-                  {[0, 1, 2, 3, 4].map(i => {
-                    const value = maxChartValue * (1 - i * 0.25);
-                    return (
-                      <text
-                        key={i}
-                        x="70"
-                        y={44 + i * 55}
-                        textAnchor="end"
-                        fontSize="11"
-                        fill="#6c757d"
-                      >
-                        {formatCurrency(Math.round(value))}
-                      </text>
-                    );
-                  })}
-                  
-                  {/* Budget Bars */}
-                  {chartData.map((point, index) => {
-                    const barWidth = 40;
-                    const x = 80 + (index * 700 / chartData.length) + (700 / chartData.length - barWidth) / 2;
-                    const barHeight = maxChartValue > 0 ? (point.budget / maxChartValue) * 220 : 0;
-                    const y = 40 + (220 - barHeight);
-                    
-                    return (
-                      <rect
-                        key={`bar-${index}`}
-                        x={x}
-                        y={y}
-                        width={barWidth}
-                        height={barHeight}
-                        fill="#007bff"
-                        opacity="0.7"
-                        rx="3"
-                      />
-                    );
-                  })}
-                  
-                  {/* Variance Shaded Areas */}
-                  {chartData.map((point, index) => {
-                    const barWidth = 40;
-                    const x = 80 + (index * 700 / chartData.length) + (700 / chartData.length - barWidth) / 2;
-                    const budgetHeight = maxChartValue > 0 ? (point.budget / maxChartValue) * 220 : 0;
-                    const realisasiHeight = maxChartValue > 0 ? (point.realisasi / maxChartValue) * 220 : 0;
-                    const budgetY = 40 + (220 - budgetHeight);
-                    const realisasiY = 40 + (220 - realisasiHeight);
-                    
-                    const isOver = point.realisasi > point.budget;
-                    const rectY = isOver ? budgetY : realisasiY;
-                    const rectHeight = Math.abs(budgetHeight - realisasiHeight);
-                    
-                    return (
-                      <rect
-                        key={`variance-${index}`}
-                        x={x}
-                        y={rectY}
-                        width={barWidth}
-                        height={rectHeight}
-                        fill={isOver ? '#dc3545' : '#28a745'}
-                        opacity="0.25"
-                      />
-                    );
-                  })}
-                  
-                  {/* Realisasi Line */}
-                  <path
-                    d={generateLinePath(chartData, 'realisasi', 700, 220)}
-                    fill="none"
-                    stroke="#28a745"
-                    strokeWidth="3"
-                    transform="translate(80, 40)"
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e9ecef" />
+                  <XAxis 
+                    dataKey="period" 
+                    tick={{ fontSize: 12, fontWeight: 500 }}
+                    stroke="#495057"
                   />
-                  
-                  {/* Data points - Realisasi */}
-                  {chartData.map((point, index) => {
-                    const x = 80 + (index * 700 / (chartData.length - 1 || 1));
-                    const y = 40 + (220 - (maxChartValue > 0 ? (point.realisasi / maxChartValue) * 220 : 0));
-                    const isOver = point.realisasi > point.budget;
-                    return (
-                      <circle
-                        key={`real-${index}`}
-                        cx={x}
-                        cy={y}
-                        r="5"
-                        fill={isOver ? '#dc3545' : '#28a745'}
-                        stroke="white"
-                        strokeWidth="2"
-                      />
-                    );
-                  })}
-                  
-                  {/* X-axis labels */}
-                  {chartData.map((point, index) => {
-                    const x = 80 + (index * 700 / chartData.length) + (700 / chartData.length) / 2;
-                    return (
-                      <text
-                        key={`label-${index}`}
-                        x={x}
-                        y="285"
-                        textAnchor="middle"
-                        fontSize="12"
-                        fill="#495057"
-                        fontWeight="500"
-                      >
-                        {point.period}
-                      </text>
-                    );
-                  })}
-                  
-                  {/* Axes */}
-                  <line x1="80" y1="260" x2="780" y2="260" stroke="#495057" strokeWidth="2" />
-                  <line x1="80" y1="40" x2="80" y2="260" stroke="#495057" strokeWidth="2" />
-                </svg>
-
-                {/* Legend */}
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  gap: '24px',
-                  marginTop: '16px',
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{
-                      width: '24px',
-                      height: '12px',
-                      backgroundColor: '#007bff',
-                      opacity: '0.7',
-                      borderRadius: '2px',
-                    }} />
-                    <span style={{ fontSize: '14px', color: '#495057' }}>Budget (Bar)</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{
-                      width: '24px',
-                      height: '3px',
-                      backgroundColor: '#28a745',
-                    }} />
-                    <span style={{ fontSize: '14px', color: '#495057' }}>Realisasi (Line)</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{
-                      width: '16px',
-                      height: '12px',
-                      backgroundColor: '#dc3545',
-                      opacity: '0.25',
-                      borderRadius: '2px',
-                    }} />
-                    <span style={{ fontSize: '14px', color: '#495057' }}>Over Budget</span>
-                  </div>
-                </div>
-              </div>
+                  <YAxis 
+                    tickFormatter={formatYAxis}
+                    tick={{ fontSize: 11 }}
+                    stroke="#495057"
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend 
+                    wrapperStyle={{ paddingTop: '20px' }}
+                    iconType="circle"
+                  />
+                  <Bar 
+                    dataKey="budget" 
+                    fill="#007bff" 
+                    name="Budget"
+                    radius={[4, 4, 0, 0]}
+                    opacity={0.8}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="realisasi" 
+                    stroke="#28a745" 
+                    strokeWidth={3}
+                    name="Realisasi"
+                    dot={{ fill: '#28a745', strokeWidth: 2, r: 5 }}
+                    activeDot={{ r: 7 }}
+                  />
+                </ComposedChart>
+              </ResponsiveContainer>
             )}
           </div>
 
-          {/* Bottom Section */}
+          {/* Bottom Section - sama seperti sebelumnya */}
           <div style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1fr',
@@ -502,6 +375,7 @@ const DashboardPage: React.FC = () => {
               border: '1px solid #dee2e6',
               borderRadius: '8px',
               padding: '24px',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
             }}>
               <h3 style={{ 
                 margin: '0 0 16px', 
@@ -596,12 +470,13 @@ const DashboardPage: React.FC = () => {
               )}
             </div>
 
-            {/* BETTER Insights & Statistics */}
+            {/* Insights & Statistics */}
             <div style={{
               backgroundColor: 'white',
               border: '1px solid #dee2e6',
               borderRadius: '8px',
               padding: '24px',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
             }}>
               <h3 style={{ 
                 margin: '0 0 16px', 
@@ -621,7 +496,7 @@ const DashboardPage: React.FC = () => {
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                  {/* AVERAGE Utilization (Lebih Akurat!) */}
+                  {/* Average Utilization */}
                   <div>
                     <div style={{
                       display: 'flex',

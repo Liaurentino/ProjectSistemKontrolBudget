@@ -9,11 +9,12 @@ import CoaPage from "./pages/CoaPage";
 
 import { useAuth } from "./contexts/AuthContext";
 import AuthPage from "./pages/AuthPage";
+import ExportPage from "./pages/ExportPage"
 
 export default function App() {
   const { user, loading, signOut } = useAuth();
   const [expandedMenu, setExpandedMenu] = useState<string | null>(
-    "master-data"
+    "Data Usaha"
   );
 
   const handleLogout = async () => {
@@ -61,10 +62,10 @@ export default function App() {
                 onClick={() => toggleMenu("master-data")}
                 className="sidebar-menu-item"
               >
-                <span className="sidebar-menu-label">Master Data</span>
+                <span className="sidebar-menu-label">Data Usaha</span>
                 <span
                   className={`sidebar-menu-arrow ${
-                    expandedMenu === "master-data" ? "expanded" : ""
+                    expandedMenu === "Data Usaha" ? "expanded" : ""
                   }`}
                 >
                   ▼
@@ -110,13 +111,22 @@ export default function App() {
             >
               <span className="sidebar-menu-label">Realisasi</span>
             </NavLink>
+
+            <NavLink
+              to="/export"
+              className={({ isActive }) =>
+                `sidebar-menu-item ${isActive ? "active" : ""}`
+              }
+            >
+              <span className="sidebar-menu-label">Export</span>
+            </NavLink>
           </nav>
 
           {/* Sidebar Footer */}
           <div className="sidebar-footer">
             <div className="sidebar-status">
               <span className="sidebar-status-indicator"></span>
-              <span className="sidebar-status-text">Sistem Aktif</span>
+              <span className="sidebar-status-text">{user?.email || "User"}</span>
             </div>
 
             {user && (
@@ -157,10 +167,16 @@ export default function App() {
               }
             />
             <Route
+              path="/export"
+              element={
+                user ? <ExportPage /> : <Navigate to="/login" />
+              }
+            />
+            <Route
               path="/dashboard"
               element={user ? <DashboardPage /> : <Navigate to="/login" />}
             />
-            <Route path="/" element={<Navigate to="/entitas" />} />
+            <Route path="/" element={<Navigate to="/dashboard" />} />
             <Route path="*" element={<Navigate to="/entitas" />} />
           </Routes>
         </main>
