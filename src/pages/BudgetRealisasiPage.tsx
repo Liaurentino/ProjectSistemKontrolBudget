@@ -9,6 +9,7 @@ import {
   type BudgetRealization,
   type BudgetRealizationSummary,
 } from '../lib/accurate';
+import { ExportFile } from '../components/ExportFile';
 
 // Helper: Format currency
 const formatCurrency = (amount: number): string => {
@@ -734,8 +735,7 @@ const BudgetRealizationPage: React.FC = () => {
             display: 'flex',
             flexDirection: 'column',
           }}>
-            {/* Modal Header */}
-            <div style={{
+         <div style={{
               padding: '20px 24px',
               borderBottom: '1px solid #dee2e6',
               display: 'flex',
@@ -750,20 +750,39 @@ const BudgetRealizationPage: React.FC = () => {
                   Periode: {selectedGroup.period} • {selectedGroup.accounts.length} akun
                 </p>
               </div>
-              <button
-                onClick={handleCloseDetail}
-                style={{
-                  padding: '8px 12px',
-                  backgroundColor: '#f8f9fa',
-                  border: '1px solid #dee2e6',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '18px',
-                  fontWeight: 600,
-                }}
-              >
-                ✕
-              </button>
+              
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                {/* Export Buttons */}
+                <ExportFile
+                  group={{
+                    budget_name: selectedGroup.budget_group_name,
+                    period: selectedGroup.period,
+                    accounts: selectedGroup.accounts,
+                    total_budget: selectedGroup.total_budget,
+                    total_realisasi: selectedGroup.total_realisasi,
+                    total_variance: selectedGroup.total_variance,
+                    variance_percentage: selectedGroup.variance_percentage,
+                    overall_status: selectedGroup.status,
+                  }}
+                  entityName={activeEntity?.entity_name || activeEntity?.name || 'Unknown'}
+                />
+                
+                {/* Close Button */}
+                <button
+                  onClick={handleCloseDetail}
+                  style={{
+                    padding: '8px 12px',
+                    backgroundColor: '#f8f9fa',
+                    border: '1px solid #dee2e6',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '18px',
+                    fontWeight: 600,
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
             </div>
 
             {/* Modal Body */}
@@ -805,7 +824,7 @@ const BudgetRealizationPage: React.FC = () => {
                     Rp{formatCurrency(selectedGroup.total_realisasi)}
                   </div>
                 </div>
-                <div style={{
+                   <div style={{
                   padding: '16px',
                   backgroundColor: selectedGroup.status === 'OVER_BUDGET' ? '#dc3545' : '#17a2b8',
                   color: 'white',
@@ -816,6 +835,22 @@ const BudgetRealizationPage: React.FC = () => {
                   </div>
                   <div style={{ fontSize: '18px', fontWeight: 600 }}>
                     Rp{formatCurrency(Math.abs(selectedGroup.total_variance))}
+                  </div>
+                </div>
+                <div style={{
+                  padding: '16px',
+                  backgroundColor: selectedGroup.status === 'OVER_BUDGET' ? '#dc3545' : '#28a745',
+                  color: 'white',
+                  borderRadius: '6px',
+                }}>
+                  <div style={{ fontSize: '11px', marginBottom: '6px', opacity: 0.9 }}>
+                    VARIANCE %
+                  </div>
+                  <div style={{ fontSize: '18px', fontWeight: 600 }}>
+                    {Math.abs(selectedGroup.variance_percentage).toFixed(2)}%
+                  </div>
+                  <div style={{ fontSize: '11px', marginTop: '4px', opacity: 0.9 }}>
+                    {selectedGroup.status === 'OVER_BUDGET' ? 'Over Budget' : 'Sisa Budget'}
                   </div>
                 </div>
               </div>

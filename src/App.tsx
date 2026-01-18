@@ -9,7 +9,6 @@ import CoaPage from "./pages/CoaPage";
 
 import { useAuth } from "./contexts/AuthContext";
 import AuthPage from "./pages/AuthPage";
-import ExportPage from "./pages/ExportPage"
 
 export default function App() {
   const { user, loading, signOut } = useAuth();
@@ -112,14 +111,6 @@ export default function App() {
               <span className="sidebar-menu-label">Realisasi</span>
             </NavLink>
 
-            <NavLink
-              to="/export"
-              className={({ isActive }) =>
-                `sidebar-menu-item ${isActive ? "active" : ""}`
-              }
-            >
-              <span className="sidebar-menu-label">Export</span>
-            </NavLink>
           </nav>
 
           {/* Sidebar Footer */}
@@ -164,12 +155,6 @@ export default function App() {
               path="/realisasi"
               element={
                 user ? <BudgetRealizationPage /> : <Navigate to="/login" />
-              }
-            />
-            <Route
-              path="/export"
-              element={
-                user ? <ExportPage /> : <Navigate to="/login" />
               }
             />
             <Route
