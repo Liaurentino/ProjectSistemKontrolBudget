@@ -19,8 +19,8 @@ interface RealisasiTableProps {
   budgetId: string;
   categories?: any[];
   budgets: any[];
-  entities: any[];              // ⬅️ ditambahkan
-  activeEntityIds: string[];    // ⬅️ ditambahkan
+  entities: any[];              
+  activeEntityIds: string[];   
   selectedBudgetId: string | null;
   onChangeBudget: (id: string) => void;
 }

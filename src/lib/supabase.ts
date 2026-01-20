@@ -288,11 +288,177 @@ export const deleteRealisasi = async (id: string) => {
 };
 
 // ============================================
-// DEBUG
+// COA / CHART OF ACCOUNTS FUNCTIONS
 // ============================================
 
-if (typeof window !== 'undefined') {
-  // @ts-ignore
-  window.supabase = supabase;
-  console.log('Supabase exposed to window for debugging');
-}
+export const importCoaFromExcel = async (accounts: any[]) => {
+  try {
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+    console.log('[importCoaFromExcel] User check:', { user: !!user, error: userError });
+    
+    if (!user) {
+      return { 
+        data: null, 
+        error: 'Tidak ada sesi aktif. Silakan login kembali.' 
+      };
+    }
+
+    console.log('[importCoaFromExcel] Processing', accounts.length, 'accounts');
+
+    // Transform accounts untuk database insertion
+    const dbAccounts = accounts.map((acc: any, index: number) => {
+      // Generate unique accurate_id untuk Excel imports
+      // Gunakan random string untuk avoid duplicate
+      const timestamp = Date.now();
+      const random = Math.random().toString(36).substring(2, 9);
+      const accurateId = `EXCEL-${acc.entity_id}-${acc.account_code}-${timestamp}-${random}`;
+
+      return {
+        entity_id: acc.entity_id,
+        accurate_id: accurateId,
+        account_name: acc.account_name,
+        account_code: acc.account_code,
+        account_type: acc.account_type,
+        account_type_name: acc.account_type,
+        balance: acc.balance || 0,
+        currency: acc.currency || 'IDR',
+        suspended: acc.suspended || false,
+        is_active: !acc.suspended,
+        source_type: 'excel',
+        parent_id: acc.parent_id,
+        parent_accurate_id: null,
+        lvl: acc.lvl || 1,
+        is_parent: false,
+        hierarchy_path: null,
+      };
+    });
+
+    console.log('[importCoaFromExcel] Transformed accounts:', dbAccounts.slice(0, 2));
+
+    // Insert langsung ke Supabase
+    const { data, error } = await supabase
+      .from('accurate_accounts')
+      .upsert(dbAccounts, {
+        onConflict: 'entity_id,accurate_id',
+        ignoreDuplicates: false,
+      })
+      .select();
+
+    if (error) {
+      console.error('[importCoaFromExcel] Insert error:', error);
+      return { 
+        data: null, 
+        error: error.message || 'Gagal insert data ke database' 
+      };
+    }
+
+    console.log('[importCoaFromExcel] Successfully imported', data?.length || 0, 'accounts');
+
+    return { 
+      data: { 
+        count: data?.length || 0, 
+        accounts: data 
+      }, 
+      error: null 
+    };
+    
+  } catch (err) {
+    const error = err instanceof Error ? err.message : 'Gagal import Excel';
+    console.error('[importCoaFromExcel] Error:', error);
+    return { data: null, error };
+  }
+};
+
+/**
+ * Get COA by entity
+ */
+export const getCoaByEntity = async (entityId: string) => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      return { data: null, error: 'User not authenticated' };
+    }
+
+    const { data, error } = await supabase
+      .from('accurate_accounts')
+      .select('*')
+      .eq('entity_id', entityId)
+      .order('account_code');
+    
+    return { data, error };
+  } catch (err) {
+    const error = err instanceof Error ? err.message : 'Gagal mengambil data COA';
+    return { data: null, error };
+  }
+};
+
+/**
+ * Update COA account
+ */
+export const updateCoaAccount = async (id: string, updates: any) => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      return { data: null, error: 'User not authenticated' };
+    }
+
+    const { data, error } = await supabase
+      .from('accurate_accounts')
+      .update(updates)
+      .eq('id', id)
+      .select();
+    
+    if (error) {
+      console.error('[updateCoaAccount] Error:', error);
+      return { 
+        data: null, 
+        error: error.message || 'Gagal update account' 
+      };
+    }
+
+    console.log('[updateCoaAccount] Successfully updated account:', id);
+    return { data, error: null };
+  } catch (err) {
+    const error = err instanceof Error ? err.message : 'Gagal update account';
+    console.error('[updateCoaAccount] Error:', error);
+    return { data: null, error };
+  }
+};
+
+/**
+ * Delete COA account
+ */
+export const deleteCoaAccount = async (id: string) => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      return { error: 'User not authenticated' };
+    }
+
+    console.log('[deleteCoaAccount] Deleting account:', id);
+
+    // Delete langsung dari Supabase
+    const { error } = await supabase
+      .from('accurate_accounts')
+      .delete()
+      .eq('id', id);
+    
+    if (error) {
+      console.error('[deleteCoaAccount] Delete error:', error);
+      return { 
+        error: error.message || 'Gagal delete account' 
+      };
+    }
+
+    console.log('[deleteCoaAccount] Successfully deleted account:', id);
+    return { error: null };
+  } catch (err) {
+    const error = err instanceof Error ? err.message : 'Gagal delete account';
+    console.error('[deleteCoaAccount] Error:', error);
+    return { error };
+  }
+};

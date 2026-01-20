@@ -1,4 +1,4 @@
-// CoaForm.tsx - Custom Hook for COA Logic
+// CoaForm.tsx - Custom Hook for COA Logic (COMPLETE VERSION)
 import { useEffect, useState } from 'react';
 import { useEntity } from '../contexts/EntityContext';
 import {
@@ -11,13 +11,19 @@ import {
   type CoaAccount,
   type EditAccountData,
 } from '../lib/accurate';
+import { deleteCoaAccount } from '../lib/supabase';
 
 interface ExpandedState {
   [accountId: number]: boolean;
 }
 
+// TAMBAH db_id untuk menyimpan UUID asli dari database
+interface CoaAccountExtended extends CoaAccount {
+  db_id: string; // UUID asli dari database
+}
+
 export const useCoaForm = () => {
-  const [accounts, setAccounts] = useState<CoaAccount[]>([]);
+  const [accounts, setAccounts] = useState<CoaAccountExtended[]>([]);
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,14 +35,19 @@ export const useCoaForm = () => {
   
   // Edit modal state
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [editingAccount, setEditingAccount] = useState<CoaAccount | null>(null);
+  const [editingAccount, setEditingAccount] = useState<CoaAccountExtended | null>(null);
   const [editForm, setEditForm] = useState<EditAccountData>({});
   const [editLoading, setEditLoading] = useState(false);
   
   // Delete modal state
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [deletingAccount, setDeletingAccount] = useState<CoaAccount | null>(null);
+  const [deletingAccount, setDeletingAccount] = useState<CoaAccountExtended | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // Delete All modal state
+  const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
+  const [showFinalConfirmModal, setShowFinalConfirmModal] = useState(false);
+  const [deletingAll, setDeletingAll] = useState(false);
 
   const { activeEntity } = useEntity();
 
@@ -63,11 +74,11 @@ export const useCoaForm = () => {
 
       if (!data || data.length === 0) {
         setAccounts([]);
-        setSyncStatus('Belum ada data COA. Klik "Tarik dari Accurate" untuk sync.');
         return;
       }
 
-      const mappedAccounts: CoaAccount[] = data.map((acc: any) => ({
+      const mappedAccounts: CoaAccountExtended[] = data.map((acc: any) => ({
+        db_id: acc.id, // ← SIMPAN UUID ASLI INI PENTING!
         id: parseInt(acc.accurate_id) || 0,
         account_code: acc.account_code || '',
         account_name: acc.account_name || '',
@@ -147,7 +158,7 @@ export const useCoaForm = () => {
   // ============================================
   // CHECK IF ACCOUNT VISIBLE
   // ============================================
-  const isVisible = (account: CoaAccount): boolean => {
+  const isVisible = (account: CoaAccountExtended): boolean => {
     if (!account.parent_id) return true; // Root level always visible
     
     const parent = accounts.find(a => a.id === account.parent_id);
@@ -160,7 +171,7 @@ export const useCoaForm = () => {
   // ============================================
   // GET DISPLAY BALANCE
   // ============================================
-  const getDisplayBalance = (account: CoaAccount): number => {
+  const getDisplayBalance = (account: CoaAccountExtended): number => {
     if (account.is_parent) {
       return calculateTotalBalance(account.id, accounts);
     }
@@ -170,7 +181,7 @@ export const useCoaForm = () => {
   // ============================================
   // HANDLE EDIT
   // ============================================
-  const handleEdit = (account: CoaAccount) => {
+  const handleEdit = (account: CoaAccountExtended) => {
     console.log('[handleEdit] Editing account:', account);
     setEditingAccount(account);
     
@@ -228,44 +239,80 @@ export const useCoaForm = () => {
   // ============================================
   // HANDLE DELETE
   // ============================================
-  const handleDelete = (account: CoaAccount) => {
+  const handleDelete = (account: CoaAccountExtended) => {
     setDeletingAccount(account);
     setDeleteModalOpen(true);
   };
 
   // ============================================
-  // SUBMIT DELETE
+  // SUBMIT DELETE - FIXED: Pakai db_id bukan id
   // ============================================
   const handleDeleteConfirm = async () => {
-    if (!activeEntity || !deletingAccount) return;
-
+    if (!deletingAccount) return;
+    
+    setDeleteLoading(true);
     try {
-      setDeleteLoading(true);
-      setError(null);
-
-      const result = await deleteAccount(activeEntity.id, deletingAccount.id);
-
-      if (!result.success) {
-        if (result.hasChildren) {
-          // Show children warning
-          const childNames = result.children?.map((c: any) => c.account_name).join(', ');
-          setError(`Tidak dapat menghapus account yang memiliki children: ${childNames}`);
-          setDeleteModalOpen(false);
-          return;
-        }
-        throw new Error(result.error || 'Gagal menghapus account');
-      }
-
-      setSyncStatus('Account berhasil dihapus');
-      setDeleteModalOpen(false);
+      console.log('[handleDeleteConfirm] Deleting account db_id:', deletingAccount.db_id);
       
-      // Reload data
-      setTimeout(() => loadCoaFromDatabase(), 500);
+      // PAKAI db_id (UUID asli), BUKAN id (accurate_id yang di-parse)
+      const { error } = await deleteCoaAccount(deletingAccount.db_id);
+      
+      if (error) {
+        throw new Error(error);
+      }
+      
+      // Success - reload data
+      await loadCoaFromDatabase();
+      setDeleteModalOpen(false);
+      setSyncStatus('✅ Account berhasil dihapus!');
       setTimeout(() => setSyncStatus(null), 3000);
+      
     } catch (err: any) {
-      setError('Gagal menghapus: ' + err.message);
+      console.error('[handleDeleteConfirm] Error:', err);
+      setError('❌ Gagal menghapus account: ' + err.message);
     } finally {
       setDeleteLoading(false);
+    }
+  };
+
+  // ============================================
+  // DELETE ALL ACCOUNTS
+  // ============================================
+  const handleDeleteAll = async () => {
+    if (!activeEntity) return;
+
+    setDeletingAll(true);
+    try {
+      console.log('[handleDeleteAll] Deleting all accounts for entity:', activeEntity.id);
+
+      // Import supabase at the top
+      const { supabase } = await import('../lib/supabase');
+      
+      // Delete all accounts for this entity
+      const { error } = await supabase
+        .from('accurate_accounts')
+        .delete()
+        .eq('entity_id', activeEntity.id);
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      // Success
+      const deletedCount = accounts.length;
+      setShowFinalConfirmModal(false);
+      setShowDeleteAllModal(false);
+      setSyncStatus(`✅ Berhasil menghapus ${deletedCount} akun COA!`);
+      
+      // Reload data
+      await loadCoaFromDatabase();
+      
+      setTimeout(() => setSyncStatus(null), 5000);
+    } catch (err: any) {
+      console.error('[handleDeleteAll] Error:', err);
+      setError('❌ Gagal menghapus semua COA: ' + err.message);
+    } finally {
+      setDeletingAll(false);
     }
   };
 
@@ -323,6 +370,13 @@ export const useCoaForm = () => {
     deleteLoading,
     setDeleteModalOpen,
     
+    // Delete All Modal State - ✅ SUDAH DITAMBAHKAN
+    showDeleteAllModal,
+    showFinalConfirmModal,
+    deletingAll,
+    setShowDeleteAllModal,
+    setShowFinalConfirmModal,
+    
     // Handlers
     loadCoaFromDatabase,
     handleManualSync,
@@ -333,5 +387,6 @@ export const useCoaForm = () => {
     handleEditSubmit,
     handleDelete,
     handleDeleteConfirm,
+    handleDeleteAll, // ✅ SUDAH DITAMBAHKAN
   };
 };

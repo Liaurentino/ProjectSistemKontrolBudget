@@ -227,8 +227,8 @@ export const EntitasPage: React.FC = () => {
               <tr>
                 <th style={{ width: '60px', textAlign: 'center' }}>Aktif</th>
                 <th>Nama Entitas</th>
-                <th>Status Koneksi</th>
-                <th>Database</th>
+                <th>Koneksi Accurate</th>
+                <th>Data Usaha Accurate</th>
                 <th style={{ textAlign: 'center' }}>Aksi</th>
               </tr>
             </thead>
@@ -250,7 +250,7 @@ export const EntitasPage: React.FC = () => {
                 entities.map((e) => {
                   const status = entityStatus[e.id];
                   const statusColor = status?.isValid ? '#4caf50' : '#f44336';
-                  const statusText = status?.isValid ? '✓ Terhubung' : '✗ Invalid';
+                  const statusText = status?.isValid ? '✓ Terhubung' : '✗ Tidak Terhubung';
 
                   return (
                     <tr key={e.id}>
@@ -350,7 +350,7 @@ export const EntitasPage: React.FC = () => {
               <span style={{ color: '#4caf50', fontWeight: 'bold' }}>✓ Terhubung</span> - Entitas terhubung dengan Accurate
             </div>
             <div style={{ marginBottom: '0.5rem' }}>
-              <span style={{ color: '#f44336', fontWeight: 'bold' }}>✗ Invalid</span> - Token tidak valid
+              <span style={{ color: '#f44336', fontWeight: 'bold' }}>✗ Tidak Terhubung</span> - Token tidak valid
             </div>
             <div>
               <span style={{ fontWeight: 'bold' }}>Penting! :</span> Pilih satu entitas sebagai aktif untuk digunakan di seluruh aplikasi
