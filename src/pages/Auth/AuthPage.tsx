@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { supabase } from '../lib/supabase';
-import { Eye, EyeOff, Loader2, Mail } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import styles from './AuthPage.module.css';
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -128,78 +129,36 @@ export default function AuthPage() {
   };
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        backgroundColor: '#f8f9fa',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '24px',
-      }}
-    >
-      <div
-        style={{
-          width: '100%',
-          maxWidth: '420px',
-          backgroundColor: 'white',
-          border: '1px solid #dee2e6',
-          borderRadius: '8px',
-          padding: '28px',
-        }}
-      >
+    <div className={styles.container}>
+      <div className={styles.card}>
         {/* Header */}
-        <div style={{ marginBottom: '20px' }}>
-          <h2 style={{ margin: 0, fontSize: '24px', fontWeight: 600 }}>
+        <div className={styles.header}>
+          <h2 className={styles.title}>
             {isLogin ? 'Login' : 'Registrasi'}
           </h2>
-          <p style={{ margin: '6px 0 0', fontSize: '14px', color: '#6c757d' }}>
+          <p className={styles.subtitle}>
             Sistem manajemen budget dan realisasi
           </p>
         </div>
 
         {/* Alert */}
         {error && (
-          <div
-            style={{
-              padding: '10px 14px',
-              backgroundColor: '#f8d7da',
-              border: '1px solid #f5c6cb',
-              borderRadius: '6px',
-              color: '#721c24',
-              fontSize: '13px',
-              marginBottom: '12px',
-            }}
-          >
+          <div className={styles.errorAlert}>
             {error}
           </div>
         )}
 
         {message && (
-          <div
-            style={{
-              padding: '10px 14px',
-              backgroundColor: '#d4edda',
-              border: '1px solid #c3e6cb',
-              borderRadius: '6px',
-              color: '#155724',
-              fontSize: '13px',
-              marginBottom: '12px',
-            }}
-          >
+          <div className={styles.successAlert}>
             {message}
           </div>
         )}
 
-
-
-
-
         {/* Form */}
         <form onSubmit={handleSubmit}>
           {!isLogin && (
-            <div style={{ marginBottom: '12px' }}>
-              <label style={{ fontSize: '13px', fontWeight: 500, display: 'block', marginBottom: '4px' }}>
+            <div className={styles.formGroup}>
+              <label className={styles.label}>
                 Nama Lengkap
               </label>
               <input
@@ -211,25 +170,18 @@ export default function AuthPage() {
                   }
                 }}
                 onBlur={() => handleBlur('fullName')}
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  border: `1px solid ${errors.fullName ? '#dc3545' : '#ced4da'}`,
-                  borderRadius: '4px',
-                  fontSize: '14px',
-                  outline: 'none',
-                }}
+                className={`${styles.input} ${errors.fullName ? styles.inputError : ''}`}
               />
               {errors.fullName && (
-                <span style={{ fontSize: '12px', color: '#dc3545', marginTop: '4px', display: 'block' }}>
+                <span className={styles.errorText}>
                   {errors.fullName}
                 </span>
               )}
             </div>
           )}
 
-          <div style={{ marginBottom: '12px' }}>
-            <label style={{ fontSize: '13px', fontWeight: 500, display: 'block', marginBottom: '4px' }}>
+          <div className={styles.formGroup}>
+            <label className={styles.label}>
               Email
             </label>
             <input
@@ -243,27 +195,20 @@ export default function AuthPage() {
                 }
               }}
               onBlur={() => handleBlur('email')}
-              style={{
-                width: '100%',
-                padding: '8px',
-                border: `1px solid ${errors.email ? '#dc3545' : '#ced4da'}`,
-                borderRadius: '4px',
-                fontSize: '14px',
-                outline: 'none',
-              }}
+              className={`${styles.input} ${errors.email ? styles.inputError : ''}`}
             />
             {errors.email && (
-              <span style={{ fontSize: '12px', color: '#dc3545', marginTop: '4px', display: 'block' }}>
+              <span className={styles.errorText}>
                 {errors.email}
               </span>
             )}
           </div>
 
-          <div style={{ marginBottom: '16px' }}>
-            <label style={{ fontSize: '13px', fontWeight: 500, display: 'block', marginBottom: '4px' }}>
+          <div className={styles.formGroupPassword}>
+            <label className={styles.label}>
               Password
             </label>
-            <div style={{ position: 'relative' }}>
+            <div className={styles.passwordWrapper}>
               <input
                 type={showPassword ? 'text' : 'password'}
                 autoComplete={isLogin ? 'current-password' : 'new-password'}
@@ -275,36 +220,18 @@ export default function AuthPage() {
                   }
                 }}
                 onBlur={() => handleBlur('password')}
-                style={{
-                  width: '100%',
-                  padding: '8px 36px 8px 8px',
-                  border: `1px solid ${errors.password ? '#dc3545' : '#ced4da'}`,
-                  borderRadius: '4px',
-                  fontSize: '14px',
-                  outline: 'none',
-                }}
+                className={`${styles.passwordInput} ${errors.password ? styles.passwordInputError : ''}`}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                style={{
-                  position: 'absolute',
-                  right: '8px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  color: '#6c757d',
-                  display: 'flex',
-                  alignItems: 'center',
-                }}
+                className={styles.togglePasswordButton}
               >
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
             {errors.password && (
-              <span style={{ fontSize: '12px', color: '#dc3545', marginTop: '4px', display: 'block' }}>
+              <span className={styles.errorText}>
                 {errors.password}
               </span>
             )}
@@ -313,63 +240,27 @@ export default function AuthPage() {
           <button
             type="submit"
             disabled={loading}
-            style={{
-              width: '100%',
-              padding: '10px',
-              backgroundColor: loading ? '#adb5bd' : '#007bff',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              fontSize: '14px',
-              fontWeight: 600,
-              cursor: loading ? 'not-allowed' : 'pointer',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              gap: '8px',
-            }}
+            className={styles.submitButton}
           >
-            {loading && <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />}
+            {loading && <Loader2 size={16} className={styles.spinner} />}
             {isLogin ? 'Login' : 'Daftar'}
           </button>
         </form>
 
         {/* Divider */}
-        <div style={{ display: 'flex', alignItems: 'center', margin: '16px 0' }}>
-          <div style={{ flex: 1, height: '1px', backgroundColor: '#dee2e6' }} />
-          <span style={{ padding: '0 12px', fontSize: '13px', color: '#6c757d' }}>
+        <div className={styles.divider}>
+          <div className={styles.dividerLine} />
+          <span className={styles.dividerText}>
             atau
           </span>
-          <div style={{ flex: 1, height: '1px', backgroundColor: '#dee2e6' }} />
+          <div className={styles.dividerLine} />
         </div>
 
         {/* Google Login Button */}
         <button
           onClick={handleGoogleLogin}
           disabled={loading}
-          style={{
-            width: '100%',
-            padding: '10px',
-            backgroundColor: 'white',
-            color: '#333',
-            border: '1px solid #dee2e6',
-            borderRadius: '4px',
-            fontSize: '14px',
-            fontWeight: 500,
-            cursor: loading ? 'not-allowed' : 'pointer',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            gap: '8px',
-            marginBottom: '16px',
-            transition: 'background-color 0.2s',
-          }}
-          onMouseEnter={(e) => {
-            if (!loading) e.currentTarget.style.backgroundColor = '#f8f9fa';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'white';
-          }}
+          className={styles.googleButton}
         >
           <svg width="18" height="18" viewBox="0 0 18 18">
             <path
@@ -393,7 +284,7 @@ export default function AuthPage() {
         </button>
 
         {/* Switch */}
-        <div style={{ marginTop: '16px', textAlign: 'center', fontSize: '13px' }}>
+        <div className={styles.switch}>
           {isLogin ? 'Belum punya akun? ' : 'Sudah punya akun? '}
           <button
             onClick={() => {
@@ -402,25 +293,12 @@ export default function AuthPage() {
               setMessage('');
               setErrors({});
             }}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: '#007bff',
-              cursor: 'pointer',
-              fontWeight: 600,
-            }}
+            className={styles.switchButton}
           >
             {isLogin ? 'Daftar' : 'Login'}
           </button>
         </div>
       </div>
-
-      <style>{`
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
     </div>
   );
 }

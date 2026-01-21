@@ -1,0 +1,487 @@
+/* ===== CONTAINER ===== */
+.container {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* ===== HEADER ===== */
+.header {
+  margin-bottom: 24px;
+}
+
+.headerTitle {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.headerSubtitle {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: #6c757d;
+}
+
+.headerEntity {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: #6c757d;
+}
+
+/* ===== NO ENTITY WARNING ===== */
+.noEntityWarning {
+  padding: 60px 20px;
+  background-color: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.noEntityWarningTitle {
+  margin: 0 0 8px;
+  color: #856404;
+}
+
+.noEntityWarningText {
+  margin: 0;
+  color: #856404;
+}
+
+/* ===== ERROR ALERT ===== */
+.errorAlert {
+  padding: 12px 16px;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 6px;
+  color: #721c24;
+  margin-bottom: 16px;
+}
+
+/* ===== CHART CARD ===== */
+.chartCard {
+  background-color: white;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 24px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.chartTitle {
+  margin: 0 0 20px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #495057;
+}
+
+.chartLoading {
+  padding: 60px 20px;
+  text-align: center;
+  color: #6c757d;
+}
+
+.chartEmpty {
+  padding: 60px 20px;
+  text-align: center;
+  color: #6c757d;
+}
+
+/* ===== BOTTOM GRID ===== */
+.bottomGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* ===== OVER BUDGET CARD ===== */
+.overBudgetCard {
+  background-color: white;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.overBudgetTitle {
+  margin: 0 0 16px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #495057;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.overBudgetLoading {
+  padding: 20px;
+  text-align: center;
+  color: #6c757d;
+}
+
+.overBudgetEmpty {
+  padding: 40px 20px;
+  text-align: center;
+  background-color: #d4edda;
+  border-radius: 6px;
+  color: #155724;
+}
+
+.overBudgetEmptyIcon {
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+
+.overBudgetEmptyTitle {
+  font-weight: 600;
+}
+
+.overBudgetEmptyText {
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+.overBudgetList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.overBudgetItem {
+  padding: 12px;
+  background-color: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 6px;
+}
+
+.overBudgetItemHeader {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.overBudgetItemCode {
+  font-weight: 600;
+  font-size: 14px;
+  color: #856404;
+}
+
+.overBudgetItemPeriod {
+  font-size: 12px;
+  color: #856404;
+  background-color: #fff;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.overBudgetItemName {
+  font-size: 13px;
+  color: #856404;
+  margin-bottom: 8px;
+}
+
+.overBudgetItemAmounts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.overBudgetItemLabel {
+  color: #6c757d;
+}
+
+.overBudgetItemBudget {
+  font-weight: 600;
+  color: #495057;
+}
+
+.overBudgetItemRealisasi {
+  font-weight: 600;
+  color: #dc3545;
+}
+
+.overBudgetItemVariance {
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #dc3545;
+}
+
+/* ===== INSIGHTS CARD ===== */
+.insightsCard {
+  background-color: white;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.insightsTitle {
+  margin: 0 0 16px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #495057;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.insightsLoading {
+  padding: 20px;
+  text-align: center;
+  color: #6c757d;
+}
+
+.insightsContent {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ===== UTILIZATION BAR ===== */
+.utilizationHeader {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.utilizationLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: #495057;
+}
+
+.utilizationPercentage {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.utilizationPercentageOver {
+  color: #dc3545;
+}
+
+.utilizationPercentageNormal {
+  color: #28a745;
+}
+
+.utilizationBarContainer {
+  width: 100%;
+  height: 24px;
+  background-color: #e9ecef;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.utilizationBar {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.utilizationBarOver {
+  background-color: #dc3545;
+}
+
+.utilizationBarWarning {
+  background-color: #ffc107;
+}
+
+.utilizationBarNormal {
+  background-color: #28a745;
+}
+
+.utilizationHint {
+  margin-top: 6px;
+  font-size: 11px;
+  color: #6c757d;
+}
+
+/* ===== AMOUNTS GRID ===== */
+.amountsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.amountBoxUnutilized {
+  padding: 12px;
+  background-color: #fff3cd;
+  border-radius: 6px;
+  border: 1px solid #ffc107;
+}
+
+.amountBoxOver {
+  padding: 12px;
+  background-color: #f8d7da;
+  border-radius: 6px;
+  border: 1px solid #f5c6cb;
+}
+
+.amountLabel {
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+
+.amountLabelUnutilized {
+  color: #856404;
+}
+
+.amountLabelOver {
+  color: #721c24;
+}
+
+.amountValue {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.amountValueUnutilized {
+  color: #856404;
+}
+
+.amountValueOver {
+  color: #721c24;
+}
+
+.amountSubtext {
+  font-size: 10px;
+  margin-top: 4px;
+}
+
+.amountSubtextUnutilized {
+  color: #856404;
+}
+
+.amountSubtextOver {
+  color: #721c24;
+}
+
+/* ===== STATS CARDS ===== */
+.statsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.statCardTotal {
+  padding: 16px;
+  background-color: #e7f3ff;
+  border-radius: 6px;
+  border: 1px solid #b3d9ff;
+}
+
+.statCardOnTrack {
+  padding: 16px;
+  background-color: #d4edda;
+  border-radius: 6px;
+  border: 1px solid #c3e6cb;
+}
+
+.statCardOver {
+  padding: 16px;
+  background-color: #f8d7da;
+  border-radius: 6px;
+  border: 1px solid #f5c6cb;
+}
+
+.statCardUnder {
+  padding: 16px;
+  background-color: #fff3cd;
+  border-radius: 6px;
+  border: 1px solid #ffc107;
+}
+
+.statLabel {
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.statLabelTotal {
+  color: #004085;
+}
+
+.statLabelOnTrack {
+  color: #155724;
+}
+
+.statLabelOver {
+  color: #721c24;
+}
+
+.statLabelUnder {
+  color: #856404;
+}
+
+.statValue {
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.statValueTotal {
+  color: #004085;
+}
+
+.statValueOnTrack {
+  color: #155724;
+}
+
+.statValueOver {
+  color: #721c24;
+}
+
+.statValueUnder {
+  color: #856404;
+}
+
+/* ===== TOOLTIP ===== */
+.customTooltip {
+  background-color: white;
+  padding: 12px;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.tooltipPeriod {
+  margin: 0 0 8px;
+  font-weight: 600;
+  color: #495057;
+}
+
+.tooltipItem {
+  margin: 4px 0;
+  font-size: 13px;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .bottomGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .amountsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .statsGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .container {
+    padding: 16px;
+  }
+
+  .headerTitle {
+    font-size: 24px;
+  }
+
+  .chartCard {
+    padding: 16px;
+  }
+
+  .overBudgetCard,
+  .insightsCard {
+    padding: 16px;
+  }
+}

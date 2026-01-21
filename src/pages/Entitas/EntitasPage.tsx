@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { getEntities, deleteEntity } from '../lib/supabase';
-import { EntitasForm } from '../components/EntitasForm';
-import { AccurateGuide } from '../components/AccurateGuide'; // ← IMPORT PANDUAN
-import { useEntity } from '../contexts/EntityContext';
-import { validateEntitasToken } from '../lib/accurate';
-import type { AccurateValidationResult } from '../lib/accurate';
+import { getEntities, deleteEntity } from '../../lib/supabase';
+import { EntitasForm } from '../../components/EntitasForm/EntitasForm';
+import { AccurateGuide } from '../../components/AccurateGuide/AccurateGuide';
+import { useEntity } from '../../contexts/EntityContext';
+import { validateEntitasToken } from '../../lib/accurate';
+import type { AccurateValidationResult } from '../../lib/accurate';
+import styles from './EntitasModule.module.css';
 
 export const EntitasPage: React.FC = () => {
   const [entities, setEntities] = useState<any[]>([]);
@@ -131,48 +132,34 @@ export const EntitasPage: React.FC = () => {
 
   return (
     <div className="app-container fade-in">
-      {/* HEADER - DENGAN TOMBOL PANDUAN */}
-      <div className="app-header" style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'flex-start',
-        gap: '1rem',
-      }}>
-        <div style={{ flex: 1 }}>
+      {/* HEADER */}
+      <div className={styles.header}>
+        <div className={styles.headerContent}>
           <h1>Manajemen Entitas</h1>
           <p>Kelola koneksi entitas perusahaan Anda dengan Accurate</p>
         </div>
         
-        {/* TOMBOL PANDUAN - DI LUAR CONTAINER */}
-        <div style={{ flexShrink: 0, paddingTop: '0.25rem' }}>
+        {/* TOMBOL PANDUAN */}
+        <div className={styles.headerActions}>
           <AccurateGuide />
         </div>
       </div>
 
       {/* ERROR */}
       {error && (
-        <div
-          style={{
-            padding: '1rem',
-            backgroundColor: '#ffebee',
-            color: '#c62828',
-            borderRadius: '8px',
-            marginBottom: '1rem',
-          }}
-        >
+        <div className={styles.errorAlert}>
           Error: {error}
         </div>
       )}
 
       {/* CARD */}
       <div className="card fade-in">
-        <div className="card-header">
-          <h3 className="card-title">Daftar Entitas</h3>
+        <div className={styles.cardHeader}>
+          <h3 className={styles.cardTitle}>Daftar Entitas</h3>
           <button
-            className="btn btn-sm btn-secondary"
+            className={`btn btn-sm btn-secondary ${styles.refreshButton}`}
             onClick={checkAllStatus}
             disabled={refreshing || loading}
-            style={{ marginLeft: 'auto' }}
           >
             {refreshing ? 'Refresh...' : 'Cek Status'}
           </button>
@@ -191,7 +178,7 @@ export const EntitasPage: React.FC = () => {
 
         {/* FORM TAMBAH */}
         {showForm && (
-          <div style={{ marginBottom: '1rem' }}>
+          <div className={styles.formContainer}>
             <EntitasForm
               mode="create"
               onSuccess={() => {
@@ -220,93 +207,89 @@ export const EntitasPage: React.FC = () => {
           />
         )}
 
-        {/* TABLE */}
+        {/* TABLE - PAKAI GLOBAL STYLES */}
         <div className="table-container">
-          <table className="table">
+          <table className="shared-table">
             <thead>
               <tr>
-                <th style={{ width: '60px', textAlign: 'center' }}>Aktif</th>
+                <th className={styles.colActive}>Aktif</th>
                 <th>Nama Entitas</th>
                 <th>Koneksi Accurate</th>
                 <th>Data Usaha Accurate</th>
-                <th style={{ textAlign: 'center' }}>Aksi</th>
+                <th className={styles.colActions}>Aksi</th>
               </tr>
             </thead>
 
             <tbody>
               {loading && entities.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="text-center">
+                  <td colSpan={5} className="table-loading">
                     Memuat data...
                   </td>
                 </tr>
               ) : entities.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="text-center">
+                  <td colSpan={5} className="table-empty">
                     Belum ada entitas. Silakan tambahkan entitas baru untuk memulai.
                   </td>
                 </tr>
               ) : (
                 entities.map((e) => {
                   const status = entityStatus[e.id];
-                  const statusColor = status?.isValid ? '#4caf50' : '#f44336';
-                  const statusText = status?.isValid ? '✓ Terhubung' : '✗ Tidak Terhubung';
+                  const isConnected = status?.isValid;
+                  const statusText = isConnected ? '✓ Terhubung' : '✗ Tidak Terhubung';
 
                   return (
                     <tr key={e.id}>
                       {/* AKTIF - RADIO */}
-                      <td style={{ textAlign: 'center' }}>
+                      <td className="table-cell-center">
                         <input
                           type="radio"
                           name="active-entity"
+                          className={styles.radioInput}
                           checked={isEntityActive(e.id)}
                           onChange={() => setActiveEntity(e.id)}
                           disabled={loading}
-                          style={{ cursor: 'pointer' }}
                         />
                       </td>
 
                       {/* NAMA ENTITAS */}
-                      <td style={{ fontWeight: 600 }}>{e.entity_name}</td>
+                      <td className={styles.cellEntityName}>{e.entity_name}</td>
 
                       {/* STATUS KONEKSI */}
                       <td>
                         <span
-                          style={{
-                            display: 'inline-block',
-                            padding: '0.25rem 0.75rem',
-                            backgroundColor: statusColor,
-                            color: '#fff',
-                            borderRadius: '4px',
-                            fontSize: '0.85rem',
-                            fontWeight: 500,
-                          }}
+                          className={`${styles.statusBadge} ${
+                            isConnected ? styles.statusConnected : styles.statusDisconnected
+                          }`}
                         >
                           {statusText}
                         </span>
                       </td>
  
                       {/* DATABASE */}
-                      <td style={{ fontSize: '0.9rem', color: '#666' }}>
+                      <td className={styles.cellDatabase}>
                         {status?.primaryDatabase ? (
-                          <div>
-                            <div style={{ fontWeight: 500 }}>{status.primaryDatabase.name}</div>
-                            <code style={{ fontSize: '0.75rem', color: '#999' }}>
+                          <div className={styles.databaseInfo}>
+                            <div className={styles.databaseName}>
+                              {status.primaryDatabase.name}
+                            </div>
+                            <code className={styles.databaseId}>
                               {status?.primaryDatabase?.id
                                 ? String(status.primaryDatabase.id).substring(0, 20) + '...'
                                 : '(tanpa id)'}
                             </code>
                           </div>
                         ) : status?.isValid === false && !status.message?.includes('Belum') ? (
-                          <span style={{ color: '#f44336' }}>Tidak terhubung</span>
+                          <span className={styles.databaseError}>Tidak terhubung</span>
                         ) : (
                           '-'
                         )}
                       </td>
 
                       {/* AKSI */}
-                      <td style={{ textAlign: 'center' }}>
-                        <div style={{ display: 'inline-flex', gap: '6px' }}>
+                      <td className="table-cell-center">
+                        <div className="table-actions">
                           <button
                             className="btn btn-outline btn-sm"
                             onClick={() => {
@@ -336,24 +319,17 @@ export const EntitasPage: React.FC = () => {
         </div>
 
         {/* LEGEND */}
-        <div
-          style={{
-            marginTop: '1.5rem',
-            paddingTop: '1rem',
-            borderTop: '1px solid #eee',
-            fontSize: '0.85rem',
-          }}
-        >
-          <strong>Keterangan:</strong>
-          <div style={{ marginTop: '0.5rem' }}>
-            <div style={{ marginBottom: '0.5rem' }}>
-              <span style={{ color: '#4caf50', fontWeight: 'bold' }}>✓ Terhubung</span> - Entitas terhubung dengan Accurate
+        <div className={styles.legend}>
+          <span className={styles.legendTitle}>Keterangan:</span>
+          <div className={styles.legendList}>
+            <div className={styles.legendItem}>
+              <span className={styles.legendConnected}>✓ Terhubung</span> - Entitas terhubung dengan Accurate
             </div>
-            <div style={{ marginBottom: '0.5rem' }}>
-              <span style={{ color: '#f44336', fontWeight: 'bold' }}>✗ Tidak Terhubung</span> - Token tidak valid
+            <div className={styles.legendItem}>
+              <span className={styles.legendDisconnected}>✗ Tidak Terhubung</span> - Token tidak valid
             </div>
-            <div>
-              <span style={{ fontWeight: 'bold' }}>Penting! :</span> Pilih satu entitas sebagai aktif untuk digunakan di seluruh aplikasi
+            <div className={styles.legendItem}>
+              <span className={styles.legendImportant}>Penting! :</span> Pilih satu entitas sebagai aktif untuk digunakan di seluruh aplikasi
             </div>
           </div>
         </div>

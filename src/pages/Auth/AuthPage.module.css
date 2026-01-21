@@ -1,0 +1,290 @@
+/* ===== CONTAINER ===== */
+.container {
+  min-height: 100vh;
+  background-color: #f8f9fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+/* ===== CARD ===== */
+.card {
+  width: 100%;
+  max-width: 420px;
+  background-color: white;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 28px;
+}
+
+/* ===== HEADER ===== */
+.header {
+  margin-bottom: 20px;
+}
+
+.title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.subtitle {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: #6c757d;
+}
+
+/* ===== ALERTS ===== */
+.errorAlert {
+  padding: 10px 14px;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 6px;
+  color: #721c24;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.successAlert {
+  padding: 10px 14px;
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+  border-radius: 6px;
+  color: #155724;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+/* ===== FORM ===== */
+.formGroup {
+  margin-bottom: 12px;
+}
+
+.formGroupPassword {
+  margin-bottom: 16px;
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 500;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 14px;
+  outline: none;
+}
+
+.input:focus {
+  border-color: #80bdff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.inputError {
+  border-color: #dc3545;
+}
+
+.inputError:focus {
+  border-color: #dc3545;
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+.errorText {
+  font-size: 12px;
+  color: #dc3545;
+  margin-top: 4px;
+  display: block;
+}
+
+/* ===== PASSWORD INPUT ===== */
+.passwordWrapper {
+  position: relative;
+}
+
+.passwordInput {
+  width: 100%;
+  padding: 8px 36px 8px 8px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 14px;
+  outline: none;
+}
+
+.passwordInput:focus {
+  border-color: #80bdff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.passwordInputError {
+  border-color: #dc3545;
+}
+
+.passwordInputError:focus {
+  border-color: #dc3545;
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+.togglePasswordButton {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #6c757d;
+  display: flex;
+  align-items: center;
+  padding: 0;
+}
+
+.togglePasswordButton:hover {
+  color: #495057;
+}
+
+/* ===== SUBMIT BUTTON ===== */
+.submitButton {
+  width: 100%;
+  padding: 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.2s;
+}
+
+.submitButton:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+.submitButton:disabled {
+  background-color: #adb5bd;
+  cursor: not-allowed;
+}
+
+.submitButton:active:not(:disabled) {
+  background-color: #004085;
+}
+
+/* ===== SPINNER ===== */
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ===== DIVIDER ===== */
+.divider {
+  display: flex;
+  align-items: center;
+  margin: 16px 0;
+}
+
+.dividerLine {
+  flex: 1;
+  height: 1px;
+  background-color: #dee2e6;
+}
+
+.dividerText {
+  padding: 0 12px;
+  font-size: 13px;
+  color: #6c757d;
+}
+
+/* ===== GOOGLE BUTTON ===== */
+.googleButton {
+  width: 100%;
+  padding: 10px;
+  background-color: white;
+  color: #333;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  transition: background-color 0.2s;
+}
+
+.googleButton:hover:not(:disabled) {
+  background-color: #f8f9fa;
+}
+
+.googleButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.googleButton:active:not(:disabled) {
+  background-color: #e9ecef;
+}
+
+/* ===== SWITCH ===== */
+.switch {
+  margin-top: 16px;
+  text-align: center;
+  font-size: 13px;
+}
+
+.switchButton {
+  background: none;
+  border: none;
+  color: #007bff;
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0;
+  text-decoration: none;
+}
+
+.switchButton:hover {
+  color: #0056b3;
+  text-decoration: underline;
+}
+
+.switchButton:active {
+  color: #004085;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 480px) {
+  .container {
+    padding: 16px;
+  }
+
+  .card {
+    padding: 20px;
+  }
+
+  .title {
+    font-size: 20px;
+  }
+
+  .subtitle {
+    font-size: 13px;
+  }
+}

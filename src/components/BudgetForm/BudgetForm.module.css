@@ -1,0 +1,439 @@
+/* BudgetForm.module.css */
+
+.card {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.header {
+  padding: 16px 24px;
+  border-bottom: 1px solid #dee2e6;
+  background-color: #f8f9fa;
+}
+
+.headerTitle {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #212529;
+}
+
+.headerSubtitle {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: #6c757d;
+}
+
+.form {
+  padding: 24px;
+}
+
+.errorAlert {
+  padding: 12px 16px;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  color: #721c24;
+  font-size: 14px;
+}
+
+.warningAlert {
+  padding: 12px 16px;
+  background-color: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  color: #856404;
+  font-size: 13px;
+}
+
+.warningAlertTitle {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.sectionTitle {
+  margin: 0 0 16px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #495057;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr 200px;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.fullWidth {
+  grid-column: 1 / -1;
+}
+
+.label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #212529;
+}
+
+.required {
+  color: #dc3545;
+}
+
+.input,
+.textarea,
+.monthInput {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.charCount {
+  font-size: 11px;
+  color: #6c757d;
+  margin-top: 4px;
+}
+
+.summaryBox {
+  padding: 20px;
+  background-color: #d1ecf1;
+  border: 1px solid #bee5eb;
+  border-radius: 6px;
+  margin-bottom: 24px;
+}
+
+.summaryContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.totalLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0c5460;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.totalAmount {
+  font-weight: 700;
+  color: #212529;
+  margin-bottom: 4px;
+}
+
+.totalHint {
+  font-size: 12px;
+  color: #0c5460;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.accountCountBadge {
+  padding: 12px 20px;
+  background-color: #28a745;
+  color: white;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.accountCountNumber {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.accountCountLabel {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.allocationHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.addButton {
+  padding: 8px 16px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.addButton:hover:not(:disabled) {
+  background-color: #218838;
+}
+
+.addButtonClose {
+  background-color: #6c757d;
+}
+
+.addButtonClose:hover:not(:disabled) {
+  background-color: #5a6268;
+}
+
+.addItemForm {
+  padding: 16px;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  margin-bottom: 16px;
+}
+
+.addItemTitle {
+  margin: 0 0 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #495057;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid #ced4da;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: #007bff;
+}
+
+.accountListContainer {
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  background-color: white;
+}
+
+.accountItem {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.accountItem:last-child {
+  border-bottom: none;
+}
+
+.accountItem:hover:not(.selected) {
+  background-color: #f8f9fa;
+}
+
+.accountItemSelected {
+  background-color: #e7f3ff;
+}
+
+.accountRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.accountCode {
+  padding: 2px 6px;
+  background-color: #e7f3ff;
+  border-radius: 3px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #004085;
+}
+
+.accountName {
+  font-size: 14px;
+  font-weight: 500;
+  color: #212529;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.accountType {
+  font-size: 12px;
+  color: #6c757d;
+}
+
+.balanceValue {
+  font-size: 14px;
+  font-weight: 600;
+  color: #28a745;
+  text-align: right;
+}
+
+.balanceLabel {
+  font-size: 11px;
+  color: #6c757d;
+  text-align: right;
+}
+
+.selectedIndicator {
+  margin-top: 8px;
+  padding: 6px 10px;
+  background-color: #d1ecf1;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #0c5460;
+  font-weight: 500;
+}
+
+.amountGrid {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.addAccountButton {
+  padding: 10px 20px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.addAccountButton:disabled {
+  background-color: #adb5bd;
+  cursor: not-allowed;
+}
+
+.noItems {
+  padding: 40px 20px;
+  text-align: center;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  color: #6c757d;
+  font-size: 14px;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tableHeader {
+  background-color: #f8f9fa;
+}
+
+.tableCell,
+.tableHeaderCell {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 14px;
+  color: #212529;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.tableHeaderCell {
+  font-weight: 600;
+  color: #495057;
+}
+
+.tableCellCenter {
+  text-align: center;
+}
+
+.codeBadge {
+  padding: 4px 8px;
+  background-color: #e7f3ff;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.typeBadge {
+  padding: 4px 8px;
+  background-color: #e7f3ff;
+  color: #004085;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.deleteButton {
+  padding: 6px 12px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.deleteButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding-top: 16px;
+  border-top: 1px solid #dee2e6;
+}
+
+.cancelButton {
+  padding: 10px 20px;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.cancelButton:disabled {
+  background-color: #adb5bd;
+  cursor: not-allowed;
+}
+
+.submitButton {
+  padding: 10px 24px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.submitButton:disabled {
+  background-color: #adb5bd;
+  cursor: not-allowed;
+}

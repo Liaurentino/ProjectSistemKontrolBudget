@@ -1,0 +1,272 @@
+/* ===== HEADER SECTION ===== */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.headerContent {
+  flex: 1;
+}
+
+.headerContent h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.headerContent p {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.headerActions {
+  flex-shrink: 0;
+  padding-top: 0.25rem;
+}
+
+/* ===== ERROR ALERT ===== */
+.errorAlert {
+  padding: 1rem;
+  background-color: #ffebee;
+  color: #c62828;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== CARD HEADER ===== */
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.cardTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.refreshButton {
+  margin-left: auto;
+}
+
+/* ===== FORM CONTAINER ===== */
+.formContainer {
+  margin-bottom: 1rem;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ===== TABLE SPECIFIC (ENTITAS) ===== */
+/* Hanya style yang SPESIFIK untuk Entitas, sisanya pakai global .shared-table */
+
+.colActive {
+  width: 60px;
+  text-align: center;
+}
+
+.colActions {
+  text-align: center;
+}
+
+/* ===== TABLE CELLS (ENTITAS SPECIFIC) ===== */
+.cellCenter {
+  text-align: center;
+}
+
+.cellEntityName {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.cellDatabase {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.databaseInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.databaseName {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.databaseId {
+  font-size: 0.75rem;
+  color: #999;
+  font-family: 'Monaco', 'Courier New', monospace;
+}
+
+.databaseError {
+  color: #f44336;
+}
+
+/* ===== STATUS BADGE (ENTITAS SPECIFIC) ===== */
+.statusBadge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  color: #fff;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: var(--transition);
+}
+
+.statusConnected {
+  background-color: #4caf50;
+}
+
+.statusDisconnected {
+  background-color: #f44336;
+}
+
+.statusBadge:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ===== RADIO INPUT ===== */
+.radioInput {
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary-color);
+}
+
+.radioInput:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* ===== ACTION BUTTONS (ENTITAS SPECIFIC) ===== */
+.actionButtons {
+  display: inline-flex;
+  gap: 6px;
+}
+
+/* ===== LEGEND ===== */
+.legend {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #eee;
+  font-size: 0.85rem;
+}
+
+.legendTitle {
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.legendList {
+  margin-top: 0.5rem;
+}
+
+.legendItem {
+  margin-bottom: 0.5rem;
+  line-height: 1.6;
+}
+
+.legendConnected {
+  color: #4caf50;
+  font-weight: bold;
+}
+
+.legendDisconnected {
+  color: #f44336;
+  font-weight: bold;
+}
+
+.legendImportant {
+  font-weight: bold;
+}
+
+/* ===== EMPTY STATE ===== */
+.emptyState {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: var(--text-secondary);
+}
+
+.loadingState {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-secondary);
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .headerActions {
+    padding-top: 0;
+  }
+
+  .cardHeader {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .refreshButton {
+    margin-left: 0;
+  }
+
+  .actionButtons {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 640px) {
+  .headerContent h1 {
+    font-size: 1.4rem;
+  }
+
+  .headerContent p {
+    font-size: 0.85rem;
+  }
+
+  .cardTitle {
+    font-size: 1.25rem;
+  }
+
+  .legend {
+    font-size: 0.8rem;
+  }
+}

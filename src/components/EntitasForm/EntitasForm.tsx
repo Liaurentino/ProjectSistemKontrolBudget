@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { insertEntity, updateEntity, getEntities } from '../lib/supabase';
-import { validateAccurateTokenOwnership, quickValidateTokenFormat } from '../lib/accurateValidate';
-import { validateAccurateApiToken } from '../services/accurateValidation';
-import type { AccurateValidationResult, AccurateDatabase } from '../lib/accurate';
+import { insertEntity, updateEntity, getEntities } from '../../lib/supabase';
+import { validateAccurateTokenOwnership, quickValidateTokenFormat } from '../../lib/accurateValidate';
+import { validateAccurateApiToken } from '../../services/accurateValidation';
+import type { AccurateValidationResult, AccurateDatabase } from '../../lib/accurate';
+import styles from './EntitasForm.module.css';
 
 interface Props {
   mode: 'create' | 'edit';
@@ -361,53 +362,33 @@ export const EntitasForm: React.FC<Props> = ({
       <div className="card-body">
         {/* ✅ TAB SELECTOR (only for create mode) */}
         {mode === 'create' && (
-          <div style={{ marginBottom: '1.5rem' }}>
-            <label className="form-label" style={{ marginBottom: '0.75rem', display: 'block' }}>
+          <div className={styles.methodSelectorContainer}>
+            <label className={`form-label ${styles.methodSelectorLabel}`}>
               Pilih Metode Penambahan:
             </label>
-            <div style={{ display: 'flex', gap: '1rem' }}>
+            <div className={styles.methodButtons}>
               <button
                 type="button"
                 onClick={() => handleMethodChange('accurate')}
-                style={{
-                  flex: 1,
-                  padding: '1rem',
-                  border: `2px solid ${selectedMethod === 'accurate' ? '#2196f3' : '#ddd'}`,
-                  borderRadius: '8px',
-                  backgroundColor: selectedMethod === 'accurate' ? '#e3f2fd' : '#fff',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                }}
+                className={`${styles.methodButton} ${
+                  selectedMethod === 'accurate' ? styles.active : styles.inactive
+                }`}
               >
-                <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🔗</div>
-                <div style={{ fontWeight: 600, marginBottom: '0.25rem', color: '#333' }}>
-                  Via Accurate
-                </div>
-                <div style={{ fontSize: '0.85rem', color: '#666' }}>
-                  Validasi & auto-fill data
-                </div>
+                <div className={styles.methodIcon}>🔗</div>
+                <div className={styles.methodTitle}>Via Accurate</div>
+                <div className={styles.methodDescription}>Validasi & auto-fill data</div>
               </button>
 
               <button
                 type="button"
                 onClick={() => handleMethodChange('manual')}
-                style={{
-                  flex: 1,
-                  padding: '1rem',
-                  border: `2px solid ${selectedMethod === 'manual' ? '#2196f3' : '#ddd'}`,
-                  borderRadius: '8px',
-                  backgroundColor: selectedMethod === 'manual' ? '#e3f2fd' : '#fff',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                }}
+                className={`${styles.methodButton} ${
+                  selectedMethod === 'manual' ? styles.active : styles.inactive
+                }`}
               >
-                <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>✍️</div>
-                <div style={{ fontWeight: 600, marginBottom: '0.25rem', color: '#333' }}>
-                  Input Manual
-                </div>
-                <div style={{ fontSize: '0.85rem', color: '#666' }}>
-                  Tanpa API, langsung simpan
-                </div>
+                <div className={styles.methodIcon}>✍️</div>
+                <div className={styles.methodTitle}>Input Manual</div>
+                <div className={styles.methodDescription}>Tanpa API, langsung simpan</div>
               </button>
             </div>
           </div>
@@ -415,14 +396,8 @@ export const EntitasForm: React.FC<Props> = ({
 
         {/* ✅ INFO METHOD (for edit mode) */}
         {mode === 'edit' && (
-          <div style={{ 
-            marginBottom: '1rem', 
-            padding: '0.75rem', 
-            backgroundColor: '#f5f5f5', 
-            borderRadius: '6px',
-            border: '1px solid #ddd'
-          }}>
-            <small style={{ color: '#666' }}>
+          <div className={styles.methodInfo}>
+            <small className={styles.methodInfoText}>
               <strong>Metode: </strong>
               {selectedMethod === 'accurate' ? '🔗 Via Accurate' : '✍️ Input Manual'}
             </small>
@@ -431,27 +406,14 @@ export const EntitasForm: React.FC<Props> = ({
 
         {/* ERROR MESSAGE */}
         {error && (
-          <div
-            style={{
-              padding: '1rem',
-              backgroundColor: '#ffebee',
-              color: '#c62828',
-              borderRadius: '8px',
-              marginBottom: '1rem',
-              fontSize: '0.875rem',
-              border: '2px solid #ef5350',
-              whiteSpace: 'pre-wrap',
-              lineHeight: '1.6',
-              boxShadow: error.includes('Email Akun') ? '0 4px 12px rgba(244, 67, 54, 0.3)' : 'none',
-            }}
-          >
+          <div className={`${styles.errorAlert} ${error.includes('Email Akun') ? styles.critical : ''}`}>
             {error.includes('Email Akun') ? (
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-                  <span style={{ fontSize: '1.5rem' }}>🚫</span>
-                  <strong style={{ fontSize: '1.05rem' }}>Token Tidak Cocok dengan Akun Anda!</strong>
+                <div className={styles.errorAlertHeader}>
+                  <span className={styles.errorAlertIcon}>🚫</span>
+                  <strong className={styles.errorAlertTitle}>Token Tidak Cocok dengan Akun Anda!</strong>
                 </div>
-                <div style={{ fontSize: '0.9rem' }}>{error}</div>
+                <div className={styles.errorAlertMessage}>{error}</div>
               </div>
             ) : (
               error
@@ -461,19 +423,7 @@ export const EntitasForm: React.FC<Props> = ({
 
         {/* SUCCESS MESSAGE */}
         {success && (
-          <div
-            style={{
-              padding: '1rem',
-              backgroundColor: '#e8f5e9',
-              color: '#2e7d32',
-              borderRadius: '4px',
-              marginBottom: '1rem',
-              fontSize: '0.875rem',
-              border: '2px solid #66bb6a',
-              whiteSpace: 'pre-wrap',
-              lineHeight: '1.5',
-            }}
-          >
+          <div className={styles.successAlert}>
             {success}
           </div>
         )}
@@ -483,73 +433,37 @@ export const EntitasForm: React.FC<Props> = ({
           <>
             <div className="form-group">
               <label className="form-label">API Token Accurate</label>
-              <div style={{ position: 'relative', marginBottom: '0.5rem' }}>
+              <div className={styles.tokenInputWrapper}>
                 <input
                   type={showToken ? 'text' : 'password'}
                   name="api_token"
                   value={formData.api_token}
                   onChange={handleChange}
-                  className="form-control"
-                  placeholder="Masukkan API Token dari Accurate (contoh: aat.NTA.eyJ2Ijo...)"
+                  className={`form-control ${styles.tokenInput} ${
+                    tokenDuplicate || formatError ? styles.error : ''
+                  }`}
+                  placeholder="Masukkan API Token dari Accurate"
                   required
                   disabled={validating || loading}
-                  style={{
-                    borderColor: (tokenDuplicate || formatError) ? '#f44336' : undefined,
-                    backgroundColor: (tokenDuplicate || formatError) ? '#ffebee' : undefined,
-                  }}
                 />
                 <button
                   type="button"
                   onClick={() => setShowToken(!showToken)}
-                  style={{
-                    position: 'absolute',
-                    right: '0.75rem',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontSize: '1.2rem',
-                    padding: 0,
-                  }}
+                  className={styles.showTokenButton}
                 >
                   {showToken ? '👁️' : '👁️‍🗨️'}
                 </button>
               </div>
 
               {formatError && !tokenDuplicate && (
-                <div
-                  style={{
-                    padding: '0.75rem',
-                    backgroundColor: '#ffebee',
-                    color: '#c62828',
-                    borderRadius: '4px',
-                    marginBottom: '0.5rem',
-                    fontSize: '0.85rem',
-                    border: '1px solid #ef5350',
-                    display: 'flex',
-                    gap: '0.5rem',
-                  }}
-                >
+                <div className={styles.formatError}>
                   <span>⚠️</span>
                   <span>{formatError}</span>
                 </div>
               )}
 
               {tokenDuplicate && formData.api_token !== initialData?.api_token && (
-                <div
-                  style={{
-                    padding: '0.75rem',
-                    backgroundColor: '#ffebee',
-                    color: '#c62828',
-                    borderRadius: '4px',
-                    marginBottom: '0.5rem',
-                    fontSize: '0.85rem',
-                    border: '1px solid #ef5350',
-                    display: 'flex',
-                    gap: '0.5rem',
-                  }}
-                >
+                <div className={styles.tokenDuplicateWarning}>
                   <span>⚠️</span>
                   <span>
                     <strong>Token Sudah Terdaftar!</strong> Token ini sudah digunakan oleh entitas
@@ -560,50 +474,36 @@ export const EntitasForm: React.FC<Props> = ({
 
               <button
                 type="button"
-                className="btn btn-sm"
+                className={`btn btn-sm ${styles.validateButton} ${
+                  tokenValidated && ownershipValidated
+                    ? styles.validated
+                    : !tokenValidated && formData.api_token
+                    ? styles.pending
+                    : ''
+                }`}
                 onClick={handleValidateToken}
                 disabled={validating || loading || !formData.api_token.trim() || tokenDuplicate || !!formatError}
-                style={{
-                  width: '100%',
-                  marginBottom: '0.5rem',
-                  backgroundColor: tokenValidated && ownershipValidated ? '#4caf50' : undefined,
-                  color: tokenValidated && ownershipValidated ? '#fff' : undefined,
-                  border: !tokenValidated && formData.api_token ? '2px solid #ff9800' : undefined,
-                  fontWeight: !tokenValidated && formData.api_token ? 'bold' : 'normal',
-                }}
               >
                 {validating
-                  ? '⏳ Validasi Token...'
+                  ? 'Validasi Token...'
                   : tokenValidated && ownershipValidated
-                  ? '✅ Token Valid & Milik Anda'
+                  ? 'Token Valid & Milik Anda'
                   : 'Validasi Token'}
               </button>
 
-              <small style={{ color: '#666', marginTop: '0.25rem', display: 'block' }}>
+              <small className={styles.helperText}>
                 Token untuk autentikasi API Accurate (Lihat Panduan Lengkap Cara Mendapatkan API Token)
               </small>
             </div>
 
             {mode === 'create' && formData.api_token && !tokenValidated && !tokenDuplicate && !formatError && (
-              <div
-                style={{
-                  padding: '0.75rem',
-                  backgroundColor: '#fff3e0',
-                  color: '#e65100',
-                  borderRadius: '4px',
-                  marginBottom: '1rem',
-                  border: '2px solid #ffb74d',
-                  display: 'flex',
-                  gap: '0.5rem',
-                  alignItems: 'flex-start',
-                }}
-              >
-                <span style={{ fontSize: '1.2rem' }}>⚠️</span>
+              <div className={styles.pendingValidationWarning}>
+                <span className={styles.pendingValidationIcon}>⚠️</span>
                 <div>
-                  <strong style={{ display: 'block', marginBottom: '0.25rem' }}>
+                  <strong className={styles.pendingValidationTitle}>
                     Token Belum Divalidasi
                   </strong>
-                  <small>
+                  <small className={styles.pendingValidationText}>
                     Silakan klik tombol "Validasi Token" di atas untuk:
                     <br />• Memverifikasi bahwa token milik akun Anda
                     <br />• Memastikan koneksi ke Accurate
@@ -620,84 +520,40 @@ export const EntitasForm: React.FC<Props> = ({
                   type="text"
                   name="entity_name"
                   value={formData.entity_name}
-                  className="form-control"
+                  className={`form-control ${styles.entityNameInput}`}
                   readOnly
-                  style={{
-                    backgroundColor: '#f5f5f5',
-                    cursor: 'not-allowed',
-                    color: '#333',
-                    fontWeight: 500,
-                  }}
                 />
-                <small style={{ color: '#666', marginTop: '0.25rem', display: 'block' }}>
+                <small className={styles.helperText}>
                   {mode === 'edit' ? '✓ Nama entitas yang tersimpan' : '✓ Nama diambil otomatis dari database Accurate'}
                 </small>
               </div>
             )}
 
             {tokenValidated && validationResult?.primaryDatabase && (
-              <div
-                style={{
-                  padding: '1rem',
-                  backgroundColor: '#f1f8e9',
-                  borderRadius: '8px',
-                  marginBottom: '1rem',
-                  border: '1px solid #c5e1a5',
-                }}
-              >
-                <h4 style={{ margin: '0 0 0.75rem 0', color: '#33691e', fontSize: '0.95rem' }}>
+              <div className={styles.databaseBox}>
+                <h4 className={styles.databaseBoxTitle}>
                   ✓ Database Terdeteksi
                 </h4>
 
                 <div>
-                  <small style={{ color: '#666', display: 'block', marginBottom: '0.25rem' }}>
+                  <small className={styles.databaseIdLabel}>
                     <strong>ID Database:</strong>
                   </small>
-                  <code
-                    style={{
-                      backgroundColor: '#fff',
-                      padding: '0.5rem',
-                      borderRadius: '4px',
-                      display: 'inline-block',
-                      fontSize: '0.9rem',
-                      color: '#333',
-                      fontWeight: 500,
-                    }}
-                  >
+                  <code className={styles.databaseIdCode}>
                     {validationResult.primaryDatabase.id || '-'}
                   </code>
                 </div>
 
                 {databases.length > 1 && (
-                  <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #c5e1a5' }}>
-                    <small style={{ color: '#666', display: 'block', marginBottom: '0.5rem' }}>
+                  <div className={styles.databaseListContainer}>
+                    <small className={styles.databaseListTitle}>
                       <strong>Database Lainnya ({databases.length} total):</strong>
                     </small>
-                    <div
-                      style={{
-                        maxHeight: '200px',
-                        overflowY: 'auto',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '0.5rem',
-                      }}
-                    >
+                    <div className={styles.databaseList}>
                       {databases.map((db) => (
-                        <div
-                          key={db.id}
-                          style={{
-                            padding: '0.5rem',
-                            backgroundColor: '#fff',
-                            border: '1px solid #ddd',
-                            borderRadius: '4px',
-                            fontSize: '0.85rem',
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                          }}
-                        >
-                          <span style={{ fontWeight: 500 }}>{db.name}</span>
-                          <code style={{ fontSize: '0.8rem', color: '#666' }}>
+                        <div key={db.id} className={styles.databaseItem}>
+                          <span className={styles.databaseItemName}>{db.name}</span>
+                          <code className={styles.databaseItemCode}>
                             ID: {db.id}
                           </code>
                         </div>
@@ -708,15 +564,7 @@ export const EntitasForm: React.FC<Props> = ({
               </div>
             )}
 
-            <div
-              style={{
-                padding: '0.75rem',
-                backgroundColor: '#fff3e0',
-                color: '#e65100',
-                borderRadius: '4px',
-                fontSize: '0.8rem',
-              }}
-            >
+            <div className={styles.securityWarning}>
               <strong>Penting! :</strong> API Token Anda Bersifat Rahasia. Jangan
               bagikan dengan orang lain.
             </div>
@@ -727,7 +575,7 @@ export const EntitasForm: React.FC<Props> = ({
         {selectedMethod === 'manual' && (
           <>
             <div className="form-group">
-              <label className="form-label">Nama Entitas *</label>
+              <label className="form-label">Nama Entitas </label>
               <input
                 type="text"
                 name="entity_name"
@@ -738,28 +586,19 @@ export const EntitasForm: React.FC<Props> = ({
                 required
                 disabled={loading}
               />
-              <small style={{ color: '#666', marginTop: '0.25rem', display: 'block' }}>
+              <small className={styles.helperText}>
                 Nama entitas yang akan ditampilkan di sistem
               </small>
             </div>
 
-            <div
-              style={{
-                padding: '0.75rem',
-                backgroundColor: '#e3f2fd',
-                color: '#1565c0',
-                borderRadius: '4px',
-                fontSize: '0.85rem',
-                border: '1px solid #90caf9',
-              }}
-            >
+            <div className={styles.infoBox}>
               <strong>ℹ️ Info:</strong> Entitas manual tidak terhubung dengan Accurate. Data akan disimpan langsung tanpa validasi API.
             </div>
           </>
         )}
       </div>
 
-      <div className="form-actions">
+      <div className={styles.formActions}>
         <button
           type="button"
           className="btn btn-secondary"
@@ -771,7 +610,11 @@ export const EntitasForm: React.FC<Props> = ({
 
         <button
           type="submit"
-          className="btn btn-primary"
+          className={`btn btn-primary ${styles.submitButton} ${
+            selectedMethod === 'accurate' && mode === 'create' && (!tokenValidated || !ownershipValidated) && formData.api_token
+              ? styles.disabled
+              : ''
+          }`}
           disabled={
             loading || 
             validating || 
@@ -779,10 +622,6 @@ export const EntitasForm: React.FC<Props> = ({
             (selectedMethod === 'accurate' && tokenDuplicate) ||
             (selectedMethod === 'accurate' && !!formatError)
           }
-          style={{
-            opacity: selectedMethod === 'accurate' && mode === 'create' && (!tokenValidated || !ownershipValidated) && formData.api_token ? 0.5 : 1,
-            cursor: selectedMethod === 'accurate' && mode === 'create' && (!tokenValidated || !ownershipValidated) && formData.api_token ? 'not-allowed' : 'pointer',
-          }}
         >
           {loading ? 'Menyimpan...' : mode === 'create' ? 'Simpan' : 'Update'}
         </button>

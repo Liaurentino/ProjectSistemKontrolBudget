@@ -3,7 +3,8 @@ import {
   getRealisasiByBudget,
   insertRealisasi,
   deleteRealisasi,
-} from "../lib/supabase";
+} from "../../lib/supabase";
+import styles from "./RealisasiTable.module.css";
 
 interface Realisasi {
   id: string;
@@ -19,8 +20,8 @@ interface RealisasiTableProps {
   budgetId: string;
   categories?: any[];
   budgets: any[];
-  entities: any[];              
-  activeEntityIds: string[];   
+  entities: any[];
+  activeEntityIds: string[];
   selectedBudgetId: string | null;
   onChangeBudget: (id: string) => void;
 }
@@ -99,45 +100,32 @@ export const RealisasiTable: React.FC<RealisasiTableProps> = ({
   // DROPDOWN ENTITAS
   // =========================
 
-  // hanya entitas aktif yang punya budget
   const visibleEntities = entities.filter((ent: any) =>
     activeEntityIds.includes(ent.id)
   );
 
-  // entity yang sedang terpilih (berdasarkan budget terpilih)
   const selectedEntityId =
     budgets.find((b) => b.id === selectedBudgetId)?.entity?.id || "";
 
   const handleSelectEntity = (entityId: string) => {
-    // cari budget milik entitas ini
     const found = budgets.find((b) => b.entity?.id === entityId);
-
     if (found) onChangeBudget(found.id);
   };
 
   return (
-    <div className="card fade-in">
-      <div className="card-header">
-        <h3 className="card-title">Realisasi Pengeluaran</h3>
+    <div className={styles.card}>
+      <div className={styles.cardHeader}>
+        <h3 className={styles.cardTitle}>Realisasi Pengeluaran</h3>
       </div>
 
       {/* DROPDOWN ENTITAS */}
-      <div
-        style={{
-          display: "flex",
-          gap: "1rem",
-          alignItems: "center",
-          marginBottom: "1rem",
-          flexWrap: "wrap",
-        }}
-      >
+      <div className={styles.controls}>
         <select
-          className="form-select"
+          className={styles.formSelect}
           value={selectedEntityId}
           onChange={(e) => handleSelectEntity(e.target.value)}
         >
           <option value="">Pilih entitas</option>
-
           {visibleEntities.map((entity: any) => (
             <option key={entity.id} value={entity.id}>
               {entity.entity_name}
@@ -146,28 +134,30 @@ export const RealisasiTable: React.FC<RealisasiTableProps> = ({
         </select>
 
         {!showForm && (
-          <button onClick={() => setShowForm(true)} className="btn btn-primary">
+          <button
+            onClick={() => setShowForm(true)}
+            className={styles.addButton}
+          >
             + Tambah Realisasi
           </button>
         )}
       </div>
 
       {showForm && (
-        <div className="card mb-4 fade-in">
-          <h4 className="mb-3">Tambah Realisasi Baru</h4>
+        <div className={styles.formCard}>
+          <h4 className={styles.formCardTitle}>Tambah Realisasi Baru</h4>
 
-          <div className="stats-grid">
-            <div className="form-group">
-              <label className="form-label">Kategori</label>
+          <div className={styles.statsGrid}>
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>Kategori</label>
               <select
-                className="form-select"
+                className={styles.formSelectInput}
                 value={formData.category}
                 onChange={(e) =>
                   setFormData({ ...formData, category: e.target.value })
                 }
               >
                 <option value="">Pilih Kategori</option>
-
                 {categories?.map((cat) => (
                   <option key={cat.id} value={cat.name}>
                     {cat.name}
@@ -176,11 +166,11 @@ export const RealisasiTable: React.FC<RealisasiTableProps> = ({
               </select>
             </div>
 
-            <div className="form-group">
-              <label className="form-label">Jumlah (IDR)</label>
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>Jumlah (IDR)</label>
               <input
                 type="number"
-                className="form-input"
+                className={styles.formInput}
                 value={formData.amount || ""}
                 onChange={(e) =>
                   setFormData({
@@ -193,12 +183,12 @@ export const RealisasiTable: React.FC<RealisasiTableProps> = ({
             </div>
           </div>
 
-          <div className="stats-grid">
-            <div className="form-group">
-              <label className="form-label">Tanggal</label>
+          <div className={styles.statsGrid}>
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>Tanggal</label>
               <input
                 type="date"
-                className="form-input"
+                className={styles.formInput}
                 value={formData.date}
                 onChange={(e) =>
                   setFormData({ ...formData, date: e.target.value })
@@ -206,11 +196,11 @@ export const RealisasiTable: React.FC<RealisasiTableProps> = ({
               />
             </div>
 
-            <div className="form-group">
-              <label className="form-label">Deskripsi</label>
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>Deskripsi</label>
               <input
                 type="text"
-                className="form-input"
+                className={styles.formInput}
                 value={formData.description}
                 onChange={(e) =>
                   setFormData({ ...formData, description: e.target.value })
@@ -220,37 +210,40 @@ export const RealisasiTable: React.FC<RealisasiTableProps> = ({
             </div>
           </div>
 
-          <div className="modal-footer" style={{ marginTop: "1rem" }}>
+          <div className={styles.modalFooter}>
             <button
               onClick={() => setShowForm(false)}
-              className="btn btn-outline"
+              className={styles.cancelButton}
             >
               Batal
             </button>
 
-            <button onClick={handleAddRealisasi} className="btn btn-primary">
+            <button
+              onClick={handleAddRealisasi}
+              className={styles.saveButton}
+            >
               Simpan
             </button>
           </div>
         </div>
       )}
 
-      <div className="table-container">
-        <table className="table">
+      <div className={styles.tableContainer}>
+        <table className={styles.table}>
           <thead>
             <tr>
               <th>Tanggal</th>
               <th>Kategori</th>
               <th>Deskripsi</th>
-              <th style={{ textAlign: "right" }}>Jumlah</th>
-              <th style={{ textAlign: "center" }}>Aksi</th>
+              <th className={styles.amount}>Jumlah</th>
+              <th className={styles.actions}>Aksi</th>
             </tr>
           </thead>
 
           <tbody>
             {realisasi.length === 0 ? (
               <tr>
-                <td colSpan={5} className="text-center">
+                <td colSpan={5} className={styles.textCenter}>
                   Belum ada data pengeluaran
                 </td>
               </tr>
@@ -260,13 +253,13 @@ export const RealisasiTable: React.FC<RealisasiTableProps> = ({
                   <td>{new Date(r.date).toLocaleDateString("id-ID")}</td>
                   <td>{r.category || "-"}</td>
                   <td>{r.description || "-"}</td>
-                  <td style={{ textAlign: "right" }}>
+                  <td className={styles.amount}>
                     Rp {r.amount.toLocaleString("id-ID")}
                   </td>
-                  <td style={{ textAlign: "center" }}>
+                  <td className={styles.actions}>
                     <button
                       onClick={() => handleDelete(r.id)}
-                      className="btn btn-danger btn-sm"
+                      className={styles.deleteButton}
                     >
                       Hapus
                     </button>

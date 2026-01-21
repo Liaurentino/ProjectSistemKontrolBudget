@@ -1,0 +1,286 @@
+/* ImportExcel.module.css */
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modalContent {
+  background-color: white;
+  border-radius: 12px;
+  padding: 32px;
+  max-width: 700px;
+  width: 90%;
+  max-height: 90vh;
+  overflow: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.header {
+  margin-bottom: 24px;
+}
+
+.headerTitle {
+  margin: 0 0 8px 0;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.headerSubtitle {
+  margin: 0;
+  color: #6c757d;
+  font-size: 14px;
+}
+
+.dropArea {
+  border: 2px dashed #dee2e6;
+  border-radius: 8px;
+  padding: 48px 24px;
+  text-align: center;
+  cursor: pointer;
+  background-color: #f8f9fa;
+  transition: all 0.3s;
+  margin-bottom: 24px;
+}
+
+.dropAreaActive {
+  border-color: #007bff;
+  background-color: #e7f3ff;
+}
+
+.fileInput {
+  display: none;
+}
+
+.icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.fileSelectedTitle {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: #28a745;
+}
+
+.fileSelectedText {
+  margin: 0;
+  font-size: 14px;
+  color: #6c757d;
+}
+
+.removeButton {
+  margin-top: 12px;
+  padding: 6px 12px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.removeButton:hover:not(:disabled) {
+  background-color: #c82333;
+}
+
+.dragDropTitle {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.dragDropText {
+  margin: 0;
+  font-size: 14px;
+  color: #6c757d;
+}
+
+.formatDetected {
+  padding: 12px 16px;
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: #155724;
+  font-weight: 600;
+}
+
+.formatUnknown {
+  padding: 12px 16px;
+  background-color: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: #856404;
+  font-weight: 600;
+}
+
+.previewContainer {
+  margin-bottom: 24px;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.previewHeader {
+  padding: 12px 16px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.previewTableWrapper {
+  overflow-x: auto;
+  max-height: 200px;
+}
+
+.previewTable {
+  width: 100%;
+  font-size: 12px;
+  border-collapse: collapse;
+}
+
+.previewTable th,
+.previewTable td {
+  padding: 8px;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.previewTable th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  text-align: left;
+}
+
+.previewTable th.amount {
+  text-align: right;
+}
+
+.previewTable td {
+  font-size: 11px;
+}
+
+.previewCode {
+  font-family: monospace;
+}
+
+.previewName {
+  font-size: 11px;
+}
+
+.previewTypeBadge {
+  padding: 2px 6px;
+  background-color: #e7f3ff;
+  color: #004085;
+  border-radius: 3px;
+  font-size: 10px;
+}
+
+.previewAmount {
+  text-align: right;
+  font-family: monospace;
+}
+
+.formatInfo {
+  padding: 16px;
+  background-color: #e7f3ff;
+  border-radius: 6px;
+  margin-bottom: 24px;
+}
+
+.formatInfoTitle {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #004085;
+}
+
+.formatInfoList {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 13px;
+  color: #004085;
+  line-height: 1.8;
+}
+
+.templateButton {
+  padding: 8px 16px;
+  background-color: #17a2b8;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.templateButton:hover:not(:disabled) {
+  background-color: #138496;
+}
+
+.actionButtons {
+  display: flex;
+  gap: 12px;
+}
+
+.importButton,
+.cancelButton {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.importButton {
+  background-color: #007bff;
+  color: white;
+}
+
+.importButton:disabled {
+  background-color: #6c757d;
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.cancelButton {
+  background-color: white;
+  color: #6c757d;
+  border: 2px solid #dee2e6;
+}
+
+.cancelButton:disabled {
+  cursor: not-allowed;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner {
+  display: inline-block;
+  animation: spin 1s linear infinite;
+}

@@ -370,7 +370,7 @@ export const useCoaForm = () => {
     deleteLoading,
     setDeleteModalOpen,
     
-    // Delete All Modal State - ✅ SUDAH DITAMBAHKAN
+    // Delete All Modal State 
     showDeleteAllModal,
     showFinalConfirmModal,
     deletingAll,
@@ -387,6 +387,6 @@ export const useCoaForm = () => {
     handleEditSubmit,
     handleDelete,
     handleDeleteConfirm,
-    handleDeleteAll, // ✅ SUDAH DITAMBAHKAN
+    handleDeleteAll, // 
   };
 };

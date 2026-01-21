@@ -10,12 +10,13 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import { useEntity } from '../contexts/EntityContext';
+import { useEntity } from '../../contexts/EntityContext';
 import {
   getBudgetRealizationsLive,
   getLocalAccounts,
   type BudgetRealization,
-} from '../lib/accurate';
+} from '../../lib/accurate';
+import styles from './DashboardPage.module.css';
 
 const formatCurrency = (amount: number): string => {
   return amount.toLocaleString('id-ID');
@@ -217,18 +218,12 @@ const DashboardPage: React.FC = () => {
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div style={{
-          backgroundColor: 'white',
-          padding: '12px',
-          border: '1px solid #dee2e6',
-          borderRadius: '6px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-        }}>
-          <p style={{ margin: '0 0 8px', fontWeight: 600, color: '#495057' }}>
+        <div className={styles.customTooltip}>
+          <p className={styles.tooltipPeriod}>
             {payload[0].payload.period}
           </p>
           {payload.map((entry: any, index: number) => (
-            <p key={index} style={{ margin: '4px 0', fontSize: '13px', color: entry.color }}>
+            <p key={index} className={styles.tooltipItem} style={{ color: entry.color }}>
               <strong>{entry.name}:</strong> Rp{formatCurrency(entry.value)}
             </p>
           ))}
@@ -247,15 +242,15 @@ const DashboardPage: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: '24px', maxWidth: '1400px', margin: '0 auto' }}>
+    <div className={styles.container}>
       {/* Header */}
-      <div style={{ marginBottom: '24px' }}>
-        <h2 style={{ margin: 0, fontSize: '28px', fontWeight: 600 }}>📊 Dashboard</h2>
-        <p style={{ margin: '4px 0 0', fontSize: '14px', color: '#6c757d' }}>
+      <div className={styles.header}>
+        <h2 className={styles.headerTitle}>📊 Dashboard</h2>
+        <p className={styles.headerSubtitle}>
           Ringkasan Budget vs Realisasi
         </p>
         {activeEntity && (
-          <p style={{ margin: '4px 0 0', fontSize: '14px', color: '#6c757d' }}>
+          <p className={styles.headerEntity}>
             Entitas: <strong>{activeEntity.entity_name || activeEntity.name}</strong>
           </p>
         )}
@@ -263,15 +258,9 @@ const DashboardPage: React.FC = () => {
 
       {/* No Entity Warning */}
       {!activeEntity && (
-        <div style={{
-          padding: '60px 20px',
-          backgroundColor: '#fff3cd',
-          border: '1px solid #ffc107',
-          borderRadius: '8px',
-          textAlign: 'center',
-        }}>
-          <h3 style={{ margin: '0 0 8px', color: '#856404' }}>Belum Ada Entitas Aktif</h3>
-          <p style={{ margin: 0, color: '#856404' }}>
+        <div className={styles.noEntityWarning}>
+          <h3 className={styles.noEntityWarningTitle}>Belum Ada Entitas Aktif</h3>
+          <p className={styles.noEntityWarningText}>
             Silakan pilih entitas terlebih dahulu di halaman Manajemen Entitas
           </p>
         </div>
@@ -279,14 +268,7 @@ const DashboardPage: React.FC = () => {
 
       {/* Error Alert */}
       {error && (
-        <div style={{
-          padding: '12px 16px',
-          backgroundColor: '#f8d7da',
-          border: '1px solid #f5c6cb',
-          borderRadius: '6px',
-          color: '#721c24',
-          marginBottom: '16px',
-        }}>
+        <div className={styles.errorAlert}>
           <strong>Error:</strong> {error}
         </div>
       )}
@@ -295,29 +277,17 @@ const DashboardPage: React.FC = () => {
       {activeEntity && (
         <>
           {/* RECHARTS Section */}
-          <div style={{
-            backgroundColor: 'white',
-            border: '1px solid #dee2e6',
-            borderRadius: '8px',
-            padding: '24px',
-            marginBottom: '16px',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-          }}>
-            <h3 style={{ 
-              margin: '0 0 20px', 
-              fontSize: '18px', 
-              fontWeight: 600,
-              color: '#495057',
-            }}>
+          <div className={styles.chartCard}>
+            <h3 className={styles.chartTitle}>
               Budget vs Realisasi
             </h3>
 
             {loading ? (
-              <div style={{ padding: '60px 20px', textAlign: 'center', color: '#6c757d' }}>
+              <div className={styles.chartLoading}>
                 ⏳ Memuat data...
               </div>
             ) : chartData.length === 0 ? (
-              <div style={{ padding: '60px 20px', textAlign: 'center', color: '#6c757d' }}>
+              <div className={styles.chartEmpty}>
                 📋 Belum ada data budget. Silakan buat budget terlebih dahulu.
               </div>
             ) : (
@@ -363,105 +333,56 @@ const DashboardPage: React.FC = () => {
             )}
           </div>
 
-          {/* Bottom Section - sama seperti sebelumnya */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: '16px',
-          }}>
+          {/* Bottom Section */}
+          <div className={styles.bottomGrid}>
             {/* Over Budget Warnings */}
-            <div style={{
-              backgroundColor: 'white',
-              border: '1px solid #dee2e6',
-              borderRadius: '8px',
-              padding: '24px',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-            }}>
-              <h3 style={{ 
-                margin: '0 0 16px', 
-                fontSize: '18px', 
-                fontWeight: 600,
-                color: '#495057',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-              }}>
+            <div className={styles.overBudgetCard}>
+              <h3 className={styles.overBudgetTitle}>
                 ⚠️ Peringatan Over Budget
               </h3>
 
               {loading ? (
-                <div style={{ padding: '20px', textAlign: 'center', color: '#6c757d' }}>
+                <div className={styles.overBudgetLoading}>
                   Memuat...
                 </div>
               ) : overBudgetItems.length === 0 ? (
-                <div style={{
-                  padding: '40px 20px',
-                  textAlign: 'center',
-                  backgroundColor: '#d4edda',
-                  borderRadius: '6px',
-                  color: '#155724',
-                }}>
-                  <div style={{ fontSize: '32px', marginBottom: '8px' }}>✓</div>
-                  <div style={{ fontWeight: 600 }}>Semua Budget On Track!</div>
-                  <div style={{ fontSize: '14px', marginTop: '4px' }}>
+                <div className={styles.overBudgetEmpty}>
+                  <div className={styles.overBudgetEmptyIcon}>✓</div>
+                  <div className={styles.overBudgetEmptyTitle}>Semua Budget On Track!</div>
+                  <div className={styles.overBudgetEmptyText}>
                     Tidak ada akun yang melebihi budget
                   </div>
                 </div>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div className={styles.overBudgetList}>
                   {overBudgetItems.map((item, index) => (
-                    <div key={index} style={{
-                      padding: '12px',
-                      backgroundColor: '#fff3cd',
-                      border: '1px solid #ffc107',
-                      borderRadius: '6px',
-                    }}>
-                      <div style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        marginBottom: '4px',
-                      }}>
-                        <span style={{ fontWeight: 600, fontSize: '14px', color: '#856404' }}>
+                    <div key={index} className={styles.overBudgetItem}>
+                      <div className={styles.overBudgetItemHeader}>
+                        <span className={styles.overBudgetItemCode}>
                           {item.account_code}
                         </span>
-                        <span style={{
-                          fontSize: '12px',
-                          color: '#856404',
-                          backgroundColor: '#fff',
-                          padding: '2px 8px',
-                          borderRadius: '4px',
-                        }}>
+                        <span className={styles.overBudgetItemPeriod}>
                           {item.period}
                         </span>
                       </div>
-                      <div style={{ fontSize: '13px', color: '#856404', marginBottom: '8px' }}>
+                      <div className={styles.overBudgetItemName}>
                         {item.account_name}
                       </div>
-                      <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: '1fr 1fr',
-                        gap: '8px',
-                        fontSize: '12px',
-                      }}>
+                      <div className={styles.overBudgetItemAmounts}>
                         <div>
-                          <div style={{ color: '#6c757d' }}>Budget:</div>
-                          <div style={{ fontWeight: 600, color: '#495057' }}>
+                          <div className={styles.overBudgetItemLabel}>Budget:</div>
+                          <div className={styles.overBudgetItemBudget}>
                             Rp{formatCurrency(item.budget)}
                           </div>
                         </div>
                         <div>
-                          <div style={{ color: '#6c757d' }}>Realisasi:</div>
-                          <div style={{ fontWeight: 600, color: '#dc3545' }}>
+                          <div className={styles.overBudgetItemLabel}>Realisasi:</div>
+                          <div className={styles.overBudgetItemRealisasi}>
                             Rp{formatCurrency(item.realisasi)}
                           </div>
                         </div>
                       </div>
-                      <div style={{
-                        marginTop: '8px',
-                        fontSize: '13px',
-                        fontWeight: 600,
-                        color: '#dc3545',
-                      }}>
+                      <div className={styles.overBudgetItemVariance}>
                         Over: Rp{formatCurrency(Math.abs(item.variance))}
                       </div>
                     </div>
@@ -471,175 +392,109 @@ const DashboardPage: React.FC = () => {
             </div>
 
             {/* Insights & Statistics */}
-            <div style={{
-              backgroundColor: 'white',
-              border: '1px solid #dee2e6',
-              borderRadius: '8px',
-              padding: '24px',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-            }}>
-              <h3 style={{ 
-                margin: '0 0 16px', 
-                fontSize: '18px', 
-                fontWeight: 600,
-                color: '#495057',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-              }}>
+            <div className={styles.insightsCard}>
+              <h3 className={styles.insightsTitle}>
                 📈 Insight & Statistik
               </h3>
 
               {loading ? (
-                <div style={{ padding: '20px', textAlign: 'center', color: '#6c757d' }}>
+                <div className={styles.insightsLoading}>
                   Memuat...
                 </div>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div className={styles.insightsContent}>
                   {/* Average Utilization */}
                   <div>
-                    <div style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      marginBottom: '8px',
-                    }}>
-                      <span style={{ fontSize: '14px', fontWeight: 600, color: '#495057' }}>
+                    <div className={styles.utilizationHeader}>
+                      <span className={styles.utilizationLabel}>
                         Rata-rata Utilisasi per Item
                       </span>
-                      <span style={{ 
-                        fontSize: '14px', 
-                        fontWeight: 600,
-                        color: stats.averageUtilization > 100 ? '#dc3545' : '#28a745',
-                      }}>
+                      <span className={`${styles.utilizationPercentage} ${
+                        stats.averageUtilization > 100 
+                          ? styles.utilizationPercentageOver 
+                          : styles.utilizationPercentageNormal
+                      }`}>
                         {stats.averageUtilization.toFixed(1)}%
                       </span>
                     </div>
-                    <div style={{
-                      width: '100%',
-                      height: '24px',
-                      backgroundColor: '#e9ecef',
-                      borderRadius: '12px',
-                      overflow: 'hidden',
-                    }}>
-                      <div style={{
-                        width: `${Math.min(stats.averageUtilization, 100)}%`,
-                        height: '100%',
-                        backgroundColor: stats.averageUtilization > 100 
-                          ? '#dc3545' 
-                          : stats.averageUtilization > 80 
-                          ? '#ffc107' 
-                          : '#28a745',
-                        transition: 'width 0.3s ease',
-                      }} />
+                    <div className={styles.utilizationBarContainer}>
+                      <div 
+                        className={`${styles.utilizationBar} ${
+                          stats.averageUtilization > 100 
+                            ? styles.utilizationBarOver 
+                            : stats.averageUtilization > 80 
+                            ? styles.utilizationBarWarning 
+                            : styles.utilizationBarNormal
+                        }`}
+                        style={{ width: `${Math.min(stats.averageUtilization, 100)}%` }}
+                      />
                     </div>
-                    <div style={{
-                      marginTop: '6px',
-                      fontSize: '11px',
-                      color: '#6c757d',
-                    }}>
+                    <div className={styles.utilizationHint}>
                       💡 Rata-rata dari {realizations.length} budget items
                     </div>
                   </div>
 
                   {/* Unutilized & Over Budget Amounts */}
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gap: '12px',
-                  }}>
-                    <div style={{
-                      padding: '12px',
-                      backgroundColor: '#fff3cd',
-                      borderRadius: '6px',
-                      border: '1px solid #ffc107',
-                    }}>
-                      <div style={{ fontSize: '11px', color: '#856404', marginBottom: '4px' }}>
+                  <div className={styles.amountsGrid}>
+                    <div className={styles.amountBoxUnutilized}>
+                      <div className={`${styles.amountLabel} ${styles.amountLabelUnutilized}`}>
                         Unutilized Budget
                       </div>
-                      <div style={{ fontSize: '18px', fontWeight: 600, color: '#856404' }}>
+                      <div className={`${styles.amountValue} ${styles.amountValueUnutilized}`}>
                         Rp{formatCurrency(stats.totalUnutilized)}
                       </div>
-                      <div style={{ fontSize: '10px', color: '#856404', marginTop: '4px' }}>
+                      <div className={`${styles.amountSubtext} ${styles.amountSubtextUnutilized}`}>
                         belum terpakai
                       </div>
                     </div>
 
-                    <div style={{
-                      padding: '12px',
-                      backgroundColor: '#f8d7da',
-                      borderRadius: '6px',
-                      border: '1px solid #f5c6cb',
-                    }}>
-                      <div style={{ fontSize: '11px', color: '#721c24', marginBottom: '4px' }}>
+                    <div className={styles.amountBoxOver}>
+                      <div className={`${styles.amountLabel} ${styles.amountLabelOver}`}>
                         Total Over Budget
                       </div>
-                      <div style={{ fontSize: '18px', fontWeight: 600, color: '#721c24' }}>
+                      <div className={`${styles.amountValue} ${styles.amountValueOver}`}>
                         Rp{formatCurrency(stats.totalOverBudget)}
                       </div>
-                      <div style={{ fontSize: '10px', color: '#721c24', marginTop: '4px' }}>
+                      <div className={`${styles.amountSubtext} ${styles.amountSubtextOver}`}>
                         melebihi budget
                       </div>
                     </div>
                   </div>
 
                   {/* Distribution Cards */}
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gap: '12px',
-                  }}>
-                    <div style={{
-                      padding: '16px',
-                      backgroundColor: '#e7f3ff',
-                      borderRadius: '6px',
-                      border: '1px solid #b3d9ff',
-                    }}>
-                      <div style={{ fontSize: '12px', color: '#004085', marginBottom: '4px' }}>
+                  <div className={styles.statsGrid}>
+                    <div className={styles.statCardTotal}>
+                      <div className={`${styles.statLabel} ${styles.statLabelTotal}`}>
                         Total Akun COA
                       </div>
-                      <div style={{ fontSize: '24px', fontWeight: 600, color: '#004085' }}>
+                      <div className={`${styles.statValue} ${styles.statValueTotal}`}>
                         {totalAccounts}
                       </div>
                     </div>
 
-                    <div style={{
-                      padding: '16px',
-                      backgroundColor: '#d4edda',
-                      borderRadius: '6px',
-                      border: '1px solid #c3e6cb',
-                    }}>
-                      <div style={{ fontSize: '12px', color: '#155724', marginBottom: '4px' }}>
+                    <div className={styles.statCardOnTrack}>
+                      <div className={`${styles.statLabel} ${styles.statLabelOnTrack}`}>
                         On Track
                       </div>
-                      <div style={{ fontSize: '24px', fontWeight: 600, color: '#155724' }}>
+                      <div className={`${styles.statValue} ${styles.statValueOnTrack}`}>
                         {stats.onTrackCount}
                       </div>
                     </div>
 
-                    <div style={{
-                      padding: '16px',
-                      backgroundColor: '#f8d7da',
-                      borderRadius: '6px',
-                      border: '1px solid #f5c6cb',
-                    }}>
-                      <div style={{ fontSize: '12px', color: '#721c24', marginBottom: '4px' }}>
+                    <div className={styles.statCardOver}>
+                      <div className={`${styles.statLabel} ${styles.statLabelOver}`}>
                         Over Budget
                       </div>
-                      <div style={{ fontSize: '24px', fontWeight: 600, color: '#721c24' }}>
+                      <div className={`${styles.statValue} ${styles.statValueOver}`}>
                         {stats.overBudgetCount}
                       </div>
                     </div>
 
-                    <div style={{
-                      padding: '16px',
-                      backgroundColor: '#fff3cd',
-                      borderRadius: '6px',
-                      border: '1px solid #ffc107',
-                    }}>
-                      <div style={{ fontSize: '12px', color: '#856404', marginBottom: '4px' }}>
+                    <div className={styles.statCardUnder}>
+                      <div className={`${styles.statLabel} ${styles.statLabelUnder}`}>
                         Under-utilized
                       </div>
-                      <div style={{ fontSize: '24px', fontWeight: 600, color: '#856404' }}>
+                      <div className={`${styles.statValue} ${styles.statValueUnder}`}>
                         {stats.underUtilizedCount}
                       </div>
                     </div>

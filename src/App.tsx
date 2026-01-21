@@ -1,14 +1,13 @@
 import { Routes, Route, NavLink, Navigate } from "react-router-dom";
 import { useState } from "react";
 
-import BudgetPage from "./pages/BudgetPage";
-import BudgetRealizationPage from "./pages/BudgetRealisasiPage";
-import DashboardPage from "./pages/DashboardPage";
-import { EntitasPage } from "./pages/EntitasPage";
-import CoaPage from "./pages/CoaPage";
-
+import BudgetPage from "./pages/Budget/BudgetPage";
+import BudgetRealizationPage from "./pages/Realisasi/BudgetRealisasiPage";
+import DashboardPage from "./pages/Dashboard/DashboardPage";
+import { EntitasPage } from "./pages/Entitas/EntitasPage";
+import CoaPage from "./pages/COA/CoaPage";
 import { useAuth } from "./contexts/AuthContext";
-import AuthPage from "./pages/AuthPage";
+import AuthPage from "./pages/Auth/AuthPage";
 
 export default function App() {
   const { user, loading, signOut } = useAuth();

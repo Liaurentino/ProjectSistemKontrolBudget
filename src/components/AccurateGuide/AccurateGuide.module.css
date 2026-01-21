@@ -1,0 +1,275 @@
+/* AccurateGuide.module.css */
+
+.triggerButton {
+  background: none;
+  border: none;
+  color: #2196f3;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0;
+  margin-top: 0.5rem;
+  transition: color 0.2s ease;
+}
+
+.triggerButton:hover {
+  color: #1976d2;
+}
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 1rem;
+  animation: fadeIn 0.2s ease-out;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+.modalContent {
+  background-color: #fff;
+  border-radius: 12px;
+  max-width: 700px;
+  width: 100%;
+  max-height: 90vh;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease-out;
+  display: flex;
+  flex-direction: column;
+}
+
+.modalHeader {
+  padding: 1.5rem;
+  border-bottom: 2px solid #e0e0e0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f5f5f5;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  flex-shrink: 0;
+}
+
+.modalTitle {
+  margin: 0;
+  color: #333;
+  font-size: 1.5rem;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  font-size: 1.8rem;
+  cursor: pointer;
+  color: #666;
+  line-height: 1;
+  padding: 0.25rem;
+  transition: color 0.2s ease, transform 0.2s ease;
+  border-radius: 4px;
+}
+
+.closeButton:hover {
+  color: #f44336;
+  transform: scale(1.1);
+}
+
+.modalBody {
+  padding: 2rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.appKeyBox {
+  background-color: #fff3e0;
+  border: 2px solid #ff9800;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.appKeyLabel {
+  color: #e65100;
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+.appKeyValue {
+  background-color: #fff;
+  padding: 0.75rem;
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 0.95rem;
+  color: #333;
+  word-break: break-all;
+  border: 1px solid #ffb74d;
+  margin-bottom: 0.75rem;
+}
+
+.copyButton {
+  background-color: #ff9800;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.copyButton:hover {
+  background-color: #f57c00;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.copyButton.copied {
+  background-color: #4caf50;
+}
+
+.stepsTitle {
+  color: #333;
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+}
+
+.step {
+  margin-bottom: 1.5rem;
+  display: flex;
+  gap: 1rem;
+}
+
+.stepNumber {
+  min-width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  color: #fff;
+}
+
+.stepNumber--blue {
+  background-color: #2196f3;
+}
+
+.stepNumber--orange {
+  background-color: #ff9800;
+}
+
+.stepNumber--green {
+  background-color: #4caf50;
+}
+
+.stepContent h4 {
+  margin: 0 0 0.5rem 0;
+  color: #333;
+}
+
+.stepContent p {
+  margin: 0;
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.warningBox {
+  margin-top: 2rem;
+  padding: 1rem;
+  background-color: #ffebee;
+  border: 2px solid #f44336;
+  border-radius: 8px;
+}
+
+.warningTitle {
+  color: #c62828;
+  display: block;
+  margin-bottom: 0.25rem;
+  font-weight: bold;
+}
+
+.warningText {
+  margin: 0;
+  color: #c62828;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.modalFooter {
+  padding: 1rem 2rem;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: flex-end;
+  background-color: #f9f9f9;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+  flex-shrink: 0;
+}
+
+.footerButton {
+  background-color: #2196f3;
+  color: #fff;
+  border: none;
+  padding: 0.75rem 2rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.footerButton:hover {
+  background-color: #1976d2;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}

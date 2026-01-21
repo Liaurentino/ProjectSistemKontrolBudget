@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useEntity } from '../contexts/EntityContext';
+import { useEntity } from '../../contexts/EntityContext';
 import {
   getBudgetRealizationsLive,
   getAvailableRealizationPeriods,
@@ -8,8 +8,9 @@ import {
   subscribeBudgetItems,
   type BudgetRealization,
   type BudgetRealizationSummary,
-} from '../lib/accurate';
-import { ExportFile } from '../components/ExportFile';
+} from '../../lib/accurate';
+import { ExportFile } from '../../components/Export&Import/ExportFile';
+import styles from './BudgetRealisasiPage.module.css';
 
 // Helper: Format currency
 const formatCurrency = (amount: number): string => {
@@ -242,23 +243,14 @@ const BudgetRealizationPage: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: '24px', maxWidth: '1400px', margin: '0 auto' }}>
+    <div className={styles.pageContainer}>
       {/* Header */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '24px',
-        flexWrap: 'wrap',
-        gap: '16px',
-      }}>
-        <div>
-          <h2 style={{ margin: 0, fontSize: '28px', fontWeight: 600 }}>Laporan Perbandingan</h2>
-          <p style={{ margin: '4px 0 0', fontSize: '14px', color: '#6c757d' }}>
-            Budget vs Realisasi per Budget Group
-          </p>
+      <div className={styles.header}>
+        <div className={styles.headerContent}>
+          <h2>Laporan Perbandingan</h2>
+          <p>Budget vs Realisasi per Budget Group</p>
           {activeEntity && (
-            <p style={{ margin: '4px 0 0', fontSize: '14px', color: '#6c757d' }}>
+            <p>
               Entitas: <strong>{activeEntity.entity_name || activeEntity.name}</strong>
             </p>
           )}
@@ -267,16 +259,9 @@ const BudgetRealizationPage: React.FC = () => {
         <button
           onClick={loadData}
           disabled={!activeEntity || loading}
-          style={{
-            padding: '10px 20px',
-            backgroundColor: activeEntity && !loading ? '#007bff' : '#adb5bd',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            cursor: activeEntity && !loading ? 'pointer' : 'not-allowed',
-            fontWeight: 600,
-            fontSize: '14px',
-          }}
+          className={`${styles.refreshButton} ${
+            activeEntity && !loading ? styles.active : styles.disabled
+          }`}
         >
           {loading ? '⏳ Memuat...' : '🔄 Refresh Data'}
         </button>
@@ -284,16 +269,9 @@ const BudgetRealizationPage: React.FC = () => {
 
       {/* No Entity Warning */}
       {!activeEntity && (
-        <div style={{
-          padding: '20px',
-          backgroundColor: '#fff3cd',
-          border: '1px solid #ffc107',
-          borderRadius: '8px',
-          marginBottom: '16px',
-          textAlign: 'center',
-        }}>
-          <h3 style={{ margin: '0 0 8px', color: '#856404' }}>Belum Ada Entitas Aktif</h3>
-          <p style={{ margin: 0, color: '#856404' }}>
+        <div className={styles.noEntityWarning}>
+          <h3>Belum Ada Entitas Aktif</h3>
+          <p>
             Silakan pilih entitas terlebih dahulu di halaman Manajemen Entitas
           </p>
         </div>
@@ -301,63 +279,27 @@ const BudgetRealizationPage: React.FC = () => {
 
       {/* Error Alert */}
       {error && (
-        <div style={{
-          padding: '12px 16px',
-          backgroundColor: '#f8d7da',
-          border: '1px solid #f5c6cb',
-          borderRadius: '6px',
-          color: '#721c24',
-          marginBottom: '16px',
-        }}>
+        <div className={styles.errorAlert}>
           <strong>Error:</strong> {error}
         </div>
       )}
 
       {/* Filters */}
       {activeEntity && (
-        <div style={{
-          padding: '20px 24px',
-          backgroundColor: 'white',
-          border: '1px solid #dee2e6',
-          borderRadius: '8px',
-          marginBottom: '16px',
-        }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            marginBottom: '16px',
-          }}>
-            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>Filter Laporan</h3>
+        <div className={styles.filterSection}>
+          <div className={styles.filterHeader}>
+            <h3>Filter Laporan</h3>
           </div>
 
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '16px',
-            marginBottom: '16px',
-          }}>
+          <div className={styles.filterGrid}>
             {/* Periode */}
             <div>
-              <label style={{
-                display: 'block',
-                marginBottom: '6px',
-                fontSize: '13px',
-                fontWeight: 500,
-              }}>
-                Periode
-              </label>
+              <label className={styles.filterLabel}>Periode</label>
               <select
                 value={selectedPeriod}
                 onChange={(e) => setSelectedPeriod(e.target.value)}
                 disabled={loading}
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  border: '1px solid #ced4da',
-                  borderRadius: '4px',
-                  fontSize: '14px',
-                }}
+                className={styles.filterSelect}
               >
                 <option value="all">Semua Periode</option>
                 {availablePeriods.map((period) => (
@@ -368,25 +310,12 @@ const BudgetRealizationPage: React.FC = () => {
 
             {/* Nama Budget */}
             <div>
-              <label style={{
-                display: 'block',
-                marginBottom: '6px',
-                fontSize: '13px',
-                fontWeight: 500,
-              }}>
-                Nama Budget
-              </label>
+              <label className={styles.filterLabel}>Nama Budget</label>
               <select
                 value={selectedBudgetGroup}
                 onChange={(e) => setSelectedBudgetGroup(e.target.value)}
                 disabled={loading}
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  border: '1px solid #ced4da',
-                  borderRadius: '4px',
-                  fontSize: '14px',
-                }}
+                className={styles.filterSelect}
               >
                 <option value="all">Semua Budget</option>
                 {availableBudgetGroups.map((group) => (
@@ -397,25 +326,12 @@ const BudgetRealizationPage: React.FC = () => {
 
             {/* Tipe Akun */}
             <div>
-              <label style={{
-                display: 'block',
-                marginBottom: '6px',
-                fontSize: '13px',
-                fontWeight: 500,
-              }}>
-                Tipe Akun
-              </label>
+              <label className={styles.filterLabel}>Tipe Akun</label>
               <select
                 value={selectedAccountType}
                 onChange={(e) => setSelectedAccountType(e.target.value)}
                 disabled={loading}
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  border: '1px solid #ced4da',
-                  borderRadius: '4px',
-                  fontSize: '14px',
-                }}
+                className={styles.filterSelect}
               >
                 <option value="all">Semua Tipe</option>
                 {availableTypes.map((type) => (
@@ -426,32 +342,19 @@ const BudgetRealizationPage: React.FC = () => {
 
             {/* Search */}
             <div>
-              <label style={{
-                display: 'block',
-                marginBottom: '6px',
-                fontSize: '13px',
-                fontWeight: 500,
-              }}>
-                Cari Budget Group
-              </label>
+              <label className={styles.filterLabel}>Cari Budget Group</label>
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Cari nama budget group..."
                 disabled={loading}
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  border: '1px solid #ced4da',
-                  borderRadius: '4px',
-                  fontSize: '14px',
-                }}
+                className={styles.filterInput}
               />
             </div>
           </div>
 
-          <div style={{ fontSize: '13px', color: '#6c757d' }}>
+          <div className={styles.filterInfo}>
             Menampilkan <strong>{filteredGroupedData.length}</strong> dari {groupedData.length} budget group
           </div>
         </div>
@@ -459,135 +362,65 @@ const BudgetRealizationPage: React.FC = () => {
 
       {/* Summary Cards */}
       {activeEntity && summary && (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-          gap: '16px',
-          marginBottom: '24px',
-        }}>
+        <div className={styles.summaryCards}>
           {/* Total Budget */}
-          <div style={{
-            padding: '20px',
-            backgroundColor: '#007bff',
-            color: 'white',
-            borderRadius: '8px',
-          }}>
-            <div style={{
-              fontSize: '12px',
-              fontWeight: 600,
-              marginBottom: '8px',
-              textTransform: 'uppercase',
-              opacity: 0.9,
-            }}>
-              Total Budget
-            </div>
-            <div style={{
-              fontSize: `${getAdaptiveFontSize(summary.total_budget)}px`,
-              fontWeight: 600,
-            }}>
+          <div className={`${styles.summaryCard} ${styles.blue}`}>
+            <div className={styles.summaryCardLabel}>Total Budget</div>
+            <div 
+              className={styles.summaryCardValue}
+              style={{ fontSize: `${getAdaptiveFontSize(summary.total_budget)}px` }}
+            >
               Rp{formatCurrency(summary.total_budget)}
             </div>
           </div>
 
           {/* Total Realisasi */}
-          <div style={{
-            padding: '20px',
-            backgroundColor: '#28a745',
-            color: 'white',
-            borderRadius: '8px',
-          }}>
-            <div style={{
-              fontSize: '12px',
-              fontWeight: 600,
-              marginBottom: '8px',
-              textTransform: 'uppercase',
-              opacity: 0.9,
-            }}>
-              Total Realisasi
-            </div>
-            <div style={{
-              fontSize: `${getAdaptiveFontSize(summary.total_realisasi)}px`,
-              fontWeight: 600,
-            }}>
+          <div className={`${styles.summaryCard} ${styles.green}`}>
+            <div className={styles.summaryCardLabel}>Total Realisasi</div>
+            <div 
+              className={styles.summaryCardValue}
+              style={{ fontSize: `${getAdaptiveFontSize(summary.total_realisasi)}px` }}
+            >
               Rp{formatCurrency(summary.total_realisasi)}
             </div>
           </div>
 
           {/* Variance */}
-          <div style={{
-            padding: '20px',
-            backgroundColor: summary.overall_status === 'OVER_BUDGET' ? '#dc3545' : '#17a2b8',
-            color: 'white',
-            borderRadius: '8px',
-          }}>
-            <div style={{
-              fontSize: '12px',
-              fontWeight: 600,
-              marginBottom: '8px',
-              textTransform: 'uppercase',
-              opacity: 0.9,
-            }}>
-              Variance
-            </div>
-            <div style={{
-              fontSize: `${getAdaptiveFontSize(Math.abs(summary.total_variance))}px`,
-              fontWeight: 600,
-            }}>
+          <div className={`${styles.summaryCard} ${
+            summary.overall_status === 'OVER_BUDGET' ? styles.red : styles.cyan
+          }`}>
+            <div className={styles.summaryCardLabel}>Variance</div>
+            <div 
+              className={styles.summaryCardValue}
+              style={{ fontSize: `${getAdaptiveFontSize(Math.abs(summary.total_variance))}px` }}
+            >
               Rp{formatCurrency(Math.abs(summary.total_variance))}
             </div>
-            <div style={{ fontSize: '11px', marginTop: '4px', opacity: 0.9 }}>
+            <div className={styles.summaryCardNote}>
               {summary.overall_status === 'OVER_BUDGET' ? 'Over Budget' : 'Under Budget'}
             </div>
           </div>
 
           {/* Variance % */}
-          <div style={{
-            padding: '20px',
-            backgroundColor: summary.overall_status === 'OVER_BUDGET' ? '#dc3545' : '#28a745',
-            color: 'white',
-            borderRadius: '8px',
-          }}>
-            <div style={{
-              fontSize: '12px',
-              fontWeight: 600,
-              marginBottom: '8px',
-              textTransform: 'uppercase',
-              opacity: 0.9,
-            }}>
-              Variance %
-            </div>
-            <div style={{ fontSize: '24px', fontWeight: 600 }}>
+          <div className={`${styles.summaryCard} ${
+            summary.overall_status === 'OVER_BUDGET' ? styles.red : styles.green
+          }`}>
+            <div className={styles.summaryCardLabel}>Variance %</div>
+            <div className={styles.summaryCardValue} style={{ fontSize: '24px' }}>
               {Math.abs(summary.variance_percentage).toFixed(2)}%
             </div>
-            <div style={{ fontSize: '11px', marginTop: '4px', opacity: 0.9 }}>
-              Sisa Budget
-            </div>
+            <div className={styles.summaryCardNote}>Sisa Budget</div>
           </div>
         </div>
       )}
 
       {/* Grouped Data Table */}
       {activeEntity && (
-        <div style={{
-          backgroundColor: 'white',
-          border: '1px solid #dee2e6',
-          borderRadius: '8px',
-          overflow: 'hidden',
-        }}>
+        <div className={styles.dataTableContainer}>
           {loading && groupedData.length === 0 ? (
-            <div style={{
-              padding: '60px 20px',
-              textAlign: 'center',
-              color: '#6c757d',
-            }}>
-              ⏳ Memuat data...
-            </div>
+            <div className={styles.loadingState}>⏳ Memuat data...</div>
           ) : filteredGroupedData.length === 0 ? (
-            <div style={{
-              padding: '60px 20px',
-              textAlign: 'center',
-              color: '#6c757d',
-            }}>
+            <div className={styles.emptyState}>
               {searchQuery ? (
                 <>🔍 Tidak ada data yang cocok dengan pencarian "<strong>{searchQuery}</strong>"</>
               ) : (
@@ -595,60 +428,44 @@ const BudgetRealizationPage: React.FC = () => {
               )}
             </div>
           ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <div className={styles.tableWrapper}>
+              <table className={styles.dataTable}>
                 <thead>
-                  <tr style={{ backgroundColor: '#f8f9fa' }}>
-                    <th style={tableHeaderStyle}>Entitas</th>
-                    <th style={tableHeaderStyle}>Periode</th>
-                    <th style={tableHeaderStyle}>Nama Budget Group</th>
-                    <th style={tableHeaderStyle}>Total Budget</th>
-                    <th style={tableHeaderStyle}>Total Realisasi</th>
-                    <th style={tableHeaderStyle}>Variance</th>
-                    <th style={tableHeaderStyle}>Variance %</th>
-                    <th style={{ ...tableHeaderStyle, textAlign: 'center' }}>Status</th>
-                    <th style={{ ...tableHeaderStyle, textAlign: 'center' }}>Aksi</th>
+                  <tr>
+                    <th>Entitas</th>
+                    <th>Periode</th>
+                    <th>Nama Budget Group</th>
+                    <th>Total Budget</th>
+                    <th>Total Realisasi</th>
+                    <th>Variance</th>
+                    <th>Variance %</th>
+                    <th className={styles.center}>Status</th>
+                    <th className={styles.center}>Aksi</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredGroupedData.map((group, index) => (
-                    <tr key={`${group.budget_group_name}-${group.period}-${index}`} style={{ borderBottom: '1px solid #dee2e6' }}>
-                      <td style={tableCellStyle}>
-                        {activeEntity.entity_name || activeEntity.name}
+                    <tr key={`${group.budget_group_name}-${group.period}-${index}`}>
+                      <td>{activeEntity.entity_name || activeEntity.name}</td>
+                      <td>
+                        <code className={styles.periodBadge}>{group.period}</code>
                       </td>
-                      <td style={tableCellStyle}>
-                        <code style={{
-                          padding: '4px 8px',
-                          backgroundColor: '#e7f3ff',
-                          borderRadius: '4px',
-                          fontSize: '13px',
-                        }}>
-                          {group.period}
-                        </code>
-                      </td>
-                      <td style={tableCellStyle}>
-                        <div style={{
-                          fontWeight: 600,
-                          color: '#007bff',
-                        }}>
+                      <td>
+                        <div className={styles.budgetGroupName}>
                           {group.budget_group_name}
                         </div>
-                        <div style={{
-                          fontSize: '12px',
-                          color: '#6c757d',
-                          marginTop: '2px',
-                        }}>
+                        <div className={styles.budgetGroupMeta}>
                           {group.accounts.length} akun
                         </div>
                       </td>
-                      <td style={tableCellStyle}>
+                      <td>
                         <strong style={{
                           fontSize: `${getAdaptiveFontSize(group.total_budget)}px`,
                         }}>
                           Rp{formatCurrency(group.total_budget)}
                         </strong>
                       </td>
-                      <td style={tableCellStyle}>
+                      <td>
                         <strong style={{
                           fontSize: `${getAdaptiveFontSize(group.total_realisasi)}px`,
                           color: '#28a745',
@@ -656,7 +473,7 @@ const BudgetRealizationPage: React.FC = () => {
                           Rp{formatCurrency(group.total_realisasi)}
                         </strong>
                       </td>
-                      <td style={tableCellStyle}>
+                      <td>
                         <strong style={{
                           fontSize: `${getAdaptiveFontSize(Math.abs(group.total_variance))}px`,
                           color: group.total_variance >= 0 ? '#28a745' : '#dc3545',
@@ -664,7 +481,7 @@ const BudgetRealizationPage: React.FC = () => {
                           Rp{formatCurrency(Math.abs(group.total_variance))}
                         </strong>
                       </td>
-                      <td style={tableCellStyle}>
+                      <td>
                         <strong style={{
                           fontSize: '14px',
                           color: group.total_variance >= 0 ? '#28a745' : '#dc3545',
@@ -672,31 +489,17 @@ const BudgetRealizationPage: React.FC = () => {
                           {Math.abs(group.variance_percentage).toFixed(2)}%
                         </strong>
                       </td>
-                      <td style={{ ...tableCellStyle, textAlign: 'center' }}>
-                        <span style={{
-                          padding: '6px 12px',
-                          backgroundColor: group.status === 'ON_TRACK' ? '#d4edda' : '#f8d7da',
-                          color: group.status === 'ON_TRACK' ? '#155724' : '#721c24',
-                          borderRadius: '12px',
-                          fontSize: '12px',
-                          fontWeight: 600,
-                        }}>
+                      <td className={styles.center}>
+                        <span className={`${styles.statusBadge} ${
+                          group.status === 'ON_TRACK' ? styles.onTrack : styles.overBudget
+                        }`}>
                           {group.status === 'ON_TRACK' ? '✓ On Track' : '⚠ Over Budget'}
                         </span>
                       </td>
-                      <td style={{ ...tableCellStyle, textAlign: 'center' }}>
+                      <td className={styles.center}>
                         <button
                           onClick={() => handleOpenDetail(group)}
-                          style={{
-                            padding: '6px 16px',
-                            backgroundColor: '#007bff',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            fontSize: '13px',
-                            fontWeight: 600,
-                          }}
+                          className={styles.detailButton}
                         >
                           📋 Detail
                         </button>
@@ -712,46 +515,17 @@ const BudgetRealizationPage: React.FC = () => {
 
       {/* Detail Modal */}
       {showDetailModal && selectedGroup && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-          padding: '20px',
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '8px',
-            maxWidth: '1200px',
-            width: '100%',
-            maxHeight: '90vh',
-            overflow: 'hidden',
-            display: 'flex',
-            flexDirection: 'column',
-          }}>
-         <div style={{
-              padding: '20px 24px',
-              borderBottom: '1px solid #dee2e6',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}>
-              <div>
-                <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 600 }}>
-                  Detail Akun - {selectedGroup.budget_group_name}
-                </h3>
-                <p style={{ margin: '4px 0 0', fontSize: '14px', color: '#6c757d' }}>
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContainer}>
+            <div className={styles.modalHeader}>
+              <div className={styles.modalHeaderContent}>
+                <h3>Detail Akun - {selectedGroup.budget_group_name}</h3>
+                <p>
                   Periode: {selectedGroup.period} • {selectedGroup.accounts.length} akun
                 </p>
               </div>
               
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <div className={styles.modalHeaderActions}>
                 {/* Export Buttons */}
                 <ExportFile
                   group={{
@@ -770,15 +544,7 @@ const BudgetRealizationPage: React.FC = () => {
                 {/* Close Button */}
                 <button
                   onClick={handleCloseDetail}
-                  style={{
-                    padding: '8px 12px',
-                    backgroundColor: '#f8f9fa',
-                    border: '1px solid #dee2e6',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '18px',
-                    fontWeight: 600,
-                  }}
+                  className={styles.modalCloseButton}
                 >
                   ✕
                 </button>
@@ -786,132 +552,83 @@ const BudgetRealizationPage: React.FC = () => {
             </div>
 
             {/* Modal Body */}
-            <div style={{
-              padding: '20px 24px',
-              overflowY: 'auto',
-              flex: 1,
-            }}>
+            <div className={styles.modalBody}>
               {/* Summary Cards for this group */}
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                gap: '12px',
-                marginBottom: '20px',
-              }}>
-                <div style={{
-                  padding: '16px',
-                  backgroundColor: '#007bff',
-                  color: 'white',
-                  borderRadius: '6px',
-                }}>
-                  <div style={{ fontSize: '11px', marginBottom: '6px', opacity: 0.9 }}>
-                    TOTAL BUDGET
-                  </div>
-                  <div style={{ fontSize: '18px', fontWeight: 600 }}>
+              <div className={styles.modalSummaryCards}>
+                <div className={`${styles.modalSummaryCard} ${styles.blue}`}>
+                  <div className={styles.modalSummaryCardLabel}>TOTAL BUDGET</div>
+                  <div className={styles.modalSummaryCardValue}>
                     Rp{formatCurrency(selectedGroup.total_budget)}
                   </div>
                 </div>
-                <div style={{
-                  padding: '16px',
-                  backgroundColor: '#28a745',
-                  color: 'white',
-                  borderRadius: '6px',
-                }}>
-                  <div style={{ fontSize: '11px', marginBottom: '6px', opacity: 0.9 }}>
-                    TOTAL REALISASI
-                  </div>
-                  <div style={{ fontSize: '18px', fontWeight: 600 }}>
+                <div className={`${styles.modalSummaryCard} ${styles.green}`}>
+                  <div className={styles.modalSummaryCardLabel}>TOTAL REALISASI</div>
+                  <div className={styles.modalSummaryCardValue}>
                     Rp{formatCurrency(selectedGroup.total_realisasi)}
                   </div>
                 </div>
-                   <div style={{
-                  padding: '16px',
-                  backgroundColor: selectedGroup.status === 'OVER_BUDGET' ? '#dc3545' : '#17a2b8',
-                  color: 'white',
-                  borderRadius: '6px',
-                }}>
-                  <div style={{ fontSize: '11px', marginBottom: '6px', opacity: 0.9 }}>
-                    VARIANCE
-                  </div>
-                  <div style={{ fontSize: '18px', fontWeight: 600 }}>
+                <div className={`${styles.modalSummaryCard} ${
+                  selectedGroup.status === 'OVER_BUDGET' ? styles.red : styles.cyan
+                }`}>
+                  <div className={styles.modalSummaryCardLabel}>VARIANCE</div>
+                  <div className={styles.modalSummaryCardValue}>
                     Rp{formatCurrency(Math.abs(selectedGroup.total_variance))}
                   </div>
                 </div>
-                <div style={{
-                  padding: '16px',
-                  backgroundColor: selectedGroup.status === 'OVER_BUDGET' ? '#dc3545' : '#28a745',
-                  color: 'white',
-                  borderRadius: '6px',
-                }}>
-                  <div style={{ fontSize: '11px', marginBottom: '6px', opacity: 0.9 }}>
-                    VARIANCE %
-                  </div>
-                  <div style={{ fontSize: '18px', fontWeight: 600 }}>
+                <div className={`${styles.modalSummaryCard} ${
+                  selectedGroup.status === 'OVER_BUDGET' ? styles.red : styles.green
+                }`}>
+                  <div className={styles.modalSummaryCardLabel}>VARIANCE %</div>
+                  <div className={styles.modalSummaryCardValue}>
                     {Math.abs(selectedGroup.variance_percentage).toFixed(2)}%
                   </div>
-                  <div style={{ fontSize: '11px', marginTop: '4px', opacity: 0.9 }}>
+                  <div className={styles.modalSummaryCardNote}>
                     {selectedGroup.status === 'OVER_BUDGET' ? 'Over Budget' : 'Sisa Budget'}
                   </div>
                 </div>
               </div>
 
               {/* Detail Table */}
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <div className={styles.modalTableWrapper}>
+                <table className={styles.modalTable}>
                   <thead>
-                    <tr style={{ backgroundColor: '#f8f9fa' }}>
-                      <th style={tableHeaderStyle}>Kode Akun</th>
-                      <th style={tableHeaderStyle}>Nama Akun</th>
-                      <th style={tableHeaderStyle}>Tipe</th>
-                      <th style={tableHeaderStyle}>Budget</th>
-                      <th style={tableHeaderStyle}>Realisasi</th>
-                      <th style={tableHeaderStyle}>Variance</th>
-                      <th style={tableHeaderStyle}>Variance %</th>
-                      <th style={{ ...tableHeaderStyle, textAlign: 'center' }}>Status</th>
+                    <tr>
+                      <th>Kode Akun</th>
+                      <th>Nama Akun</th>
+                      <th>Tipe</th>
+                      <th>Budget</th>
+                      <th>Realisasi</th>
+                      <th>Variance</th>
+                      <th>Variance %</th>
+                      <th className={styles.center}>Status</th>
                     </tr>
                   </thead>
                   <tbody>
                     {selectedGroup.accounts.map((account) => (
-                      <tr key={account.id} style={{ borderBottom: '1px solid #dee2e6' }}>
-                        <td style={tableCellStyle}>
-                          <code style={{
-                            padding: '4px 8px',
-                            backgroundColor: '#e7f3ff',
-                            borderRadius: '4px',
-                            fontSize: '13px',
-                            fontWeight: 500,
-                          }}>
+                      <tr key={account.id}>
+                        <td>
+                          <code className={styles.accountCode}>
                             {account.account_code}
                           </code>
                         </td>
-                        <td style={tableCellStyle}>
-                          <div style={{
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                            maxWidth: '250px',
-                          }}>
+                        <td>
+                          <div className={styles.accountName}>
                             {account.account_name}
                           </div>
                         </td>
-                        <td style={tableCellStyle}>
-                          <span style={{
-                            padding: '4px 8px',
-                            backgroundColor: '#f0f0f0',
-                            borderRadius: '4px',
-                            fontSize: '12px',
-                          }}>
+                        <td>
+                          <span className={styles.accountTypeBadge}>
                             {account.account_type || '-'}
                           </span>
                         </td>
-                        <td style={tableCellStyle}>
+                        <td>
                           <strong style={{
                             fontSize: `${getAdaptiveFontSize(account.budget_allocated)}px`,
                           }}>
                             Rp{formatCurrency(account.budget_allocated)}
                           </strong>
                         </td>
-                        <td style={tableCellStyle}>
+                        <td>
                           <strong style={{
                             fontSize: `${getAdaptiveFontSize(account.realisasi)}px`,
                             color: '#28a745',
@@ -919,7 +636,7 @@ const BudgetRealizationPage: React.FC = () => {
                             Rp{formatCurrency(account.realisasi)}
                           </strong>
                         </td>
-                        <td style={tableCellStyle}>
+                        <td>
                           <strong style={{
                             fontSize: `${getAdaptiveFontSize(Math.abs(account.variance))}px`,
                             color: account.variance >= 0 ? '#28a745' : '#dc3545',
@@ -927,7 +644,7 @@ const BudgetRealizationPage: React.FC = () => {
                             Rp{formatCurrency(Math.abs(account.variance))}
                           </strong>
                         </td>
-                        <td style={tableCellStyle}>
+                        <td>
                           <strong style={{
                             fontSize: '14px',
                             color: account.variance >= 0 ? '#28a745' : '#dc3545',
@@ -935,15 +652,10 @@ const BudgetRealizationPage: React.FC = () => {
                             {Math.abs(account.variance_percentage).toFixed(2)}%
                           </strong>
                         </td>
-                        <td style={{ ...tableCellStyle, textAlign: 'center' }}>
-                          <span style={{
-                            padding: '6px 12px',
-                            backgroundColor: account.status === 'ON_TRACK' ? '#d4edda' : '#f8d7da',
-                            color: account.status === 'ON_TRACK' ? '#155724' : '#721c24',
-                            borderRadius: '12px',
-                            fontSize: '12px',
-                            fontWeight: 600,
-                          }}>
+                        <td className={styles.center}>
+                          <span className={`${styles.statusBadge} ${
+                            account.status === 'ON_TRACK' ? styles.onTrack : styles.overBudget
+                          }`}>
                             {account.status === 'ON_TRACK' ? '✓ On Track' : '⚠ Over Budget'}
                           </span>
                         </td>
@@ -955,24 +667,10 @@ const BudgetRealizationPage: React.FC = () => {
             </div>
 
             {/* Modal Footer */}
-            <div style={{
-              padding: '16px 24px',
-              borderTop: '1px solid #dee2e6',
-              display: 'flex',
-              justifyContent: 'flex-end',
-            }}>
+            <div className={styles.modalFooter}>
               <button
                 onClick={handleCloseDetail}
-                style={{
-                  padding: '10px 24px',
-                  backgroundColor: '#6c757d',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                }}
+                className={styles.modalFooterButton}
               >
                 Tutup
               </button>
@@ -982,25 +680,6 @@ const BudgetRealizationPage: React.FC = () => {
       )}
     </div>
   );
-};
-
-const tableHeaderStyle: React.CSSProperties = {
-  padding: '14px 16px',
-  textAlign: 'left',
-  fontSize: '13px',
-  fontWeight: 600,
-  textTransform: 'uppercase',
-  letterSpacing: '0.5px',
-  color: '#495057',
-  borderBottom: '2px solid #dee2e6',
-  borderRight: '1px solid #dee2e6',
-};
-
-const tableCellStyle: React.CSSProperties = {
-  padding: '14px 16px',
-  fontSize: '14px',
-  color: '#212529',
-  borderRight: '1px solid #dee2e6',
 };
 
 export default BudgetRealizationPage;

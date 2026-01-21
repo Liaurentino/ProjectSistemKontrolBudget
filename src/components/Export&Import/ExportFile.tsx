@@ -1,10 +1,19 @@
-//Exportfile.tsx
-
 import React from 'react';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
-import { Document, Paragraph, Table, TableRow, TableCell, WidthType, AlignmentType, HeadingLevel, Packer } from 'docx';
-import type { BudgetRealization } from '../lib/accurate';
+import {
+  Document,
+  Paragraph,
+  Table,
+  TableRow,
+  TableCell,
+  WidthType,
+  AlignmentType,
+  HeadingLevel,
+  Packer,
+} from 'docx';
+import type { BudgetRealization } from '../../lib/accurate';
+import styles from './ExportFile.module.css';
 
 // Helper: Format currency
 const formatCurrency = (amount: number): string => {
@@ -18,7 +27,7 @@ const formatDate = (date: Date): string => {
     month: 'long',
     year: 'numeric',
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
   });
 };
 
@@ -48,7 +57,6 @@ export const ExportFile: React.FC<ExportFileProps> = ({ group, entityName, onExp
     onExporting?.(true);
 
     try {
-      // Prepare header data
       const headerData = [
         ['LAPORAN BUDGET VS REALISASI'],
         [],
@@ -68,7 +76,6 @@ export const ExportFile: React.FC<ExportFileProps> = ({ group, entityName, onExp
         [],
       ];
 
-      // Prepare table data
       const tableHeader = [
         'No',
         'Kode Akun',
@@ -78,7 +85,7 @@ export const ExportFile: React.FC<ExportFileProps> = ({ group, entityName, onExp
         'Realisasi (Rp)',
         'Variance (Rp)',
         'Variance (%)',
-        'Status'
+        'Status',
       ];
 
       const tableData = group.accounts.map((account, index) => [
@@ -90,25 +97,13 @@ export const ExportFile: React.FC<ExportFileProps> = ({ group, entityName, onExp
         account.realisasi,
         account.variance,
         `${account.variance_percentage.toFixed(2)}%`,
-        account.status === 'ON_TRACK' ? 'On Track' : 'Over Budget'
+        account.status === 'ON_TRACK' ? 'On Track' : 'Over Budget',
       ]);
 
-      // Combine all data
-      const allData = [
-        ...headerData,
-        tableHeader,
-        ...tableData
-      ];
+      const allData = [...headerData, tableHeader, ...tableData];
 
-      // Create worksheet
       const ws = XLSX.utils.aoa_to_sheet(allData);
-
-      // Merge cells for title
-      ws['!merges'] = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 8 } },
-      ];
-
-      // Set column widths
+      ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 8 } }];
       ws['!cols'] = [
         { wch: 5 },
         { wch: 15 },
@@ -121,11 +116,9 @@ export const ExportFile: React.FC<ExportFileProps> = ({ group, entityName, onExp
         { wch: 15 },
       ];
 
-      // Create workbook
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Budget Realization');
 
-      // Save file
       const fileName = `Budget_Realization_${group.budget_name.replace(/\s+/g, '_')}_${group.period}_${new Date().getTime()}.xlsx`;
       XLSX.writeFile(wb, fileName);
 
@@ -146,7 +139,6 @@ export const ExportFile: React.FC<ExportFileProps> = ({ group, entityName, onExp
     onExporting?.(true);
 
     try {
-      // Prepare CSV data
       const csvData = [
         ['LAPORAN BUDGET VS REALISASI'],
         [],
@@ -174,14 +166,11 @@ export const ExportFile: React.FC<ExportFileProps> = ({ group, entityName, onExp
           account.realisasi,
           account.variance,
           `${account.variance_percentage.toFixed(2)}%`,
-          account.status === 'ON_TRACK' ? 'On Track' : 'Over Budget'
-        ])
+          account.status === 'ON_TRACK' ? 'On Track' : 'Over Budget',
+        ]),
       ];
 
-      // Convert to CSV string
       const csvString = csvData.map(row => row.join(',')).join('\n');
-
-      // Create blob and download
       const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
       const fileName = `Budget_Realization_${group.budget_name.replace(/\s+/g, '_')}_${group.period}_${new Date().getTime()}.csv`;
       saveAs(blob, fileName);
@@ -203,12 +192,10 @@ export const ExportFile: React.FC<ExportFileProps> = ({ group, entityName, onExp
     onExporting?.(true);
 
     try {
-      // Create document
       const doc = new Document({
         sections: [{
           properties: {},
           children: [
-            // Title
             new Paragraph({
               text: 'LAPORAN BUDGET VS REALISASI',
               heading: HeadingLevel.HEADING_1,
@@ -216,26 +203,19 @@ export const ExportFile: React.FC<ExportFileProps> = ({ group, entityName, onExp
               spacing: { after: 300 },
             }),
 
-            // Metadata Section
             new Paragraph({
               text: 'Informasi Laporan',
               heading: HeadingLevel.HEADING_2,
               spacing: { before: 200, after: 200 },
             }),
-            
+
             new Table({
               width: { size: 100, type: WidthType.PERCENTAGE },
               rows: [
                 new TableRow({
                   children: [
-                    new TableCell({
-                      children: [new Paragraph('Entitas')],
-                      width: { size: 30, type: WidthType.PERCENTAGE },
-                    }),
-                    new TableCell({
-                      children: [new Paragraph(entityName)],
-                      width: { size: 70, type: WidthType.PERCENTAGE },
-                    }),
+                    new TableCell({ children: [new Paragraph('Entitas')], width: { size: 30, type: WidthType.PERCENTAGE } }),
+                    new TableCell({ children: [new Paragraph(entityName)], width: { size: 70, type: WidthType.PERCENTAGE } }),
                   ],
                 }),
                 new TableRow({
@@ -261,7 +241,6 @@ export const ExportFile: React.FC<ExportFileProps> = ({ group, entityName, onExp
 
             new Paragraph({ text: '', spacing: { before: 300, after: 200 } }),
 
-            // Ringkasan Section
             new Paragraph({
               text: 'Ringkasan',
               heading: HeadingLevel.HEADING_2,
@@ -271,59 +250,26 @@ export const ExportFile: React.FC<ExportFileProps> = ({ group, entityName, onExp
             new Table({
               width: { size: 100, type: WidthType.PERCENTAGE },
               rows: [
-                new TableRow({
-                  children: [
-                    new TableCell({ children: [new Paragraph('Total Budget')] }),
-                    new TableCell({ children: [new Paragraph(`Rp ${formatCurrency(group.total_budget)}`)] }),
-                  ],
-                }),
-                new TableRow({
-                  children: [
-                    new TableCell({ children: [new Paragraph('Total Realisasi')] }),
-                    new TableCell({ children: [new Paragraph(`Rp ${formatCurrency(group.total_realisasi)}`)] }),
-                  ],
-                }),
-                new TableRow({
-                  children: [
-                    new TableCell({ children: [new Paragraph('Total Variance')] }),
-                    new TableCell({ children: [new Paragraph(`Rp ${formatCurrency(Math.abs(group.total_variance))}`)] }),
-                  ],
-                }),
-                new TableRow({
-                  children: [
-                    new TableCell({ children: [new Paragraph('Variance %')] }),
-                    new TableCell({ children: [new Paragraph(`${Math.abs(group.variance_percentage).toFixed(2)}%`)] }),
-                  ],
-                }),
-                new TableRow({
-                  children: [
-                    new TableCell({ children: [new Paragraph('Status')] }),
-                    new TableCell({ children: [new Paragraph(group.overall_status === 'ON_TRACK' ? 'On Track' : 'Over Budget')] }),
-                  ],
-                }),
-                new TableRow({
-                  children: [
-                    new TableCell({ children: [new Paragraph('Jumlah Akun')] }),
-                    new TableCell({ children: [new Paragraph(group.accounts.length.toString())] }),
-                  ],
-                }),
+                new TableRow({ children: [new TableCell({ children: [new Paragraph('Total Budget')] }), new TableCell({ children: [new Paragraph(`Rp ${formatCurrency(group.total_budget)}`)] }) ]}),
+                new TableRow({ children: [new TableCell({ children: [new Paragraph('Total Realisasi')] }), new TableCell({ children: [new Paragraph(`Rp ${formatCurrency(group.total_realisasi)}`)] }) ]}),
+                new TableRow({ children: [new TableCell({ children: [new Paragraph('Total Variance')] }), new TableCell({ children: [new Paragraph(`Rp ${formatCurrency(Math.abs(group.total_variance))}`)] }) ]}),
+                new TableRow({ children: [new TableCell({ children: [new Paragraph('Variance %')] }), new TableCell({ children: [new Paragraph(`${Math.abs(group.variance_percentage).toFixed(2)}%`)] }) ]}),
+                new TableRow({ children: [new TableCell({ children: [new Paragraph('Status')] }), new TableCell({ children: [new Paragraph(group.overall_status === 'ON_TRACK' ? 'On Track' : 'Over Budget')] }) ]}),
+                new TableRow({ children: [new TableCell({ children: [new Paragraph('Jumlah Akun')] }), new TableCell({ children: [new Paragraph(group.accounts.length.toString())] }) ]}),
               ],
             }),
 
             new Paragraph({ text: '', spacing: { before: 300, after: 200 } }),
 
-            // Detail Akun Section
             new Paragraph({
               text: 'Detail Per Akun',
               heading: HeadingLevel.HEADING_2,
               spacing: { before: 200, after: 200 },
             }),
 
-            // Table Detail
             new Table({
               width: { size: 100, type: WidthType.PERCENTAGE },
               rows: [
-                // Header Row
                 new TableRow({
                   tableHeader: true,
                   children: [
@@ -338,8 +284,7 @@ export const ExportFile: React.FC<ExportFileProps> = ({ group, entityName, onExp
                     new TableCell({ children: [new Paragraph({ text: 'Status', bold: true })] }),
                   ],
                 }),
-                // Data Rows
-                ...group.accounts.map((account, index) => 
+                ...group.accounts.map((account, index) =>
                   new TableRow({
                     children: [
                       new TableCell({ children: [new Paragraph((index + 1).toString())] }),
@@ -359,7 +304,6 @@ export const ExportFile: React.FC<ExportFileProps> = ({ group, entityName, onExp
 
             new Paragraph({ text: '', spacing: { before: 400 } }),
 
-            // Catatan Section
             new Paragraph({
               text: 'Catatan & Analisis',
               heading: HeadingLevel.HEADING_2,
@@ -371,7 +315,6 @@ export const ExportFile: React.FC<ExportFileProps> = ({ group, entityName, onExp
 
             new Paragraph({ text: '', spacing: { before: 300 } }),
 
-            // Tanda Tangan Section
             new Paragraph({
               text: 'Tanda Tangan',
               heading: HeadingLevel.HEADING_2,
@@ -418,7 +361,6 @@ export const ExportFile: React.FC<ExportFileProps> = ({ group, entityName, onExp
         }],
       });
 
-      // Generate and save
       const blob = await Packer.toBlob(doc);
       const fileName = `Budget_Realization_${group.budget_name.replace(/\s+/g, '_')}_${group.period}_${new Date().getTime()}.docx`;
       saveAs(blob, fileName);
@@ -435,70 +377,27 @@ export const ExportFile: React.FC<ExportFileProps> = ({ group, entityName, onExp
   };
 
   return (
-    <div style={{
-      display: 'flex',
-      gap: '8px',
-      flexWrap: 'wrap',
-    }}>
-      {/* Excel Button */}
+    <div className={styles.exportContainer}>
       <button
         onClick={exportToExcel}
         disabled={exporting}
-        style={{
-          padding: '8px 16px',
-          backgroundColor: exporting ? '#6c757d' : '#28a745',
-          color: 'white',
-          border: 'none',
-          borderRadius: '6px',
-          cursor: exporting ? 'not-allowed' : 'pointer',
-          fontSize: '13px',
-          fontWeight: 600,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px',
-        }}
+        className={`${styles.exportButton} ${styles.excelButton}`}
       >
         📊 Export Excel
       </button>
 
-      {/* CSV Button */}
       <button
         onClick={exportToCSV}
         disabled={exporting}
-        style={{
-          padding: '8px 16px',
-          backgroundColor: exporting ? '#6c757d' : '#17a2b8',
-          color: 'white',
-          border: 'none',
-          borderRadius: '6px',
-          cursor: exporting ? 'not-allowed' : 'pointer',
-          fontSize: '13px',
-          fontWeight: 600,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px',
-        }}
+        className={`${styles.exportButton} ${styles.csvButton}`}
       >
         📄 Export CSV
       </button>
 
-      {/* Word Button */}
       <button
         onClick={exportToWord}
         disabled={exporting}
-        style={{
-          padding: '8px 16px',
-          backgroundColor: exporting ? '#6c757d' : '#007bff',
-          color: 'white',
-          border: 'none',
-          borderRadius: '6px',
-          cursor: exporting ? 'not-allowed' : 'pointer',
-          fontSize: '13px',
-          fontWeight: 600,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px',
-        }}
+        className={`${styles.exportButton} ${styles.wordButton}`}
       >
         📝 Export Word
       </button>

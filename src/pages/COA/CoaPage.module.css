@@ -1,0 +1,743 @@
+/* ===== CONTAINER ===== */
+.container {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* ===== HEADER ===== */
+.header {
+  margin-bottom: 24px;
+}
+
+.headerContent {
+  margin-bottom: 16px;
+}
+
+.headerTitle {
+  font-size: 28px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.headerSubtitle {
+  margin: 8px 0 0 0;
+  color: #6c757d;
+  font-size: 14px;
+}
+
+/* ===== ALERTS ===== */
+.noEntityWarning {
+  padding: 24px;
+  background-color: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.noEntityWarningTitle {
+  margin: 0 0 12px 0;
+  color: #856404;
+}
+
+.noEntityWarningText {
+  margin: 0 0 16px 0;
+  color: #856404;
+}
+
+.noEntityWarningButton {
+  padding: 8px 16px;
+  background-color: #ffc107;
+  color: #212529;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.errorAlert {
+  padding: 16px;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  color: #721c24;
+}
+
+.syncStatusAlert {
+  padding: 16px;
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  color: #155724;
+}
+
+.successAlert {
+  padding: 16px;
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  color: #155724;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ===== COA CARD ===== */
+.coaCard {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+.cardHeader {
+  padding: 16px 24px;
+  border-bottom: 1px solid #dee2e6;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cardHeaderTitle {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.cardHeaderActions {
+  display: flex;
+  gap: 12px;
+}
+
+/* ===== BUTTONS ===== */
+.refreshButton {
+  padding: 8px 16px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.refreshButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.refreshButtonSpinner {
+  animation: spin 1s linear infinite;
+}
+
+/* ===== DROPDOWN ===== */
+.dropdownContainer {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdownButton {
+  padding: 8px 16px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.2s;
+}
+
+.dropdownButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.dropdownButton:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+.dropdownArrow {
+  margin-left: 4px;
+}
+
+.dropdownMenu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  background-color: white;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  min-width: 220px;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.dropdownMenuItem {
+  width: 100%;
+  padding: 12px 16px;
+  background-color: white;
+  border: none;
+  border-bottom: 1px solid #f0f0f0;
+  text-align: left;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: background-color 0.2s;
+}
+
+.dropdownMenuItem:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.dropdownMenuItem:hover:not(:disabled) {
+  background-color: #f8f9fa;
+}
+
+.dropdownMenuItem:last-child {
+  border-bottom: none;
+}
+
+.dropdownMenuIcon {
+  font-size: 18px;
+}
+
+/* ===== TABLE SPECIFIC (COA) ===== */
+/* Hanya style yang SPESIFIK untuk COA, sisanya pakai global .shared-table */
+
+.tableHeaderCellRight {
+  text-align: right;
+}
+
+.tableHeaderCellCenter {
+  width: 100px;
+  text-align: center;
+}
+
+.tableCellIndent {
+  display: flex;
+  align-items: center;
+}
+
+/* ===== BADGES (COA SPECIFIC) ===== */
+.accountTypeBadge {
+  padding: 4px 8px;
+  background-color: #e7f3ff;
+  color: #004085;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.statusBadgeActive {
+  padding: 4px 8px;
+  background-color: #d4edda;
+  color: #155724;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.statusBadgeSuspended {
+  padding: 4px 8px;
+  background-color: #f8d7da;
+  color: #721c24;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+/* ===== ACTION BUTTONS (COA SPECIFIC) ===== */
+.editButton {
+  padding: 6px 12px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.deleteButton {
+  padding: 6px 12px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+/* ===== FOOTER ===== */
+.cardFooter {
+  padding: 16px;
+  background-color: #f8f9fa;
+  border-top: 1px solid #dee2e6;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  color: #6c757d;
+}
+
+.deleteAllButton {
+  padding: 8px 16px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background-color 0.2s;
+}
+
+.deleteAllButton:hover {
+  background-color: #c82333;
+}
+
+/* ===== MODALS ===== */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+/* ===== MODALS DELETE ALL ===== */
+.modalOverlayDeleteAll {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1001;
+}
+
+.modalOverlayFinalConfirm {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1002;
+}
+
+.modalContentDeleteAll {
+  background-color: white;
+  border-radius: 12px;
+  padding: 32px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+.modalContentFinalConfirm {
+  background-color: white;
+  border-radius: 12px;
+  padding: 32px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  border: 3px solid #dc3545;
+}
+
+.modalTitleDeleteAll {
+  margin: 0 0 16px 0;
+  color: #dc3545;
+  text-align: center;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.modalTitleFinalConfirm {
+  margin: 0 0 16px 0;
+  color: #dc3545;
+  text-align: center;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.modalTextDeleteAll {
+  margin: 0 0 16px 0;
+  font-size: 15px;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.modalWarningBoxYellow {
+  padding: 16px;
+  background-color: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 8px;
+  margin-bottom: 24px;
+}
+
+.modalWarningBoxRed {
+  padding: 20px;
+  background-color: #f8d7da;
+  border: 2px solid #dc3545;
+  border-radius: 8px;
+  margin-bottom: 24px;
+}
+
+.modalWarningTextYellow {
+  margin: 0;
+  font-size: 14px;
+  color: #856404;
+  line-height: 1.6;
+}
+
+.modalWarningTextRed {
+  margin: 0;
+  font-size: 15px;
+  color: #721c24;
+  text-align: center;
+  font-weight: 600;
+  line-height: 1.6;
+}
+
+.modalConfirmText {
+  margin: 0 0 24px 0;
+  font-size: 14px;
+  text-align: center;
+  font-weight: 500;
+}
+
+.modalFinalText {
+  margin: 0 0 24px 0;
+  font-size: 14px;
+  text-align: center;
+  color: #6c757d;
+}
+
+.modalButtonGroupDeleteAll {
+  display: flex;
+  gap: 12px;
+}
+
+.buttonCancelGray {
+  flex: 1;
+  padding: 12px;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.buttonWarningYellow {
+  flex: 1;
+  padding: 12px;
+  background-color: #ffc107;
+  color: #212529;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.buttonCancelGreen {
+  flex: 1;
+  padding: 14px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.buttonCancelGreen:disabled {
+  cursor: not-allowed;
+}
+
+.buttonDangerRed {
+  flex: 1;
+  padding: 14px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.buttonDangerRed:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.modalContent {
+  background-color: white;
+  border-radius: 8px;
+  padding: 24px;
+  max-width: 500px;
+  width: 100%;
+  max-height: 80vh;
+  overflow: auto;
+}
+
+.modalContentSmall {
+  max-width: 400px;
+}
+
+.modalContentLarge {
+  border-radius: 12px;
+  padding: 32px;
+  width: 30%;
+  background-color: #ffffff;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+.modalContentDanger {
+  border: 3px solid #dc3545;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+
+.modalTitle {
+  margin: 0 0 16px 0;
+}
+
+.modalTitleDanger {
+  font-size: 30px;
+  text-align: center;
+  color: #dc3545;
+}
+
+.modalText {
+  margin: 0 0 16px 0;
+  font-size: 14px;
+}
+
+.modalTextCenter {
+  text-align: center;
+  font-size: 15px;
+  line-height: 1.6;
+  padding-bottom: 10px;
+}
+
+.modalTextCenterBold {
+  font-weight: 500;
+}
+
+.modalTextGray {
+  color: #6c757d;
+}
+
+.modalWarningBox {
+  padding: 16px;
+  background-color: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 8px;
+  margin-bottom: 24px;
+}
+
+.modalWarningBoxDanger {
+  padding: 20px;
+  background-color: #f8d7da;
+  border: 2px solid #dc3545;
+  border-radius: 8px;
+  margin-bottom: 24px;
+}
+
+.modalWarningText {
+  margin: 0;
+  font-size: 14px;
+  color: #856404;
+  line-height: 1.6;
+}
+
+.modalWarningTextDanger {
+  margin: 0;
+  font-size: 15px;
+  color: #721c24;
+  text-align: center;
+  font-weight: 600;
+  line-height: 1.6;
+}
+
+/* ===== FORM ===== */
+.formGroup {
+  margin-bottom: 16px;
+}
+
+.formLabel {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.formInput {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.formSelect {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.accountInfoBox {
+  padding: 12px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  margin-bottom: 16px;
+}
+
+.accountInfoItem {
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+/* ===== MODAL BUTTONS ===== */
+.modalButtonGroup {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.modalButtonPrimary {
+  flex: 1;
+  padding: 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.modalButtonPrimary:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.modalButtonSecondary {
+  flex: 1;
+  padding: 10px;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.modalButtonSecondary:disabled {
+  cursor: not-allowed;
+}
+
+.modalButtonDanger {
+  flex: 1;
+  padding: 10px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.modalButtonDanger:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.modalButtonWarning {
+  flex: 1;
+  padding: 12px;
+  background-color: #ffc107;
+  color: #212529;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.modalButtonSuccess {
+  flex: 1;
+  padding: 14px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.modalButtonSuccess:disabled {
+  cursor: not-allowed;
+}
+
+.modalButtonDangerLarge {
+  flex: 1;
+  padding: 14px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.modalButtonDangerLarge:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
