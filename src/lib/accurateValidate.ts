@@ -2,7 +2,6 @@
 
 import { supabase } from './supabase';
 
-
 export interface AccurateValidationResult {
   isValid: boolean;
   error?: string;
@@ -13,7 +12,6 @@ export interface AccurateValidationResult {
   };
   details?: any;
 }
-
 
 /**
  * Validate token format before sending to API
@@ -161,11 +159,12 @@ export async function validateAccurateTokenOwnership(
     };
   }
 }
+
 /**
  * Quick format validation (untuk real-time feedback di form)
  * Tidak memanggil API, hanya cek format
  */
 export function quickValidateTokenFormat(token: string): string | null {
   const result = validateTokenFormat(token);
-  return result.valid ? null : result.error;
+  return result.valid ? null : (result.error ?? null);
 }

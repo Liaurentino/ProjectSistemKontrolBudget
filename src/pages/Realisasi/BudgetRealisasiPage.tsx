@@ -40,7 +40,7 @@ const BudgetRealizationPage: React.FC = () => {
   const { activeEntity } = useEntity();
 
   // State
-  const [realizations, setRealizations] = useState<BudgetRealization[]>([]);
+  const [_realizations, setRealizations] = useState<BudgetRealization[]>([]);
   const [groupedData, setGroupedData] = useState<GroupedBudgetRealization[]>([]);
   const [summary, setSummary] = useState<BudgetRealizationSummary | null>(null);
   const [loading, setLoading] = useState(false);

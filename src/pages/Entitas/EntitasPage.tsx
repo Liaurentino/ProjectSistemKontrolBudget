@@ -24,6 +24,14 @@ export const EntitasPage: React.FC = () => {
   const { setActiveEntity, isEntityActive, setEntities: setContextEntities } = useEntity();
 
   /**
+   * Helper function untuk mendapatkan error message
+   */
+  const getErrorMessage = (error: unknown): string => {
+    if (error instanceof Error) return error.message;
+    return String(error);
+  };
+
+  /**
    * Fetch entitas dari Supabase
    */
   const fetchEntities = async () => {
@@ -31,12 +39,14 @@ export const EntitasPage: React.FC = () => {
     setError('');
     try {
       const { data, error: err } = await getEntities();
-      if (err) throw new Error(typeof err === 'string' ? err : err.message);
+      if (err) {
+        const errorMessage = getErrorMessage(err);
+        throw new Error(errorMessage);
+      }
       setEntities(data || []);
       setContextEntities(data || []); // Update context
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Gagal memuat entitas';
-      setError(message);
+      setError(getErrorMessage(err));
       console.error(err);
     } finally {
       setLoading(false);
@@ -98,7 +108,10 @@ export const EntitasPage: React.FC = () => {
     setLoading(true);
     try {
       const { error: err } = await deleteEntity(id);
-      if (err) throw new Error(typeof err === 'string' ? err : err.message);
+      if (err) {
+        const errorMessage = getErrorMessage(err);
+        throw new Error(errorMessage);
+      }
       
       // Jika entity yang dihapus adalah active entity, clear selection
       if (isEntityActive(id)) {
@@ -107,8 +120,7 @@ export const EntitasPage: React.FC = () => {
       
       await fetchEntities();
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Gagal menghapus entitas';
-      setError(message);
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -219,7 +231,6 @@ export const EntitasPage: React.FC = () => {
                 <th className={styles.colActions}>Aksi</th>
               </tr>
             </thead>
-
             <tbody>
               {loading && entities.length === 0 ? (
                 <tr>
@@ -300,7 +311,6 @@ export const EntitasPage: React.FC = () => {
                           >
                             Edit
                           </button>
-
                           <button
                             className="btn btn-danger btn-sm"
                             onClick={() => handleDeleteEntity(e.id, e.entity_name)}

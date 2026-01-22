@@ -154,13 +154,16 @@ class AccurateAuthService {
         return { connected: false, needsRefresh: false };
       }
 
-      // Check if token is expired or will expire soon (within 1 day)
+      // ✅ IMPROVED: Check if token is expired or will expire soon (within 1 day)
       const expiresAt = new Date(data.expires_at);
       const now = new Date();
       const oneDayFromNow = new Date();
       oneDayFromNow.setDate(oneDayFromNow.getDate() + 1);
 
-      const needsRefresh = expiresAt <= oneDayFromNow;
+      // Token needs refresh if:
+      // 1. Already expired (expiresAt <= now), OR
+      // 2. Will expire within 1 day (expiresAt <= oneDayFromNow)
+      const needsRefresh = expiresAt <= now || expiresAt <= oneDayFromNow;
 
       return {
         connected: true,

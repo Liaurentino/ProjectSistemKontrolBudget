@@ -160,7 +160,7 @@ export default function App() {
               path="/dashboard"
               element={user ? <DashboardPage /> : <Navigate to="/login" />}
             />
-            <Route path="/" element={<Navigate to="/dashboard" />} />
+            <Route path="/" element={<Navigate to="/entitas" />} />
             <Route path="*" element={<Navigate to="/entitas" />} />
           </Routes>
         </main>

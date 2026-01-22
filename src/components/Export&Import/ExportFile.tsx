@@ -11,6 +11,7 @@ import {
   AlignmentType,
   HeadingLevel,
   Packer,
+  TextRun, // ✅ Tambahkan ini
 } from 'docx';
 import type { BudgetRealization } from '../../lib/accurate';
 import styles from './ExportFile.module.css';
@@ -273,15 +274,70 @@ export const ExportFile: React.FC<ExportFileProps> = ({ group, entityName, onExp
                 new TableRow({
                   tableHeader: true,
                   children: [
-                    new TableCell({ children: [new Paragraph({ text: 'No', bold: true })] }),
-                    new TableCell({ children: [new Paragraph({ text: 'Kode Akun', bold: true })] }),
-                    new TableCell({ children: [new Paragraph({ text: 'Nama Akun', bold: true })] }),
-                    new TableCell({ children: [new Paragraph({ text: 'Tipe', bold: true })] }),
-                    new TableCell({ children: [new Paragraph({ text: 'Budget (Rp)', bold: true })] }),
-                    new TableCell({ children: [new Paragraph({ text: 'Realisasi (Rp)', bold: true })] }),
-                    new TableCell({ children: [new Paragraph({ text: 'Variance (Rp)', bold: true })] }),
-                    new TableCell({ children: [new Paragraph({ text: 'Variance %', bold: true })] }),
-                    new TableCell({ children: [new Paragraph({ text: 'Status', bold: true })] }),
+                    // ✅ Perbaikan: gunakan TextRun + bold
+                    new TableCell({
+                      children: [
+                        new Paragraph({
+                          children: [new TextRun({ text: 'No', bold: true })],
+                        }),
+                      ],
+                    }),
+                    new TableCell({
+                      children: [
+                        new Paragraph({
+                          children: [new TextRun({ text: 'Kode Akun', bold: true })],
+                        }),
+                      ],
+                    }),
+                    new TableCell({
+                      children: [
+                        new Paragraph({
+                          children: [new TextRun({ text: 'Nama Akun', bold: true })],
+                        }),
+                      ],
+                    }),
+                    new TableCell({
+                      children: [
+                        new Paragraph({
+                          children: [new TextRun({ text: 'Tipe', bold: true })],
+                        }),
+                      ],
+                    }),
+                    new TableCell({
+                      children: [
+                        new Paragraph({
+                          children: [new TextRun({ text: 'Budget (Rp)', bold: true })],
+                        }),
+                      ],
+                    }),
+                    new TableCell({
+                      children: [
+                        new Paragraph({
+                          children: [new TextRun({ text: 'Realisasi (Rp)', bold: true })],
+                        }),
+                      ],
+                    }),
+                    new TableCell({
+                      children: [
+                        new Paragraph({
+                          children: [new TextRun({ text: 'Variance (Rp)', bold: true })],
+                        }),
+                      ],
+                    }),
+                    new TableCell({
+                      children: [
+                        new Paragraph({
+                          children: [new TextRun({ text: 'Variance %', bold: true })],
+                        }),
+                      ],
+                    }),
+                    new TableCell({
+                      children: [
+                        new Paragraph({
+                          children: [new TextRun({ text: 'Status', bold: true })],
+                        }),
+                      ],
+                    }),
                   ],
                 }),
                 ...group.accounts.map((account, index) =>
@@ -404,3 +460,5 @@ export const ExportFile: React.FC<ExportFileProps> = ({ group, entityName, onExp
     </div>
   );
 };
+
+export default ExportFile;

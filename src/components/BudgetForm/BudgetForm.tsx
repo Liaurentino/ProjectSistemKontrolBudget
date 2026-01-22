@@ -14,8 +14,6 @@ import {
   getAdaptiveFontSize,
   formatCurrency,
   calculateTotalAllocated,
-  tableHeaderStyle,
-  tableCellStyle,
 } from '../../services/budgetHelpers';
 import styles from './BudgetForm.module.css';
 

@@ -292,19 +292,21 @@ export async function getAccurateDatabaseList(
   }
 }
 
-// Placeholder functions untuk kompatibilitas
+/**
+ * Placeholder function untuk kompatibilitas
+ * Returns null karena tidak menggunakan access token system
+ */
 export async function getAccessToken(): Promise<string | null> {
   return null;
 }
 
-export async function saveTokens(accessToken: string, refreshToken: string): Promise<void> {
-  // Placeholder
-}
-
-export function isTokenExpired(token: string): boolean {
-  return false;
-}
-
-export async function clearAccurateTokens(): Promise<void> {
-  // Placeholder
+/**
+ * Placeholder function untuk kompatibilitas
+ * Tidak melakukan apa-apa karena menggunakan API Token system
+ */
+export async function saveTokens(
+  _accessToken: string,
+  _refreshToken: string
+): Promise<void> {
+  // Intentionally empty - using API Token instead
 }

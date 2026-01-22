@@ -7,7 +7,6 @@ import {
   subscribeAccounts,
   calculateTotalBalance,
   editAccount,
-  deleteAccount,
   type CoaAccount,
   type EditAccountData,
 } from '../lib/accurate';

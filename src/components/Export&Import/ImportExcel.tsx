@@ -4,7 +4,7 @@ import { importCoaFromExcel } from '../../lib/supabase';
 import styles from './ImportExcel.module.css';
 
 interface ImportExcelProps {
-  entityId: number;
+  entityId: string; // ✅ Changed from number to string
   onSuccess: () => void;
   onError: (message: string) => void;
   onClose: () => void;
@@ -565,4 +565,3 @@ export const ImportExcel: React.FC<ImportExcelProps> = ({
     </div>
   );
 };
-

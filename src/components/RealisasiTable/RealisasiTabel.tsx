@@ -92,8 +92,13 @@ export const RealisasiTable: React.FC<RealisasiTableProps> = ({
 
   const handleDelete = async (id: string) => {
     if (!confirm("Yakin ingin menghapus realisasi ini?")) return;
-    await deleteRealisasi(id);
-    fetchRealisasi();
+    setLoading(true);
+    try {
+      await deleteRealisasi(id);
+      fetchRealisasi();
+    } finally {
+      setLoading(false);
+    }
   };
 
   // =========================
@@ -124,6 +129,7 @@ export const RealisasiTable: React.FC<RealisasiTableProps> = ({
           className={styles.formSelect}
           value={selectedEntityId}
           onChange={(e) => handleSelectEntity(e.target.value)}
+          disabled={loading}
         >
           <option value="">Pilih entitas</option>
           {visibleEntities.map((entity: any) => (
@@ -137,6 +143,7 @@ export const RealisasiTable: React.FC<RealisasiTableProps> = ({
           <button
             onClick={() => setShowForm(true)}
             className={styles.addButton}
+            disabled={loading}
           >
             + Tambah Realisasi
           </button>
@@ -156,6 +163,7 @@ export const RealisasiTable: React.FC<RealisasiTableProps> = ({
                 onChange={(e) =>
                   setFormData({ ...formData, category: e.target.value })
                 }
+                disabled={loading}
               >
                 <option value="">Pilih Kategori</option>
                 {categories?.map((cat) => (
@@ -179,6 +187,7 @@ export const RealisasiTable: React.FC<RealisasiTableProps> = ({
                   })
                 }
                 placeholder="0"
+                disabled={loading}
               />
             </div>
           </div>
@@ -193,6 +202,7 @@ export const RealisasiTable: React.FC<RealisasiTableProps> = ({
                 onChange={(e) =>
                   setFormData({ ...formData, date: e.target.value })
                 }
+                disabled={loading}
               />
             </div>
 
@@ -206,6 +216,7 @@ export const RealisasiTable: React.FC<RealisasiTableProps> = ({
                   setFormData({ ...formData, description: e.target.value })
                 }
                 placeholder="Contoh: Beli ATK"
+                disabled={loading}
               />
             </div>
           </div>
@@ -214,6 +225,7 @@ export const RealisasiTable: React.FC<RealisasiTableProps> = ({
             <button
               onClick={() => setShowForm(false)}
               className={styles.cancelButton}
+              disabled={loading}
             >
               Batal
             </button>
@@ -221,10 +233,19 @@ export const RealisasiTable: React.FC<RealisasiTableProps> = ({
             <button
               onClick={handleAddRealisasi}
               className={styles.saveButton}
+              disabled={loading}
             >
-              Simpan
+              {loading ? "Menyimpan..." : "Simpan"}
             </button>
           </div>
+        </div>
+      )}
+
+      {/* LOADING INDICATOR */}
+      {loading && (
+        <div className={styles.loadingOverlay}>
+          <div className={styles.spinner}></div>
+          <p className={styles.loadingText}>Memuat data...</p>
         </div>
       )}
 
@@ -244,7 +265,7 @@ export const RealisasiTable: React.FC<RealisasiTableProps> = ({
             {realisasi.length === 0 ? (
               <tr>
                 <td colSpan={5} className={styles.textCenter}>
-                  Belum ada data pengeluaran
+                  {loading ? "Memuat..." : "Belum ada data pengeluaran"}
                 </td>
               </tr>
             ) : (
@@ -260,6 +281,7 @@ export const RealisasiTable: React.FC<RealisasiTableProps> = ({
                     <button
                       onClick={() => handleDelete(r.id)}
                       className={styles.deleteButton}
+                      disabled={loading}
                     >
                       Hapus
                     </button>
@@ -273,3 +295,5 @@ export const RealisasiTable: React.FC<RealisasiTableProps> = ({
     </div>
   );
 };
+
+export default RealisasiTable;

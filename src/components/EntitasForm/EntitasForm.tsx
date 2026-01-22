@@ -328,11 +328,15 @@ export const EntitasForm: React.FC<Props> = ({
 
       // Save to database
       if (mode === 'create') {
-        const { error: err } = await insertEntity(dataToSave);
-        if (err) throw new Error(typeof err === 'string' ? err : err.message);
+        const result = await insertEntity(dataToSave);
+        if (result.error) {
+          throw new Error(result.error);
+        }
       } else {
-        const { error: err } = await updateEntity(initialData.id, dataToSave);
-        if (err) throw new Error(typeof err === 'string' ? err : err.message);
+        const result = await updateEntity(initialData.id, dataToSave);
+        if (result.error) {
+          throw new Error(result.error);
+        }
       }
 
       setSuccess(

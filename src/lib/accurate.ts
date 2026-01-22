@@ -1,10 +1,7 @@
 // accurate.ts - Complete with parent-child and edit/delete functions
 
 import {
-  getAccessToken,
   saveTokens,
-  isTokenExpired,
-  clearAccurateTokens,
   validateAccurateApiToken,
   getAccurateDatabaseList,
   type AccurateValidationResult,
@@ -21,7 +18,7 @@ const HMAC_SECRET_KEY = import.meta.env.VITE_ACCURATE_HMAC_SECRET || '';
 // ============================================
 
 export interface Account {
-  id?: string;
+  id: string;
   entity_id: string;
   accurate_id: string;
   account_name: string;
@@ -84,7 +81,7 @@ export const exchangeCodeForToken = async (code: string) => {
     });
     if (error) throw error;
     if (data?.access_token && data?.refresh_token && data?.expires_in) {
-      saveTokens(data.access_token, data.refresh_token, data.expires_in);
+      saveTokens(data.access_token, data.refresh_token);
     }
     return { data, error: null };
   } catch (error) {
@@ -741,7 +738,7 @@ export async function validateBudgetAllocation(budgetId: string) {
  */
 export async function isAccountUsedInBudget(budgetId: string, accountCode: string) {
   try {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('budget_items')
       .select('id')
       .eq('budget_id', budgetId)

@@ -307,7 +307,7 @@ export const importCoaFromExcel = async (accounts: any[]) => {
     console.log('[importCoaFromExcel] Processing', accounts.length, 'accounts');
 
     // Transform accounts untuk database insertion
-    const dbAccounts = accounts.map((acc: any, index: number) => {
+    const dbAccounts = accounts.map((acc: any) => {
       // Generate unique accurate_id untuk Excel imports
       // Gunakan random string untuk avoid duplicate
       const timestamp = Date.now();

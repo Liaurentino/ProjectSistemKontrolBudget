@@ -50,15 +50,12 @@ const BudgetPage: React.FC = () => {
     try {
       console.log('[BudgetPage] Loading budgets for entity:', activeEntity.id);
 
-      // ALWAYS load ALL budgets first
       const allResult = await getBudgets(activeEntity.id);
       
       if (allResult.error) throw allResult.error;
       
-      // Save ALL budgets untuk availableYears
       setAllBudgets(allResult.data || []);
 
-      // Then filter by year if needed
       let filteredData = allResult.data || [];
       if (selectedYear !== 'all') {
         filteredData = filteredData.filter(b => b.period.startsWith(selectedYear));
@@ -355,23 +352,37 @@ const BudgetPage: React.FC = () => {
                               {budget.period}
                             </span>
                           </div>
-                          <div className={styles.budgetDescription}>
-                            {budget.description || 'Tidak ada deskripsi'}
-                            {budgetDetails && ` • ${budgetDetails.items.length} akun`}
-                          </div>
+                          {budget.description && (
+                            <div className={styles.budgetDescription}>
+                              {budget.description}
+                            </div>
+                          )}
                         </div>
 
-                        {/* Total Budget */}
-                        <div className={styles.budgetTotal}>
-                          <div className={styles.budgetTotalLabel}>
-                            Total Budget
+                        {/* Right Section: Total Budget + Account Count */}
+                        <div className={styles.budgetMetrics}>
+                          <div className={styles.budgetTotal}>
+                            <div className={styles.budgetTotalLabel}>
+                              Total Budget
+                            </div>
+                            <div 
+                              className={styles.budgetTotalValue}
+                              style={{ fontSize: `${getAdaptiveFontSize(budget.total_budget)}px` }}
+                            >
+                              Rp {formatCurrency(budget.total_budget)}
+                            </div>
                           </div>
-                          <div 
-                            className={styles.budgetTotalValue}
-                            style={{ fontSize: `${getAdaptiveFontSize(budget.total_budget)}px` }}
-                          >
-                            Rp {formatCurrency(budget.total_budget)}
-                          </div>
+
+                          {budgetDetails && (
+                            <div className={styles.accountCountMetric}>
+                              <div className={styles.budgetTotalLabel}>
+                                Akun
+                              </div>
+                              <div className={styles.accountCountValue}>
+                                {budgetDetails.items.length}
+                              </div>
+                            </div>
+                          )}
                         </div>
 
                         {/* Expand Button */}
