@@ -12,7 +12,7 @@ import AuthPage from "./pages/Auth/AuthPage";
 export default function App() {
   const { user, loading, signOut } = useAuth();
   const [expandedMenu, setExpandedMenu] = useState<string | null>(
-    "Data Usaha"
+    "master-data"  // ← UBAH INI dari "Data Usaha" ke "master-data"
   );
 
   const handleLogout = async () => {
@@ -63,7 +63,7 @@ export default function App() {
                 <span className="sidebar-menu-label">Data Usaha</span>
                 <span
                   className={`sidebar-menu-arrow ${
-                    expandedMenu === "Data Usaha" ? "expanded" : ""
+                    expandedMenu === "master-data" ? "expanded" : ""  // ← UBAH INI
                   }`}
                 >
                   ▼
@@ -160,8 +160,8 @@ export default function App() {
               path="/dashboard"
               element={user ? <DashboardPage /> : <Navigate to="/login" />}
             />
-            <Route path="/" element={<Navigate to="/entitas" />} />
-            <Route path="*" element={<Navigate to="/entitas" />} />
+            <Route path="/" element={<Navigate to="/dashboard" />} />
+            <Route path="*" element={<Navigate to="/dashboard" />} />
           </Routes>
         </main>
       </div>
