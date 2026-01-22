@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useCoaForm } from '../../components/CoaForm';
 import { ImportExcel } from '../../components/Export&Import/ImportExcel';
-import styles from './COAPage.module.css';
+import styles from './CoaPage.module.css';
 
 const CoaPage: React.FC = () => {
   const {
