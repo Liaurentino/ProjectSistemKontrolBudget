@@ -4,7 +4,7 @@ import { importCoaFromExcel } from '../../lib/supabase';
 import styles from './ImportExcel.module.css';
 
 interface ImportExcelProps {
-  entityId: string; // ✅ Changed from number to string
+  entityId: string;
   onSuccess: () => void;
   onError: (message: string) => void;
   onClose: () => void;
@@ -21,7 +21,44 @@ export const ImportExcel: React.FC<ImportExcelProps> = ({
   const [dragActive, setDragActive] = useState(false);
   const [detectedFormat, setDetectedFormat] = useState<'standard' | 'unknown'>('unknown');
   const [previewData, setPreviewData] = useState<any[]>([]);
+  const [inputKey, setInputKey] = useState(Date.now()); // ✅ Key untuk force re-mount input
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // ========================================
+  // 🔧 Helper: Parse number dengan handling comma/dot separator
+  // ========================================
+  const parseNumber = (value: any): number => {
+    if (value === null || value === undefined || value === '') return 0;
+    
+    // Jika sudah number, return
+    if (typeof value === 'number') return value;
+    
+    // Convert ke string
+    const str = String(value).trim();
+    
+    // Remove semua karakter non-numeric kecuali . dan , dan -
+    // Handle format: 5,600,000.00 atau 5.600.000,00
+    const cleaned = str.replace(/[^\d.,-]/g, '');
+    
+    if (!cleaned) return 0;
+    
+    // Detect format berdasarkan posisi koma dan titik terakhir
+    const lastComma = cleaned.lastIndexOf(',');
+    const lastDot = cleaned.lastIndexOf('.');
+    
+    let normalized: string;
+    
+    if (lastComma > lastDot) {
+      // Format Eropa: 5.600.000,00 → 5600000.00
+      normalized = cleaned.replace(/\./g, '').replace(',', '.');
+    } else {
+      // Format US: 5,600,000.00 → 5600000.00
+      normalized = cleaned.replace(/,/g, '');
+    }
+    
+    const result = parseFloat(normalized);
+    return isNaN(result) ? 0 : result;
+  };
 
   // Handle drag events
   const handleDrag = (e: React.DragEvent) => {
@@ -62,10 +99,123 @@ export const ImportExcel: React.FC<ImportExcelProps> = ({
     if (e.target.files && e.target.files[0]) {
       handleFileSelection(e.target.files[0]);
     }
+    // ✅ IMPORTANT: Reset input value agar file dengan nama sama bisa di-upload lagi
+    e.target.value = '';
+  };
+
+  // ========================================
+  // 🔧 IMPROVED: Better column matching with consistent normalization
+  // ========================================
+  const findColumnValue = (row: any, possibleNames: string[]): any => {
+    // Helper function untuk normalize string secara konsisten
+    const normalizeKey = (str: string): string => {
+      return str
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, ' ')      // Multiple spaces → single space
+        .replace(/[_\-\/]/g, ' ')  // Replace _, -, / dengan space
+        .replace(/\s+/g, ' ')      // Cleanup again setelah replace
+        .trim();
+    };
+
+    // Buat map dengan normalized keys
+    const normalizedRow: Record<string, any> = {};
+    const keyMapping: Record<string, string> = {};
+    
+    Object.keys(row).forEach(originalKey => {
+      const normalized = normalizeKey(originalKey);
+      normalizedRow[normalized] = row[originalKey];
+      keyMapping[normalized] = originalKey;
+    });
+
+    console.log('[findColumnValue] Searching for:', possibleNames);
+    console.log('[findColumnValue] Available columns:', Object.keys(normalizedRow));
+
+    // Strategy 1: Exact match
+    for (const name of possibleNames) {
+      const normalized = normalizeKey(name);
+      
+      console.log(`[findColumnValue] Trying exact match: "${name}" → normalized: "${normalized}"`);
+      console.log(`[findColumnValue] Has property "${normalized}"?`, normalizedRow.hasOwnProperty(normalized));
+      
+      if (normalizedRow.hasOwnProperty(normalized)) {
+        console.log(`[findColumnValue] Value at "${normalized}":`, normalizedRow[normalized]);
+        console.log(`[findColumnValue] Value type:`, typeof normalizedRow[normalized]);
+        console.log(`[findColumnValue] Is empty?`, normalizedRow[normalized] === '');
+      }
+      
+      if (normalizedRow.hasOwnProperty(normalized) && 
+          normalizedRow[normalized] !== undefined && 
+          normalizedRow[normalized] !== null && 
+          normalizedRow[normalized] !== '') {
+        console.log(`[findColumnValue] ✅ Exact match found: "${name}" -> "${keyMapping[normalized]}" = ${normalizedRow[normalized]}`);
+        return normalizedRow[normalized];
+      }
+    }
+    
+    // Strategy 2: Multi-word keyword match
+    // Hanya untuk searches dengan min 2 kata
+    for (const name of possibleNames) {
+      const normalized = normalizeKey(name);
+      const keywords = normalized.split(' ').filter(k => k.length > 2);
+      
+      // Skip single-word searches di strategy ini
+      if (keywords.length < 2) continue;
+      
+      const matchingKey = Object.keys(normalizedRow).find(key => {
+        // SEMUA keywords harus ada di key
+        return keywords.every(keyword => key.includes(keyword));
+      });
+      
+      if (matchingKey && 
+          normalizedRow[matchingKey] !== undefined && 
+          normalizedRow[matchingKey] !== null && 
+          normalizedRow[matchingKey] !== '') {
+        console.log(`[findColumnValue] ✅ Multi-word match found: "${name}" -> "${keyMapping[matchingKey]}" = ${normalizedRow[matchingKey]}`);
+        return normalizedRow[matchingKey];
+      }
+    }
+
+    // Strategy 3: Partial match untuk specific single keywords
+    const allowedPartialKeywords = [
+      'kode', 'nama', 'uraian', 'keterangan', 
+      'currency', 'curr', 'suspended', 'aktif', 'active',
+      'st', 'lvl', 'level', 'debit', 'credit'
+    ];
+    
+    for (const name of possibleNames) {
+      const normalized = normalizeKey(name);
+      
+      // Hanya izinkan partial match untuk allowed keywords
+      if (!allowedPartialKeywords.includes(normalized)) continue;
+      
+      const matchingKey = Object.keys(normalizedRow).find(key => 
+        key.includes(normalized)
+      );
+      
+      if (matchingKey && 
+          normalizedRow[matchingKey] !== undefined && 
+          normalizedRow[matchingKey] !== null && 
+          normalizedRow[matchingKey] !== '') {
+        console.log(`[findColumnValue] ✅ Partial match found: "${name}" -> "${keyMapping[matchingKey]}" = ${normalizedRow[matchingKey]}`);
+        return normalizedRow[matchingKey];
+      }
+    }
+    
+    console.log(`[findColumnValue] ❌ No match found for:`, possibleNames);
+    return null;
   };
 
   // Detect Excel format and preview
   const handleFileSelection = async (selectedFile: File) => {
+    // ✅ Force clear previous state first
+    setFile(null);
+    setDetectedFormat('unknown');
+    setPreviewData([]);
+    
+    console.log('[handleFileSelection] Reading file:', selectedFile.name, 'size:', selectedFile.size, 'lastModified:', new Date(selectedFile.lastModified));
+    
+    // ✅ Set file AFTER clearing to force re-render
     setFile(selectedFile);
     
     try {
@@ -74,9 +224,18 @@ export const ImportExcel: React.FC<ImportExcelProps> = ({
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
       
+      console.log('[handleFileSelection] Sheet name:', sheetName);
+      console.log('[handleFileSelection] Worksheet range:', worksheet['!ref']);
+      
       const rawData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][];
 
+      console.log('[handleFileSelection] Raw data rows:', rawData.length);
+      if (rawData.length > 0) {
+        console.log('[handleFileSelection] First raw row:', rawData[0]);
+      }
+
       if (!rawData || rawData.length === 0) {
+        console.warn('[handleFileSelection] No data found in Excel');
         setDetectedFormat('unknown');
         setPreviewData([]);
         return;
@@ -95,23 +254,33 @@ export const ImportExcel: React.FC<ImportExcelProps> = ({
             rowStr.includes('code')
         )) {
           headerRowIndex = i;
+          console.log('[handleFileSelection] Found header at row', i, ':', row);
           break;
         }
       }
 
       if (headerRowIndex === -1) {
+        console.log('[handleFileSelection] No header detected, using row 0 as default');
         headerRowIndex = 0;
       }
+
+      console.log('[handleFileSelection] Header row detected at index:', headerRowIndex);
 
       const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1');
       range.s.r = headerRowIndex;
       
       const jsonData = XLSX.utils.sheet_to_json(worksheet, { 
         range: headerRowIndex,
-        defval: '' 
+        defval: '',
+        raw: false // ✅ Convert semua ke string untuk avoid masalah parsing
       });
 
+      console.log('[handleFileSelection] Parsed JSON rows:', jsonData.length);
+      console.log('[handleFileSelection] First row keys:', Object.keys(jsonData[0] || {}));
+      console.log('[handleFileSelection] First row data:', jsonData[0]);
+
       if (!Array.isArray(jsonData) || jsonData.length === 0) {
+        console.warn('[handleFileSelection] No valid data after parsing');
         setDetectedFormat('unknown');
         setPreviewData([]);
         return;
@@ -120,23 +289,43 @@ export const ImportExcel: React.FC<ImportExcelProps> = ({
       const firstRow = jsonData[0] as any;
       const columns = Object.keys(firstRow).map(c => c.toLowerCase().trim());
 
-      const hasAccountCode = columns.some(col => 
-        col.includes('account') && (col.includes('code') || col.includes('no') || col.includes('number')) ||
-        col === 'kode' ||
-        col === 'code' ||
-        col === 'no' ||
-        col.includes('kode akun') ||
-        col.includes('nomor')
-      );
+      console.log('[handleFileSelection] Detected columns:', columns);
 
-      const hasAccountName = columns.some(col => 
-        col.includes('account') && col.includes('name') ||
-        col.includes('nama') ||
-        col === 'name' ||
-        col === 'account' ||
-        col.includes('uraian') ||
-        col.includes('keterangan')
-      );
+      const hasAccountCode = columns.some(col => {
+        const match = (col.includes('account') && (col.includes('code') || col.includes('no') || col.includes('number'))) ||
+          col === 'kode' ||
+          col === 'code' ||
+          col === 'no' ||
+          col.includes('kode akun') ||
+          col.includes('nomor') ||
+          col === 'account no' ||
+          col === 'account_no' ||
+          col === 'accountno';
+        
+        if (match) console.log('[handleFileSelection] Account code column found:', col);
+        return match;
+      });
+
+      const hasAccountName = columns.some(col => {
+        const match = (col.includes('account') && col.includes('name')) ||
+          col.includes('nama') ||
+          col === 'name' ||
+          col === 'account' ||
+          col.includes('uraian') ||
+          col.includes('keterangan') ||
+          col === 'account name' ||
+          col === 'account_name' ||
+          col === 'accountname';
+        
+        if (match) console.log('[handleFileSelection] Account name column found:', col);
+        return match;
+      });
+
+      console.log('[handleFileSelection] Format detection:', {
+        hasAccountCode,
+        hasAccountName,
+        willSetFormat: (hasAccountCode && hasAccountName) ? 'standard' : 'unknown'
+      });
 
       const format = (hasAccountCode && hasAccountName) ? 'standard' : 'unknown';
 
@@ -150,36 +339,12 @@ export const ImportExcel: React.FC<ImportExcelProps> = ({
     }
   };
 
-  // Helper: Find column value with flexible matching
-  const findColumnValue = (row: any, possibleNames: string[]): any => {
-    const normalizedRow: any = {};
-    Object.keys(row).forEach(key => {
-      normalizedRow[key.toLowerCase().trim()] = row[key];
-    });
-
-    for (const name of possibleNames) {
-      const normalized = name.toLowerCase().trim();
-      
-      if (normalizedRow[normalized] !== undefined) {
-        return normalizedRow[normalized];
-      }
-      
-      const matchingKey = Object.keys(normalizedRow).find(key => 
-        key.includes(normalized) || normalized.includes(key)
-      );
-      
-      if (matchingKey && normalizedRow[matchingKey] !== undefined) {
-        return normalizedRow[matchingKey];
-      }
-    }
-    
-    return null;
-  };
-
   // Transform data based on detected format
   const transformData = (jsonData: any[]) => {
     if (detectedFormat === 'standard') {
-      return jsonData.map((row: any) => {
+      return jsonData.map((row: any, index: number) => {
+        console.log(`\n[transformData] Processing row ${index + 1}:`, row);
+
         const accountCode = findColumnValue(row, [
           'account no', 'account_no', 'accountno',
           'account_code', 'account code', 'account number',
@@ -196,10 +361,24 @@ export const ImportExcel: React.FC<ImportExcelProps> = ({
           'tipe', 'tipe akun', 'jenis', 'kategori'
         ]);
 
+        // ========================================
+        // 🔧 IMPROVED: Better balance detection
+        // Prioritas: ending balance > saldo akhir > final balance > balance (generic)
+        // ========================================
         const balance = findColumnValue(row, [
-          'ending balance', 'ending_balance', 'endingbalance', 'final balance',
-          'balance', 'saldo', 'saldo akhir', 'amount', 'nilai', 'jumlah'
+          'ending balance',    // ✅ SPECIFIC - dicek duluan
+          'saldo akhir',       // ✅ SPECIFIC
+          'final balance',     // ✅ SPECIFIC
+          'ending_balance',
+          'endingbalance',
+          'balance',           // ⚠️ GENERIC - fallback terakhir
+          'saldo',
+          'amount',
+          'nilai',
+          'jumlah'
         ]);
+
+        console.log(`[transformData] Row ${index + 1} balance:`, balance);
 
         const currency = findColumnValue(row, [
           'currency', 'mata uang', 'curr'
@@ -217,7 +396,10 @@ export const ImportExcel: React.FC<ImportExcelProps> = ({
           'db/cr', 'dbcr', 'db cr', 'debit/credit', 'type'
         ]);
 
-        if (!accountCode && !accountName) return null;
+        if (!accountCode && !accountName) {
+          console.log(`[transformData] Row ${index + 1} skipped: no account code or name`);
+          return null;
+        }
 
         const codeStr = String(accountCode || '').toLowerCase().trim();
         const nameStr = String(accountName || '').toLowerCase().trim();
@@ -228,6 +410,7 @@ export const ImportExcel: React.FC<ImportExcelProps> = ({
         );
         
         if (shouldSkip) {
+          console.log(`[transformData] Row ${index + 1} skipped: contains skip keyword`);
           return null;
         }
 
@@ -257,12 +440,12 @@ export const ImportExcel: React.FC<ImportExcelProps> = ({
           }
         }
 
-        return {
+        const result = {
           entity_id: entityId,
           account_code: String(accountCode || '').trim(),
           account_name: String(accountName || '').trim(),
           account_type: finalAccountType,
-          balance: Number(balance || 0),
+          balance: parseNumber(balance), // ✅ Use parseNumber to handle comma separators
           currency: String(currency || 'IDR').toUpperCase(),
           suspended: suspended === true || suspended === 'true' || suspended === 1 || suspended === 'suspended',
           source_type: 'excel',
@@ -270,6 +453,9 @@ export const ImportExcel: React.FC<ImportExcelProps> = ({
           parent_id: null,
           lvl: Number(lvl || 1),
         };
+
+        console.log(`[transformData] Row ${index + 1} result:`, result);
+        return result;
       }).filter(Boolean);
     }
 
@@ -329,6 +515,8 @@ export const ImportExcel: React.FC<ImportExcelProps> = ({
         throw new Error('Tidak ada data valid yang ditemukan di file Excel');
       }
 
+      console.log('[handleImport] Importing', accounts.length, 'accounts');
+
       const { data: result, error: importError } = await importCoaFromExcel(accounts);
       
       if (importError) {
@@ -336,7 +524,18 @@ export const ImportExcel: React.FC<ImportExcelProps> = ({
       }
 
       onSuccess();
-      alert(`✅ Berhasil import ${result?.count || accounts.length} akun dari Excel!`);
+      
+      const message = result?.updated 
+        ? `✅ Berhasil import ${result.inserted || 0} akun baru dan update ${result.updated} akun existing!`
+        : `✅ Berhasil import ${result?.count || accounts.length} akun dari Excel!`;
+      
+      alert(message);
+      
+      // ✅ Clear semua state setelah sukses import
+      setFile(null);
+      setDetectedFormat('unknown');
+      setPreviewData([]);
+      setInputKey(Date.now()); // ✅ Force re-mount input
     } catch (err: any) {
       console.error('[ImportExcel] Error:', err);
       onError('Gagal import Excel: ' + err.message);
@@ -366,6 +565,7 @@ export const ImportExcel: React.FC<ImportExcelProps> = ({
           onClick={() => fileInputRef.current?.click()}
         >
           <input
+            key={inputKey} // ✅ Force re-mount when key changes
             ref={fileInputRef}
             type="file"
             accept=".xlsx,.xls,.xlsm,.xlsb,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
@@ -387,6 +587,7 @@ export const ImportExcel: React.FC<ImportExcelProps> = ({
                   setFile(null);
                   setDetectedFormat('unknown');
                   setPreviewData([]);
+                  setInputKey(Date.now()); // ✅ Force re-mount input
                 }}
                 className={styles.removeButton}
               >
@@ -436,39 +637,20 @@ export const ImportExcel: React.FC<ImportExcelProps> = ({
                 </thead>
                 <tbody>
                   {previewData.map((row, idx) => {
-                    const findValue = (possibleNames: string[]): any => {
-                      const normalizedRow: any = {};
-                      Object.keys(row).forEach(key => {
-                        normalizedRow[key.toLowerCase().trim()] = row[key];
-                      });
-
-                      for (const name of possibleNames) {
-                        const normalized = name.toLowerCase().trim();
-                        if (normalizedRow[normalized] !== undefined) {
-                          return normalizedRow[normalized];
-                        }
-                        const matchingKey = Object.keys(normalizedRow).find(key => 
-                          key.includes(normalized) || normalized.includes(key)
-                        );
-                        if (matchingKey && normalizedRow[matchingKey] !== undefined) {
-                          return normalizedRow[matchingKey];
-                        }
-                      }
-                      return null;
-                    };
-
-                    const accountCode = findValue([
+                    const accountCode = findColumnValue(row, [
                       'account no', 'account_no', 'accountno',
                       'account_code', 'account code', 'kode', 'code', 'no'
                     ]);
 
-                    const accountName = findValue([
+                    const accountName = findColumnValue(row, [
                       'account name', 'account_name', 'accountname',
                       'account', 'nama', 'name'
                     ]);
 
-                    const balance = findValue([
-                      'ending balance', 'ending_balance', 'balance', 'saldo'
+                    const balance = findColumnValue(row, [
+                      'ending balance', 'saldo akhir', 'final balance',
+                      'ending_balance', 'endingbalance',
+                      'balance', 'saldo'
                     ]);
 
                     if (!accountCode && !accountName) return null;
@@ -489,7 +671,7 @@ export const ImportExcel: React.FC<ImportExcelProps> = ({
                           <span className={styles.previewTypeBadge}>{accountType}</span>
                         </td>
                         <td className={`${styles.previewAmount} ${styles.amount}`}>
-                          {balance ? Number(balance).toLocaleString('id-ID') : '0'}
+                          {balance ? parseNumber(balance).toLocaleString('id-ID') : '0'}
                         </td>
                       </tr>
                     );
@@ -508,6 +690,7 @@ export const ImportExcel: React.FC<ImportExcelProps> = ({
             <li><strong>Kolom Opsional:</strong> Tipe/Jenis, Saldo/Balance, Currency, Level</li>
             <li><strong>Nama Kolom Fleksibel:</strong> Sistem akan mendeteksi otomatis meski nama beda</li>
             <li>Contoh: "Kode", "Account Code", "Nomor Akun" → semua akan terbaca sebagai Kode Akun</li>
+            <li><strong>Duplicate:</strong> Jika account code sama, sistem akan update saldo saja</li>
             <li>File harus dalam format Excel (.xlsx, .xls, .xlsm, .xlsb)</li>
           </ul>
         </div>

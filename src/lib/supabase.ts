@@ -288,7 +288,7 @@ export const deleteRealisasi = async (id: string) => {
 };
 
 // ============================================
-// COA / CHART OF ACCOUNTS FUNCTIONS
+// COA / CHART OF ACCOUNTS FUNCTIONS - DEBUG VERSION
 // ============================================
 
 export const importCoaFromExcel = async (accounts: any[]) => {
@@ -305,67 +305,183 @@ export const importCoaFromExcel = async (accounts: any[]) => {
     }
 
     console.log('[importCoaFromExcel] Processing', accounts.length, 'accounts');
+    console.log('[importCoaFromExcel] First account sample:', accounts[0]);
 
-    // Transform accounts untuk database insertion
-    const dbAccounts = accounts.map((acc: any) => {
-      // Generate unique accurate_id untuk Excel imports
-      // Gunakan random string untuk avoid duplicate
-      const timestamp = Date.now();
-      const random = Math.random().toString(36).substring(2, 9);
-      const accurateId = `EXCEL-${acc.entity_id}-${acc.account_code}-${timestamp}-${random}`;
+    // ========================================
+    // CEK DUPLIKAT berdasarkan entity_id + account_code
+    // ========================================
+    const entityIds = [...new Set(accounts.map(a => a.entity_id))];
+    const accountCodes = accounts.map(a => a.account_code);
 
-      return {
-        entity_id: acc.entity_id,
-        accurate_id: accurateId,
-        account_name: acc.account_name,
-        account_code: acc.account_code,
-        account_type: acc.account_type,
-        account_type_name: acc.account_type,
-        balance: acc.balance || 0,
-        currency: acc.currency || 'IDR',
-        suspended: acc.suspended || false,
-        is_active: !acc.suspended,
-        source_type: 'excel',
-        parent_id: acc.parent_id,
-        parent_accurate_id: null,
-        lvl: acc.lvl || 1,
-        is_parent: false,
-        hierarchy_path: null,
-      };
+    console.log('[importCoaFromExcel] Checking duplicates for:', {
+      entityIds,
+      accountCodes: accountCodes.slice(0, 5)
     });
 
-    console.log('[importCoaFromExcel] Transformed accounts:', dbAccounts.slice(0, 2));
+    const { data: existingAccounts, error: checkError } = await supabase
+      .from('accurate_accounts')
+      .select('id, entity_id, account_code, accurate_id, account_name, account_type, balance, currency, suspended, source_type, parent_id, lvl')
+      .in('entity_id', entityIds)
+      .in('account_code', accountCodes);
 
-    // Insert langsung ke Supabase
+    if (checkError) {
+      console.error('[importCoaFromExcel] Check error:', checkError);
+      return { data: null, error: checkError.message };
+    }
+
+    console.log('[importCoaFromExcel] Found existing accounts:', existingAccounts?.length || 0);
+    if (existingAccounts && existingAccounts.length > 0) {
+      console.log('[importCoaFromExcel] Sample existing account:', existingAccounts[0]);
+    }
+
+    // Buat map untuk cek duplikat: key = "entity_id-account_code"
+    const existingMap = new Map(
+      existingAccounts?.map(acc => [
+        `${acc.entity_id}-${acc.account_code}`, 
+        acc
+      ]) || []
+    );
+
+    console.log('[importCoaFromExcel] Existing map size:', existingMap.size);
+    console.log('[importCoaFromExcel] Existing map keys sample:', 
+      Array.from(existingMap.keys()).slice(0, 3)
+    );
+
+    // ========================================
+    // Transform accounts untuk database
+    // ========================================
+    let updateCount = 0;
+    let insertCount = 0;
+
+    const dbAccounts = accounts.map((acc: any) => {
+      const key = `${acc.entity_id}-${acc.account_code}`;
+      const existing = existingMap.get(key);
+
+      console.log(`\n[importCoaFromExcel] Processing account: ${acc.account_code}`);
+      console.log(`[importCoaFromExcel] Looking for key: "${key}"`);
+      console.log(`[importCoaFromExcel] Existing found:`, !!existing);
+
+      if (existing) {
+        // DUPLICATE DETECTED - UPDATE HANYA BALANCE
+        updateCount++;
+        
+        console.log(`[importCoaFromExcel] 🔄 UPDATING account ${acc.account_code}:`);
+        console.log(`  - Old balance: ${existing.balance}`);
+        console.log(`  - New balance: ${acc.balance}`);
+        console.log(`  - Using accurate_id: ${existing.accurate_id}`);
+        console.log(`  - Using id: ${existing.id}`);
+        
+        return {
+          id: existing.id, // ✅ CRITICAL: Harus include ID untuk update
+          entity_id: existing.entity_id,
+          accurate_id: existing.accurate_id, // ✅ Gunakan accurate_id yang lama
+          account_name: existing.account_name, // Tetap pakai yang lama
+          account_code: existing.account_code,
+          account_type: existing.account_type, // Tetap pakai yang lama
+          account_type_name: existing.account_type,
+          balance: acc.balance || 0, // ✅ UPDATE BALANCE BARU
+          currency: existing.currency, // Tetap pakai yang lama
+          suspended: existing.suspended,
+          is_active: !existing.suspended,
+          source_type: existing.source_type,
+          parent_id: existing.parent_id,
+          parent_accurate_id: null,
+          lvl: existing.lvl,
+          is_parent: false,
+          hierarchy_path: null,
+        };
+      } else {
+        // NEW ACCOUNT - INSERT SEMUA DATA
+        insertCount++;
+        
+        console.log(`[importCoaFromExcel] ➕ INSERTING new account ${acc.account_code}`);
+        
+        const timestamp = Date.now();
+        const random = Math.random().toString(36).substring(2, 9);
+        const accurateId = `EXCEL-${acc.entity_id}-${acc.account_code}-${timestamp}-${random}`;
+
+        return {
+          entity_id: acc.entity_id,
+          accurate_id: accurateId,
+          account_name: acc.account_name,
+          account_code: acc.account_code,
+          account_type: acc.account_type,
+          account_type_name: acc.account_type,
+          balance: acc.balance || 0,
+          currency: acc.currency || 'IDR',
+          suspended: acc.suspended || false,
+          is_active: !acc.suspended,
+          source_type: 'excel',
+          parent_id: acc.parent_id,
+          parent_accurate_id: null,
+          lvl: acc.lvl || 1,
+          is_parent: false,
+          hierarchy_path: null,
+        };
+      }
+    });
+
+    console.log('\n[importCoaFromExcel] Summary BEFORE upsert:', {
+      total: dbAccounts.length,
+      toInsert: insertCount,
+      toUpdate: updateCount
+    });
+
+    console.log('[importCoaFromExcel] First 2 transformed accounts:', dbAccounts.slice(0, 2));
+
+    // ========================================
+    // UPSERT ke database
+    // ========================================
+    console.log('[importCoaFromExcel] Starting upsert...');
+
     const { data, error } = await supabase
       .from('accurate_accounts')
       .upsert(dbAccounts, {
-        onConflict: 'entity_id,accurate_id',
-        ignoreDuplicates: false,
+        onConflict: 'entity_id,accurate_id', // Conflict berdasarkan entity_id + accurate_id
+        ignoreDuplicates: false, // Jangan ignore, kita mau update
       })
       .select();
 
     if (error) {
-      console.error('[importCoaFromExcel] Insert error:', error);
+      console.error('[importCoaFromExcel] Upsert error:', error);
+      console.error('[importCoaFromExcel] Error details:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
       return { 
         data: null, 
         error: error.message || 'Gagal insert data ke database' 
       };
     }
 
-    console.log('[importCoaFromExcel] Successfully imported', data?.length || 0, 'accounts');
+    console.log('[importCoaFromExcel] Upsert successful!');
+    console.log('[importCoaFromExcel] Returned rows:', data?.length || 0);
+    if (data && data.length > 0) {
+      console.log('[importCoaFromExcel] Sample returned data:', data[0]);
+    }
+
+    console.log('\n[importCoaFromExcel] Final Summary:', {
+      total: dbAccounts.length,
+      inserted: insertCount,
+      updated: updateCount,
+      returned: data?.length || 0
+    });
 
     return { 
       data: { 
         count: data?.length || 0, 
-        accounts: data 
+        accounts: data,
+        inserted: insertCount,
+        updated: updateCount
       }, 
       error: null 
     };
     
   } catch (err) {
     const error = err instanceof Error ? err.message : 'Gagal import Excel';
-    console.error('[importCoaFromExcel] Error:', error);
+    console.error('[importCoaFromExcel] Unexpected error:', err);
     return { data: null, error };
   }
 };
