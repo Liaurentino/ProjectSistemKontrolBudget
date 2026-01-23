@@ -1029,7 +1029,7 @@ export async function getAvailableAccountTypes(entityId?: string, period?: strin
 /**
  * Get available budget names from budgets
  */
-export async function getAvailableBudgetGroups(entityId?: string) {
+export async function getAvailableBudgetGroups(entityId?: string, period?: string) {
   try {
     let query = supabase
       .from('budgets')
@@ -1040,16 +1040,17 @@ export async function getAvailableBudgetGroups(entityId?: string) {
       query = query.eq('entity_id', entityId);
     }
 
-    const { data, error } = await query;
+    if (period) {
+      query = query.eq('period', period); // ✅ Filter by period
+    }
 
+    const { data, error } = await query;
     if (error) throw error;
 
-    // Get unique budget names and filter out null/undefined values
     const groups = [...new Set(
       data?.map(item => item.name).filter(Boolean) || []
     )].sort();
 
-    console.log('[getAvailableBudgetGroups] Found', groups.length, 'unique budget names');
     return { data: groups, error: null };
   } catch (error) {
     console.error('[getAvailableBudgetGroups] Error:', error);

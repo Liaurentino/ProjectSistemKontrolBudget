@@ -33,14 +33,14 @@ interface GroupedBudgetRealization {
   total_variance: number;
   variance_percentage: number;
   status: 'ON_TRACK' | 'OVER_BUDGET';
-  accounts: BudgetRealization[]; // Detail akun-akun dalam group ini
+  accounts: BudgetRealization[];
 }
 
 const BudgetRealizationPage: React.FC = () => {
   const { activeEntity } = useEntity();
 
   // State
-  const [_realizations, setRealizations] = useState<BudgetRealization[]>([]);
+  const [realizations, setRealizations] = useState<BudgetRealization[]>([]);
   const [groupedData, setGroupedData] = useState<GroupedBudgetRealization[]>([]);
   const [summary, setSummary] = useState<BudgetRealizationSummary | null>(null);
   const [loading, setLoading] = useState(false);
@@ -61,24 +61,56 @@ const BudgetRealizationPage: React.FC = () => {
   const [availableTypes, setAvailableTypes] = useState<string[]>([]);
   const [availableBudgetGroups, setAvailableBudgetGroups] = useState<string[]>([]);
 
-  // Load available filters
+  // Load available filters (periods & types only - once)
   useEffect(() => {
     if (activeEntity?.id) {
-      loadAvailableFilters();
+      loadStaticFilters();
     }
   }, [activeEntity?.id]);
 
-  const loadAvailableFilters = async () => {
+  const loadStaticFilters = async () => {
     if (!activeEntity) return;
 
     const { data: periods } = await getAvailableRealizationPeriods(activeEntity.id);
-    const { data: types } = await getAvailableAccountTypes(activeEntity.id);
-    const { data: groups } = await getAvailableBudgetGroups(activeEntity.id);
+    const {  types } = await getAvailableAccountTypes(activeEntity.id);
 
     setAvailablePeriods(periods || []);
     setAvailableTypes(types || []);
+  };
+
+  // ✅ BARU: Load budget groups based on selected period
+  const loadAvailableBudgetGroups = async () => {
+    if (!activeEntity) return;
+
+    const period = selectedPeriod === 'all' ? undefined : selectedPeriod;
+    const {  groups } = await getAvailableBudgetGroups(activeEntity.id, period);
     setAvailableBudgetGroups(groups || []);
   };
+
+  // ✅ BARU: Load periods based on selected budget group
+  const loadAvailablePeriodsForBudget = async () => {
+    if (!activeEntity) return;
+
+    const budgetName = selectedBudgetGroup === 'all' ? undefined : selectedBudgetGroup;
+    const {  periods } = await getAvailableRealizationPeriods(activeEntity.id, budgetName);
+    setAvailablePeriods(periods || []);
+  };
+
+  // ✅ Trigger reload budget groups when period changes
+  useEffect(() => {
+    if (activeEntity?.id) {
+      loadAvailableBudgetGroups();
+      setSelectedBudgetGroup('all'); // Reset selection
+    }
+  }, [activeEntity?.id, selectedPeriod]);
+
+  // ✅ Trigger reload periods when budget group changes
+  useEffect(() => {
+    if (activeEntity?.id) {
+      loadAvailablePeriodsForBudget();
+      setSelectedPeriod('all'); // Reset selection
+    }
+  }, [activeEntity?.id, selectedBudgetGroup]);
 
   // Load data
   useEffect(() => {
@@ -102,7 +134,6 @@ const BudgetRealizationPage: React.FC = () => {
       const accountType = selectedAccountType === 'all' ? undefined : selectedAccountType;
       const budgetName = selectedBudgetGroup === 'all' ? undefined : selectedBudgetGroup;
 
-      // Load realizations with live data from accurate_accounts
       const { data: realizationsData, error: realizationsError } = await getBudgetRealizationsLive(
         activeEntity.id,
         period,
@@ -113,12 +144,8 @@ const BudgetRealizationPage: React.FC = () => {
       if (realizationsError) throw realizationsError;
 
       setRealizations(realizationsData || []);
-
-      // Group data by budget_group_name and period
       const grouped = groupRealizationsByBudgetGroup(realizationsData || []);
       setGroupedData(grouped);
-
-      // Calculate summary from loaded data
       const summaryData = calculateSummary(realizationsData || [], activeEntity, period);
       setSummary(summaryData);
 
@@ -132,13 +159,11 @@ const BudgetRealizationPage: React.FC = () => {
     }
   };
 
-  // Group realizations by budget name (from budgets.name) and period
+  // Group realizations by budget name and period
   const groupRealizationsByBudgetGroup = (data: BudgetRealization[]): GroupedBudgetRealization[] => {
     const groupMap = new Map<string, BudgetRealization[]>();
 
-    // Group by budgets.name + period
     data.forEach(item => {
-      // Get budget name from budgets.name
       const budgetName = item.budgets?.name || 'Unknown Budget';
       const key = `${budgetName}|||${item.period}`;
       if (!groupMap.has(key)) {
@@ -147,7 +172,6 @@ const BudgetRealizationPage: React.FC = () => {
       groupMap.get(key)!.push(item);
     });
 
-    // Convert to array and calculate totals
     const grouped: GroupedBudgetRealization[] = [];
     groupMap.forEach((accounts, key) => {
       const [budgetGroupName, period] = key.split('|||');
@@ -173,7 +197,7 @@ const BudgetRealizationPage: React.FC = () => {
     return grouped;
   };
 
-  // Calculate summary from realizations data
+  // Calculate summary
   const calculateSummary = (
     data: BudgetRealization[], 
     entity: any, 
@@ -210,20 +234,16 @@ const BudgetRealizationPage: React.FC = () => {
   useEffect(() => {
     if (!activeEntity?.id) return;
 
-    console.log('[BudgetRealizationPage] Setting up subscription...');
-
     const subscription = subscribeBudgetItems(activeEntity.id, () => {
-      console.log('[BudgetRealizationPage] Real-time update detected');
       loadData();
     });
 
     return () => {
-      console.log('[BudgetRealizationPage] Cleaning up subscription');
       subscription.unsubscribe();
     };
   }, [activeEntity?.id]);
 
-  // Filter by search (search in budget name from budgets.name)
+  // Filter by search
   const filteredGroupedData = groupedData.filter((item) => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
@@ -363,7 +383,6 @@ const BudgetRealizationPage: React.FC = () => {
       {/* Summary Cards */}
       {activeEntity && summary && (
         <div className={styles.summaryCards}>
-          {/* Total Budget */}
           <div className={`${styles.summaryCard} ${styles.blue}`}>
             <div className={styles.summaryCardLabel}>Total Budget</div>
             <div 
@@ -374,7 +393,6 @@ const BudgetRealizationPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Total Realisasi */}
           <div className={`${styles.summaryCard} ${styles.green}`}>
             <div className={styles.summaryCardLabel}>Total Realisasi</div>
             <div 
@@ -385,7 +403,6 @@ const BudgetRealizationPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Variance */}
           <div className={`${styles.summaryCard} ${
             summary.overall_status === 'OVER_BUDGET' ? styles.red : styles.cyan
           }`}>
@@ -401,7 +418,6 @@ const BudgetRealizationPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Variance % */}
           <div className={`${styles.summaryCard} ${
             summary.overall_status === 'OVER_BUDGET' ? styles.red : styles.green
           }`}>
@@ -526,7 +542,6 @@ const BudgetRealizationPage: React.FC = () => {
               </div>
               
               <div className={styles.modalHeaderActions}>
-                {/* Export Buttons */}
                 <ExportFile
                   group={{
                     budget_name: selectedGroup.budget_group_name,
@@ -541,7 +556,6 @@ const BudgetRealizationPage: React.FC = () => {
                   entityName={activeEntity?.entity_name || activeEntity?.name || 'Unknown'}
                 />
                 
-                {/* Close Button */}
                 <button
                   onClick={handleCloseDetail}
                   className={styles.modalCloseButton}
@@ -551,9 +565,7 @@ const BudgetRealizationPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Modal Body */}
             <div className={styles.modalBody}>
-              {/* Summary Cards for this group */}
               <div className={styles.modalSummaryCards}>
                 <div className={`${styles.modalSummaryCard} ${styles.blue}`}>
                   <div className={styles.modalSummaryCardLabel}>TOTAL BUDGET</div>
@@ -588,7 +600,6 @@ const BudgetRealizationPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Detail Table */}
               <div className={styles.modalTableWrapper}>
                 <table className={styles.modalTable}>
                   <thead>
@@ -666,7 +677,6 @@ const BudgetRealizationPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Modal Footer */}
             <div className={styles.modalFooter}>
               <button
                 onClick={handleCloseDetail}
