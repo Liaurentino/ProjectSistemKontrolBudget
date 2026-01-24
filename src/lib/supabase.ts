@@ -578,3 +578,97 @@ export const deleteCoaAccount = async (id: string) => {
     return { error };
   }
 };
+
+// ============================================
+// PUBLIC PROFILES FUNCTIONS
+// ============================================
+
+/**
+ * Get all users with their public entities
+ */
+export const getAllPublicUsers = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('public_entities')
+      .select('*')
+      .order('user_email');
+
+    if (error) throw error;
+
+    // Group by user
+    const usersMap = new Map<string, any>();
+    
+    data?.forEach((entity: any) => {
+      if (!usersMap.has(entity.user_id)) {
+        usersMap.set(entity.user_id, {
+          user_id: entity.user_id,
+          user_email: entity.user_email,
+          user_name: entity.user_name || entity.user_email?.split('@')[0],
+          user_avatar: entity.user_avatar,
+          entities: [],
+        });
+      }
+      
+      usersMap.get(entity.user_id)!.entities.push({
+        id: entity.id,
+        entity_name: entity.entity_name,
+        is_connected: entity.is_connected,
+        created_at: entity.created_at,
+      });
+    });
+
+    const users = Array.from(usersMap.values());
+    
+    return { data: users, error: null };
+  } catch (err) {
+    const error = err instanceof Error ? err.message : 'Gagal memuat data users';
+    return { data: null, error };
+  }
+};
+
+/**
+ * Get public entity details by ID
+ */
+export const getPublicEntityById = async (entityId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('public_entities')
+      .select('*')
+      .eq('id', entityId)
+      .single();
+
+    if (error) throw error;
+
+    return { data, error: null };
+  } catch (err) {
+    const error = err instanceof Error ? err.message : 'Gagal memuat data entity';
+    return { data: null, error };
+  }
+};
+
+/**
+ * Update entity privacy setting
+ */
+export const updateEntityPrivacy = async (entityId: string, isPublic: boolean) => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      return { data: null, error: 'User not authenticated' };
+    }
+
+    const { data, error } = await supabase
+      .from('entity')
+      .update({ is_public: isPublic })
+      .eq('id', entityId)
+      .eq('user_id', user.id) // Ensure ownership
+      .select();
+
+    if (error) throw error;
+
+    return { data, error: null };
+  } catch (err) {
+    const error = err instanceof Error ? err.message : 'Gagal update privacy setting';
+    return { data: null, error };
+  }
+};

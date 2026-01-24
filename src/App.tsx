@@ -6,14 +6,13 @@ import BudgetRealizationPage from "./pages/Realisasi/BudgetRealisasiPage";
 import DashboardPage from "./pages/Dashboard/DashboardPage";
 import { EntitasPage } from "./pages/Entitas/EntitasPage";
 import CoaPage from "./pages/COA/CoaPage";
+import PublicProfilesPage from "./pages/PublicUsers/PublicUsersPage";
 import { useAuth } from "./contexts/AuthContext";
 import AuthPage from "./pages/Auth/AuthPage";
 
 export default function App() {
   const { user, loading, signOut } = useAuth();
-  const [expandedMenu, setExpandedMenu] = useState<string | null>(
-    "master-data"  // ← UBAH INI dari "Data Usaha" ke "master-data"
-  );
+  const [expandedMenu, setExpandedMenu] = useState<string | null>("master-data");
 
   const handleLogout = async () => {
     await signOut();
@@ -63,7 +62,7 @@ export default function App() {
                 <span className="sidebar-menu-label">Data Usaha</span>
                 <span
                   className={`sidebar-menu-arrow ${
-                    expandedMenu === "master-data" ? "expanded" : ""  // ← UBAH INI
+                    expandedMenu === "master-data" ? "expanded" : ""
                   }`}
                 >
                   ▼
@@ -101,6 +100,8 @@ export default function App() {
                 </div>
               )}
             </div>
+
+            {/* Realisasi */}
             <NavLink
               to="/realisasi"
               className={({ isActive }) =>
@@ -110,6 +111,15 @@ export default function App() {
               <span className="sidebar-menu-label">Realisasi</span>
             </NavLink>
 
+            {/* ✨ TAMBAH INI - Community Profiles */}
+            <NavLink
+              to="/community"
+              className={({ isActive }) =>
+                `sidebar-menu-item ${isActive ? "active" : ""}`
+              }
+            >
+              <span className="sidebar-menu-label">🌐 Community</span>
+            </NavLink>
           </nav>
 
           {/* Sidebar Footer */}
@@ -160,6 +170,13 @@ export default function App() {
               path="/dashboard"
               element={user ? <DashboardPage /> : <Navigate to="/login" />}
             />
+            
+            {/* ✨ TAMBAH INI - Route Community */}
+            <Route
+              path="/community"
+              element={user ? <PublicProfilesPage /> : <Navigate to="/login" />}
+            />
+
             <Route path="/" element={<Navigate to="/dashboard" />} />
             <Route path="*" element={<Navigate to="/dashboard" />} />
           </Routes>

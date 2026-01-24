@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getEntities, deleteEntity } from '../../lib/supabase';
+import { getEntities, deleteEntity, updateEntityPrivacy } from '../../lib/supabase';
 import { EntitasForm } from '../../components/EntitasForm/EntitasForm';
 import { AccurateGuide } from '../../components/AccurateGuide/AccurateGuide';
 import { useEntity } from '../../contexts/EntityContext';
@@ -126,6 +126,25 @@ export const EntitasPage: React.FC = () => {
     }
   };
 
+  /**
+   * Handle toggle privacy
+   */
+  const handleTogglePrivacy = async (entityId: string, currentStatus: boolean) => {
+    setLoading(true);
+    try {
+      const { error: err } = await updateEntityPrivacy(entityId, !currentStatus);
+      if (err) {
+        throw new Error(err);
+      }
+      
+      await fetchEntities(); // Refresh list
+    } catch (err) {
+      setError('Gagal update privacy: ' + getErrorMessage(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Initial fetch
   useEffect(() => {
     fetchEntities();
@@ -228,19 +247,20 @@ export const EntitasPage: React.FC = () => {
                 <th>Nama Entitas</th>
                 <th>Koneksi Accurate</th>
                 <th>Data Usaha Accurate</th>
+                <th className={styles.colPrivacy}>Privacy</th>
                 <th className={styles.colActions}>Aksi</th>
               </tr>
             </thead>
             <tbody>
               {loading && entities.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="table-loading">
+                  <td colSpan={6} className="table-loading">
                     Memuat data...
                   </td>
                 </tr>
               ) : entities.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="table-empty">
+                  <td colSpan={6} className="table-empty">
                     Belum ada entitas. Silakan tambahkan entitas baru untuk memulai.
                   </td>
                 </tr>
@@ -298,6 +318,22 @@ export const EntitasPage: React.FC = () => {
                         )}
                       </td>
 
+                      {/* PRIVACY TOGGLE */}
+                      <td className="table-cell-center">
+                        <label className={styles.privacyToggle}>
+                          <input
+                            type="checkbox"
+                            checked={e.is_public || false}
+                            onChange={() => handleTogglePrivacy(e.id, e.is_public || false)}
+                            disabled={loading}
+                            className={styles.privacyCheckbox}
+                          />
+                          <span className={styles.privacyLabel}>
+                            {e.is_public ? '🌐 Public' : '🔒 Private'}
+                          </span>
+                        </label>
+                      </td>
+
                       {/* AKSI */}
                       <td className="table-cell-center">
                         <div className="table-actions">
@@ -337,6 +373,12 @@ export const EntitasPage: React.FC = () => {
             </div>
             <div className={styles.legendItem}>
               <span className={styles.legendDisconnected}>✗ Tidak Terhubung</span> - Token tidak valid
+            </div>
+            <div className={styles.legendItem}>
+              <span className={styles.legendImportant}>🌐 Public:</span> Data realisasi dapat dilihat user lain di halaman Community
+            </div>
+            <div className={styles.legendItem}>
+              <span className={styles.legendImportant}>🔒 Private:</span> Data hanya dapat dilihat oleh Anda
             </div>
             <div className={styles.legendItem}>
               <span className={styles.legendImportant}>Penting! :</span> Pilih satu entitas sebagai aktif untuk digunakan di seluruh aplikasi

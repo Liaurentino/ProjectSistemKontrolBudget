@@ -270,3 +270,40 @@
     font-size: 0.8rem;
   }
 }
+
+/* Privacy Toggle */
+.colPrivacy {
+  width: 150px;
+  text-align: center;
+}
+
+.privacyToggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.privacyCheckbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #667eea;
+}
+
+.privacyCheckbox:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.privacyLabel {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.privacyToggle:hover .privacyLabel {
+  color: #667eea;
+}
