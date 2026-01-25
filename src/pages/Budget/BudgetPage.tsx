@@ -414,13 +414,29 @@ const BudgetPage: React.FC = () => {
                           <div className={styles.summaryGrid}>
                             <div className={styles.summaryItem}>
                               <div className={styles.summaryLabel}>
-                                Total Alokasi
+                                Total Budget (Target)
                               </div>
                               <div 
                                 className={styles.summaryValue}
                                 style={{ fontSize: `${getAdaptiveFontSize(budgetDetails.total_allocated)}px` }}
                               >
                                 Rp {formatCurrency(budgetDetails.total_allocated)}
+                              </div>
+                            </div>
+
+                            {/* NEW: Total Realisasi */}
+                            <div className={styles.summaryItem}>
+                              <div className={styles.summaryLabel}>
+                                Total Realisasi (Aktual)
+                              </div>
+                              <div 
+                                className={styles.summaryValue}
+                                style={{ 
+                                  fontSize: `${getAdaptiveFontSize(budgetDetails.total_realisasi || 0)}px`,
+                                  color: '#0369a1'
+                                }}
+                              >
+                                Rp {formatCurrency(budgetDetails.total_realisasi || 0)}
                               </div>
                             </div>
             
@@ -481,7 +497,8 @@ const BudgetPage: React.FC = () => {
                                   <th>Kode Akun</th>
                                   <th>Nama Akun</th>
                                   <th>Tipe</th>
-                                  <th>Alokasi</th>
+                                  <th>Budget</th>
+                                  <th>Realisasi</th>
                                   <th>Catatan</th>
                                 </tr>
                               </thead>
@@ -509,6 +526,14 @@ const BudgetPage: React.FC = () => {
                                       }}>
                                         Rp {formatCurrency(item.allocated_amount)}
                                       </strong>
+                                    </td>
+                                    <td>
+                                      <span style={{
+                                        fontSize: `${getAdaptiveFontSize(item.realisasi_snapshot || 0)}px`,
+                                        color: '#0369a1',
+                                      }}>
+                                        Rp {formatCurrency(item.realisasi_snapshot || 0)}
+                                      </span>
                                     </td>
                                     <td>
                                       <div className={styles.itemDescription}>

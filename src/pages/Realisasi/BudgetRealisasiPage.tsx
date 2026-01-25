@@ -4,7 +4,6 @@ import {
   getBudgetRealizationsLive,
   getAvailableRealizationPeriods,
   getAvailableAccountTypes,
-  getAvailableBudgetGroups,
   subscribeBudgetItems,
   type BudgetRealization,
   type BudgetRealizationSummary,
@@ -50,95 +49,74 @@ const BudgetRealizationPage: React.FC = () => {
   const [selectedGroup, setSelectedGroup] = useState<GroupedBudgetRealization | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
 
-  // Filters
-  const [selectedPeriod, setSelectedPeriod] = useState<string>('all');
+  // Filters - CHANGED: Period is now required, no default 'all'
+  const [selectedPeriod, setSelectedPeriod] = useState<string>('');
   const [selectedAccountType, setSelectedAccountType] = useState<string>('all');
-  const [selectedBudgetGroup, setSelectedBudgetGroup] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
   // Available options
   const [availablePeriods, setAvailablePeriods] = useState<string[]>([]);
   const [availableTypes, setAvailableTypes] = useState<string[]>([]);
-  const [availableBudgetGroups, setAvailableBudgetGroups] = useState<string[]>([]);
 
-  // Load available filters (periods & types only - once)
+  // NEW: Track if data has been loaded (user has selected period)
+  const [hasSelectedPeriod, setHasSelectedPeriod] = useState(false);
+
+  // Load available periods on mount
   useEffect(() => {
     if (activeEntity?.id) {
-      loadStaticFilters();
+      loadAvailablePeriods();
     }
   }, [activeEntity?.id]);
 
-  const loadStaticFilters = async () => {
+  const loadAvailablePeriods = async () => {
     if (!activeEntity) return;
 
     const { data: periods } = await getAvailableRealizationPeriods(activeEntity.id);
-    const {  types } = await getAvailableAccountTypes(activeEntity.id);
-
-    setAvailablePeriods(periods || []);
-    setAvailableTypes(types || []);
-  };
-
-  // ✅ BARU: Load budget groups based on selected period
-  const loadAvailableBudgetGroups = async () => {
-    if (!activeEntity) return;
-
-    const period = selectedPeriod === 'all' ? undefined : selectedPeriod;
-    const {  groups } = await getAvailableBudgetGroups(activeEntity.id, period);
-    setAvailableBudgetGroups(groups || []);
-  };
-
-  // ✅ BARU: Load periods based on selected budget group
-  const loadAvailablePeriodsForBudget = async () => {
-    if (!activeEntity) return;
-
-    const budgetName = selectedBudgetGroup === 'all' ? undefined : selectedBudgetGroup;
-    const {  periods } = await getAvailableRealizationPeriods(activeEntity.id, budgetName);
     setAvailablePeriods(periods || []);
   };
 
-  // ✅ Trigger reload budget groups when period changes
+  // Load available account types when period is selected
   useEffect(() => {
-    if (activeEntity?.id) {
-      loadAvailableBudgetGroups();
-      setSelectedBudgetGroup('all'); // Reset selection
+    if (activeEntity?.id && selectedPeriod) {
+      loadAvailableAccountTypes();
     }
   }, [activeEntity?.id, selectedPeriod]);
 
-  // ✅ Trigger reload periods when budget group changes
-  useEffect(() => {
-    if (activeEntity?.id) {
-      loadAvailablePeriodsForBudget();
-      setSelectedPeriod('all'); // Reset selection
-    }
-  }, [activeEntity?.id, selectedBudgetGroup]);
+  const loadAvailableAccountTypes = async () => {
+    if (!activeEntity || !selectedPeriod) return;
 
-  // Load data
+    const { data: types } = await getAvailableAccountTypes(activeEntity.id, selectedPeriod);
+    setAvailableTypes(types || []);
+  };
+
+  // Load data ONLY when period is selected
   useEffect(() => {
-    if (activeEntity?.id) {
+    if (activeEntity?.id && selectedPeriod) {
       loadData();
+      setHasSelectedPeriod(true);
     } else {
+      // Reset data when no period selected
       setRealizations([]);
       setGroupedData([]);
       setSummary(null);
+      setHasSelectedPeriod(false);
     }
-  }, [activeEntity?.id, selectedPeriod, selectedAccountType, selectedBudgetGroup]);
+  }, [activeEntity?.id, selectedPeriod, selectedAccountType]);
 
   const loadData = async () => {
-    if (!activeEntity) return;
+    if (!activeEntity || !selectedPeriod) return;
 
     setLoading(true);
     setError(null);
 
     try {
-      const period = selectedPeriod === 'all' ? undefined : selectedPeriod;
       const accountType = selectedAccountType === 'all' ? undefined : selectedAccountType;
-      const budgetName = selectedBudgetGroup === 'all' ? undefined : selectedBudgetGroup;
 
       const { data: realizationsData, error: realizationsError } = await getBudgetRealizationsLive(
         activeEntity.id,
-        period,
+        selectedPeriod,
         accountType,
-        budgetName
+        undefined // budgetName removed
       );
 
       if (realizationsError) throw realizationsError;
@@ -146,7 +124,7 @@ const BudgetRealizationPage: React.FC = () => {
       setRealizations(realizationsData || []);
       const grouped = groupRealizationsByBudgetGroup(realizationsData || []);
       setGroupedData(grouped);
-      const summaryData = calculateSummary(realizationsData || [], activeEntity, period);
+      const summaryData = calculateSummary(realizationsData || [], activeEntity, selectedPeriod);
       setSummary(summaryData);
 
       console.log('[BudgetRealizationPage] Loaded', realizationsData?.length || 0, 'realizations');
@@ -201,7 +179,7 @@ const BudgetRealizationPage: React.FC = () => {
   const calculateSummary = (
     data: BudgetRealization[], 
     entity: any, 
-    period?: string
+    period: string
   ): BudgetRealizationSummary | null => {
     if (!data || data.length === 0) return null;
 
@@ -216,7 +194,7 @@ const BudgetRealizationPage: React.FC = () => {
     return {
       entity_id: entity.id,
       entity_name: entity.entity_name || entity.name,
-      period: period || 'all',
+      period: period,
       total_accounts: data.length,
       total_budgets: [...new Set(data.map(item => item.budget_id))].length,
       total_budget: totalBudget,
@@ -232,7 +210,7 @@ const BudgetRealizationPage: React.FC = () => {
 
   // Setup real-time subscription
   useEffect(() => {
-    if (!activeEntity?.id) return;
+    if (!activeEntity?.id || !selectedPeriod) return;
 
     const subscription = subscribeBudgetItems(activeEntity.id, () => {
       loadData();
@@ -241,7 +219,7 @@ const BudgetRealizationPage: React.FC = () => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [activeEntity?.id]);
+  }, [activeEntity?.id, selectedPeriod]);
 
   // Filter by search
   const filteredGroupedData = groupedData.filter((item) => {
@@ -278,9 +256,9 @@ const BudgetRealizationPage: React.FC = () => {
 
         <button
           onClick={loadData}
-          disabled={!activeEntity || loading}
+          disabled={!activeEntity || !selectedPeriod || loading}
           className={`${styles.refreshButton} ${
-            activeEntity && !loading ? styles.active : styles.disabled
+            activeEntity && selectedPeriod && !loading ? styles.active : styles.disabled
           }`}
         >
           {loading ? '⏳ Memuat...' : '🔄 Refresh Data'}
@@ -304,42 +282,33 @@ const BudgetRealizationPage: React.FC = () => {
         </div>
       )}
 
-      {/* Filters */}
+      {/* Filters - UPDATED: Period is required */}
       {activeEntity && (
         <div className={styles.filterSection}>
           <div className={styles.filterHeader}>
             <h3>Filter Laporan</h3>
+            {!selectedPeriod && (
+              <p style={{ color: '#dc3545', fontSize: '14px', marginTop: '8px' }}>
+                ⚠️ Pilih periode untuk melihat data
+              </p>
+            )}
           </div>
 
           <div className={styles.filterGrid}>
-            {/* Periode */}
+            {/* Periode - REQUIRED */}
             <div>
-              <label className={styles.filterLabel}>Periode</label>
+              <label className={styles.filterLabel}>
+                Periode <span style={{ color: '#dc3545' }}>*</span>
+              </label>
               <select
                 value={selectedPeriod}
                 onChange={(e) => setSelectedPeriod(e.target.value)}
                 disabled={loading}
                 className={styles.filterSelect}
               >
-                <option value="all">Semua Periode</option>
+                <option value="">-- Pilih Periode --</option>
                 {availablePeriods.map((period) => (
                   <option key={period} value={period}>{period}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Nama Budget */}
-            <div>
-              <label className={styles.filterLabel}>Nama Budget</label>
-              <select
-                value={selectedBudgetGroup}
-                onChange={(e) => setSelectedBudgetGroup(e.target.value)}
-                disabled={loading}
-                className={styles.filterSelect}
-              >
-                <option value="all">Semua Budget</option>
-                {availableBudgetGroups.map((group) => (
-                  <option key={group} value={group}>{group}</option>
                 ))}
               </select>
             </div>
@@ -350,7 +319,7 @@ const BudgetRealizationPage: React.FC = () => {
               <select
                 value={selectedAccountType}
                 onChange={(e) => setSelectedAccountType(e.target.value)}
-                disabled={loading}
+                disabled={loading || !selectedPeriod}
                 className={styles.filterSelect}
               >
                 <option value="all">Semua Tipe</option>
@@ -368,20 +337,22 @@ const BudgetRealizationPage: React.FC = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Cari nama budget group..."
-                disabled={loading}
+                disabled={loading || !selectedPeriod}
                 className={styles.filterInput}
               />
             </div>
           </div>
 
-          <div className={styles.filterInfo}>
-            Menampilkan <strong>{filteredGroupedData.length}</strong> dari {groupedData.length} budget group
-          </div>
+          {hasSelectedPeriod && (
+            <div className={styles.filterInfo}>
+              Menampilkan <strong>{filteredGroupedData.length}</strong> dari {groupedData.length} budget group
+            </div>
+          )}
         </div>
       )}
 
-      {/* Summary Cards */}
-      {activeEntity && summary && (
+      {/* Summary Cards - ONLY show if period is selected */}
+      {activeEntity && summary && selectedPeriod && (
         <div className={styles.summaryCards}>
           <div className={`${styles.summaryCard} ${styles.blue}`}>
             <div className={styles.summaryCardLabel}>Total Budget</div>
@@ -430,17 +401,21 @@ const BudgetRealizationPage: React.FC = () => {
         </div>
       )}
 
-      {/* Grouped Data Table */}
-      {activeEntity && (
+      {/* Grouped Data Table - ONLY show if period is selected */}
+      {activeEntity && selectedPeriod && (
         <div className={styles.dataTableContainer}>
           {loading && groupedData.length === 0 ? (
             <div className={styles.loadingState}>⏳ Memuat data...</div>
+          ) : !hasSelectedPeriod ? (
+            <div className={styles.emptyState}>
+              📅 Pilih periode untuk melihat laporan Budget vs Realisasi
+            </div>
           ) : filteredGroupedData.length === 0 ? (
             <div className={styles.emptyState}>
               {searchQuery ? (
                 <>🔍 Tidak ada data yang cocok dengan pencarian "<strong>{searchQuery}</strong>"</>
               ) : (
-                <>📋 Belum ada data realisasi. Pastikan sudah ada budget dan akun accurate tersedia.</>
+                <>📋 Belum ada data realisasi untuk periode ini. Pastikan sudah ada budget dan akun accurate tersedia.</>
               )}
             </div>
           ) : (
@@ -526,6 +501,19 @@ const BudgetRealizationPage: React.FC = () => {
               </table>
             </div>
           )}
+        </div>
+      )}
+
+      {/* No Period Selected Message */}
+      {activeEntity && !selectedPeriod && (
+        <div className={styles.dataTableContainer}>
+          <div className={styles.emptyState}>
+            <div style={{ fontSize: '48px', marginBottom: '16px' }}>📅</div>
+            <h3>Pilih Periode Terlebih Dahulu</h3>
+            <p style={{ marginTop: '8px', color: '#6c757d' }}>
+              Silakan pilih periode di filter di atas untuk melihat laporan Budget vs Realisasi
+            </p>
+          </div>
         </div>
       )}
 

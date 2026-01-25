@@ -25,6 +25,13 @@ export const calculateTotalAllocated = (items: { allocated_amount: number }[]): 
 };
 
 /**
+ * Calculate total realisasi from budget items
+ */
+export const calculateTotalRealisasi = (items: { realisasi_snapshot?: number }[]): number => {
+  return items.reduce((sum, item) => sum + (item.realisasi_snapshot || 0), 0);
+};
+
+/**
  * Table header style - reusable for all budget tables
  */
 export const tableHeaderStyle: React.CSSProperties = {

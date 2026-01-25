@@ -1,4 +1,5 @@
 // accurate.ts - Complete with parent-child and edit/delete functions
+// FIXED: Added realisasi_snapshot support and fixed getBudgetRealizationsLive logic
 
 import {
   saveTokens,
@@ -394,7 +395,8 @@ export interface BudgetItem {
   account_code: string;
   account_name: string;
   account_type?: string;
-  allocated_amount: number;
+  allocated_amount: number; // Budget (manual input)
+  realisasi_snapshot?: number; // Realisasi (snapshot of COA balance when created)
   description?: string;
   created_at?: string;
   updated_at?: string;
@@ -403,6 +405,7 @@ export interface BudgetItem {
 export interface BudgetWithItems extends Budget {
   items: BudgetItem[];
   total_allocated: number;
+  total_realisasi?: number; // NEW: Total realisasi from snapshots
   remaining_budget: number;
   status: 'OVER_BUDGET' | 'FULLY_ALLOCATED' | 'UNDER_BUDGET';
 }
@@ -422,7 +425,8 @@ export interface CreateBudgetItemData {
   account_code: string;
   account_name: string;
   account_type?: string;
-  allocated_amount: number;
+  allocated_amount: number; // Budget (manual input)
+  realisasi_snapshot?: number; // Realisasi (snapshot from COA)
   description?: string;
 }
 
@@ -494,6 +498,7 @@ export async function getBudgetById(budgetId: string): Promise<{ data: BudgetWit
 
     // Calculate totals
     const total_allocated = items?.reduce((sum, item) => sum + (item.allocated_amount || 0), 0) || 0;
+    const total_realisasi = items?.reduce((sum, item) => sum + (item.realisasi_snapshot || 0), 0) || 0;
     const remaining_budget = budget.total_budget - total_allocated;
     
     let status: 'OVER_BUDGET' | 'FULLY_ALLOCATED' | 'UNDER_BUDGET';
@@ -509,6 +514,7 @@ export async function getBudgetById(budgetId: string): Promise<{ data: BudgetWit
       ...budget,
       items: items || [],
       total_allocated,
+      total_realisasi,
       remaining_budget,
       status,
     };
@@ -634,7 +640,10 @@ export async function addBudgetItem(itemData: CreateBudgetItemData) {
 
     const { data, error } = await supabase
       .from('budget_items')
-      .insert(itemData)
+      .insert({
+        ...itemData,
+        realisasi_snapshot: itemData.realisasi_snapshot || 0,
+      })
       .select()
       .single();
 
@@ -844,6 +853,7 @@ export async function getBudgetRealizationsLive(
         account_name,
         account_type,
         allocated_amount,
+        realisasi_snapshot,
         budgets!inner(
           id,
           name,
@@ -879,10 +889,10 @@ export async function getBudgetRealizationsLive(
     if (error) throw error;
 
     // Transform data to BudgetRealization format
-    // IMPORTANT FIX: allocated_amount contains realisasi, balance contains budget
+    // FIXED: allocated_amount = budget, realisasi_snapshot = realisasi
     const realizations: BudgetRealization[] = (data || []).map((item: any) => {
-      const budgetAllocated = item.accurate_accounts?.balance || 0;  // Budget from COA balance
-      const realisasi = item.allocated_amount || 0;  // Actual realisasi from budget_items
+      const budgetAllocated = item.allocated_amount || 0;  // Budget (manual input)
+      const realisasi = item.realisasi_snapshot || 0;  // Realisasi (snapshot from COA)
       const variance = budgetAllocated - realisasi;
       const variancePercentage = budgetAllocated > 0 ? (variance / budgetAllocated) * 100 : 0;
       const status = realisasi <= budgetAllocated ? 'ON_TRACK' : 'OVER_BUDGET';

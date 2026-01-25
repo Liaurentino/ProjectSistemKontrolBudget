@@ -14,6 +14,7 @@ import {
   getAdaptiveFontSize,
   formatCurrency,
   calculateTotalAllocated,
+  calculateTotalRealisasi,
 } from '../../services/budgetHelpers';
 import styles from './BudgetForm.module.css';
 
@@ -45,7 +46,8 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
 
   // New item state
   const [selectedAccountId, setSelectedAccountId] = useState('');
-  const [itemAmount, setItemAmount] = useState<number | ''>('');
+  const [itemAmount, setItemAmount] = useState<number | ''>(''); // Budget (manual input)
+  const [realisasiSnapshot, setRealisasiSnapshot] = useState<number>(0); // Realisasi (auto-fill from COA)
   const [itemDescription, setItemDescription] = useState('');
   const [showAddItem, setShowAddItem] = useState(false);
 
@@ -81,11 +83,12 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
 
   const totalAllocated = calculateTotalAllocated(budgetItems);
   const totalBudget = totalAllocated;
+  const totalRealisasi = calculateTotalRealisasi(budgetItems);
 
   useEffect(() => {
     const newWarnings: string[] = [];
     if (typeof itemAmount === 'number' && itemAmount > 0 && itemAmount % 1000 !== 0) {
-      newWarnings.push('Jumlah alokasi: Disarankan gunakan angka bulat ribuan (kelipatan 1.000)');
+      newWarnings.push('Jumlah budget: Disarankan gunakan angka bulat ribuan (kelipatan 1.000)');
     }
     setWarnings(newWarnings);
   }, [itemAmount]);
@@ -93,12 +96,14 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
   const handleAccountSelect = (accountId: string) => {
     setSelectedAccountId(accountId);
     if (!accountId) {
-      setItemAmount('');
+      setItemAmount(''); // Budget kosong (user input manual)
+      setRealisasiSnapshot(0); // Reset realisasi
       return;
     }
     const account = availableAccounts.find(a => a.id === accountId);
     if (account) {
-      setItemAmount(account.balance || 0);
+      setItemAmount(''); // Budget kosong (user input manual dari 0)
+      setRealisasiSnapshot(account.balance || 0); // Realisasi = snapshot dari COA balance
     }
   };
 
@@ -151,6 +156,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
             account_name: item.account_name,
             account_type: item.account_type,
             allocated_amount: item.allocated_amount,
+            realisasi_snapshot: item.realisasi_snapshot || 0, // Include realisasi snapshot
             description: item.description,
           });
         }
@@ -202,13 +208,15 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
       account_code: selectedAccount.account_code,
       account_name: selectedAccount.account_name,
       account_type: selectedAccount.account_type,
-      allocated_amount: Number(itemAmount),
+      allocated_amount: Number(itemAmount), // Budget (manual input)
+      realisasi_snapshot: realisasiSnapshot, // Realisasi (snapshot from COA)
       description: itemDescription.trim(),
     };
 
     setBudgetItems([...budgetItems, newItem]);
     setSelectedAccountId('');
     setItemAmount('');
+    setRealisasiSnapshot(0);
     setItemDescription('');
     setAccountFilter('');
     setShowAddItem(false);
@@ -237,7 +245,8 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
         account_code: selectedAccount.account_code,
         account_name: selectedAccount.account_name,
         account_type: selectedAccount.account_type,
-        allocated_amount: Number(itemAmount),
+        allocated_amount: Number(itemAmount), // Budget (manual input)
+        realisasi_snapshot: realisasiSnapshot, // Realisasi (snapshot from COA)
         description: itemDescription.trim(),
       });
 
@@ -246,6 +255,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
       setBudgetItems([...budgetItems, data!]);
       setSelectedAccountId('');
       setItemAmount('');
+      setRealisasiSnapshot(0);
       setItemDescription('');
       setAccountFilter('');
       setShowAddItem(false);
@@ -375,6 +385,14 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
               >
                 Rp {formatCurrency(totalBudget)}
               </div>
+              
+              {totalRealisasi > 0 && (
+                <div className={styles.totalHint} style={{ marginTop: '8px' }}>
+                  <span>📊</span>
+                  <span>Total Realisasi: Rp {formatCurrency(totalRealisasi)}</span>
+                </div>
+              )}
+              
               <div className={styles.totalHint}>
                 <span>💡</span>
                 <span>Dihitung otomatis dari {budgetItems.length} akun yang dialokasikan</span>
@@ -456,7 +474,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
                           </div>
                           <div style={{ textAlign: 'right', marginLeft: '16px', flexShrink: 0 }}>
                             <div className={styles.balanceValue}>Rp {formatCurrency(acc.balance || 0)}</div>
-                            <div className={styles.balanceLabel}>Balance</div>
+                            <div className={styles.balanceLabel}>Balance (Realisasi)</div>
                           </div>
                         </div>
                         {selectedAccountId === acc.id && (
@@ -470,10 +488,29 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
 
               {selectedAccountId && (
                 <>
+                  {/* NEW: Show realisasi snapshot */}
+                  <div style={{ 
+                    padding: '12px', 
+                    backgroundColor: '#f0f9ff', 
+                    borderRadius: '8px',
+                    border: '1px solid #bae6fd',
+                    marginBottom: '16px'
+                  }}>
+                    <div style={{ fontSize: '14px', color: '#0369a1', marginBottom: '4px' }}>
+                      📊 Realisasi (Balance COA saat ini):
+                    </div>
+                    <div style={{ fontSize: '18px', fontWeight: '600', color: '#0c4a6e' }}>
+                      Rp {formatCurrency(realisasiSnapshot)}
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#075985', marginTop: '4px' }}>
+                      Nilai ini akan tersimpan sebagai snapshot dan tidak akan berubah
+                    </div>
+                  </div>
+
                   <div className={styles.amountGrid}>
                     <div>
                       <label className={styles.label}>
-                        Jumlah (IDR) <span className={styles.required}>*</span>
+                        Budget (Target) <span className={styles.required}>*</span>
                       </label>
                       <input
                         type="number"
@@ -494,11 +531,11 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
                         max={999_999_999_999_999}
                         step={1}
                         disabled={loading}
-                        placeholder="Masukkan nominal (max 15 digit)"
+                        placeholder="Masukkan nominal budget (max 15 digit)"
                         className={styles.input}
                       />
                       <div className={styles.charCount}>
-                        Auto-fill dari balance • Max 15 digit
+                        Input manual • Max 15 digit
                       </div>
                     </div>
 
@@ -542,7 +579,8 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
                     <th className={styles.tableHeaderCell}>Kode Akun</th>
                     <th className={styles.tableHeaderCell}>Nama Akun</th>
                     <th className={styles.tableHeaderCell}>Tipe</th>
-                    <th className={styles.tableHeaderCell}>Alokasi</th>
+                    <th className={styles.tableHeaderCell}>Budget</th>
+                    <th className={styles.tableHeaderCell}>Realisasi</th>
                     <th className={styles.tableHeaderCell}>Catatan</th>
                     <th className={`${styles.tableHeaderCell} ${styles.tableCellCenter}`}>Aksi</th>
                   </tr>
@@ -559,7 +597,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
                             whiteSpace: 'nowrap',
-                            maxWidth: '300px',
+                            maxWidth: '250px',
                           }}
                         >
                           {item.account_name}
@@ -578,12 +616,22 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
                         </strong>
                       </td>
                       <td className={styles.tableCell}>
+                        <span
+                          style={{
+                            fontSize: `${getAdaptiveFontSize(item.realisasi_snapshot || 0)}px`,
+                            color: '#0369a1',
+                          }}
+                        >
+                          Rp {formatCurrency(item.realisasi_snapshot || 0)}
+                        </span>
+                      </td>
+                      <td className={styles.tableCell}>
                         <div
                           style={{
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
                             whiteSpace: 'nowrap',
-                            maxWidth: '200px',
+                            maxWidth: '150px',
                           }}
                         >
                           {item.description || '-'}
