@@ -313,3 +313,30 @@
     opacity: 1;
   }
 }
+
+/* Forgot Password */
+.forgotPasswordWrapper {
+  margin-bottom: 1.5rem;
+  text-align: right;
+}
+
+.forgotPasswordButton {
+  background: transparent;
+  border: none;
+  color: #3b82f6;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0.25rem 0;
+  transition: all 0.2s;
+}
+
+.forgotPasswordButton:hover {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+.forgotPasswordButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
