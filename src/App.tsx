@@ -9,6 +9,8 @@ import CoaPage from "./pages/COA/CoaPage";
 import PublicProfilesPage from "./pages/PublicUsers/PublicUsersPage";
 import { useAuth } from "./contexts/AuthContext";
 import AuthPage from "./pages/Auth/AuthPage";
+import ResetPasswordPage from "./pages/Auth/ResetPasswordPage";
+
 
 export default function App() {
   const { user, loading, signOut } = useAuth();
@@ -176,6 +178,7 @@ export default function App() {
               path="/community"
               element={user ? <PublicProfilesPage /> : <Navigate to="/login" />}
             />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
 
             <Route path="/" element={<Navigate to="/dashboard" />} />
             <Route path="*" element={<Navigate to="/dashboard" />} />

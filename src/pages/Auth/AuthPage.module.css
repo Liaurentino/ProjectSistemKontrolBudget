@@ -288,3 +288,28 @@
     font-size: 13px;
   }
 }
+
+.successState {
+  text-align: center;
+  padding: 3rem 1rem;
+}
+
+.successIcon {
+  color: #10b981;
+  margin: 0 auto 1.5rem;
+}
+
+.successIcon {
+  animation: scaleIn 0.3s ease-out;
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
