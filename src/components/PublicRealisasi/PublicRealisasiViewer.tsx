@@ -4,7 +4,6 @@ import {
   type BudgetRealization,
   type BudgetRealizationSummary,
 } from '../../lib/accurate';
-import { ExportFile } from '../Export&Import/ExportFile';
 import styles from './PublicRealisasiViewer.module.css';
 
 interface GroupedBudgetRealization {
@@ -169,11 +168,11 @@ export const PublicRealisasiViewer: React.FC<Props> = ({
           {loading && <div className={styles.loading}>⏳ Memuat data...</div>}
           {error && <div className={styles.error}>{error}</div>}
 
-          {/* Summary Cards */}
+          {/* Summary Cards - SAMA SEPERTI BudgetRealisasiPage */}
           {summary && (
             <div className={styles.summaryCards}>
               <div className={`${styles.summaryCard} ${styles.blue}`}>
-                <div className={styles.summaryCardLabel}>TOTAL BUDGET</div>
+                <div className={styles.summaryCardLabel}>Total Budget</div>
                 <div
                   className={styles.summaryCardValue}
                   style={{ fontSize: `${getAdaptiveFontSize(summary.total_budget)}px` }}
@@ -183,7 +182,7 @@ export const PublicRealisasiViewer: React.FC<Props> = ({
               </div>
 
               <div className={`${styles.summaryCard} ${styles.green}`}>
-                <div className={styles.summaryCardLabel}>TOTAL REALISASI</div>
+                <div className={styles.summaryCardLabel}>Total Realisasi</div>
                 <div
                   className={styles.summaryCardValue}
                   style={{ fontSize: `${getAdaptiveFontSize(summary.total_realisasi)}px` }}
@@ -197,7 +196,7 @@ export const PublicRealisasiViewer: React.FC<Props> = ({
                   summary.overall_status === 'OVER_BUDGET' ? styles.red : styles.cyan
                 }`}
               >
-                <div className={styles.summaryCardLabel}>VARIANCE</div>
+                <div className={styles.summaryCardLabel}>Variance</div>
                 <div
                   className={styles.summaryCardValue}
                   style={{
@@ -206,11 +205,26 @@ export const PublicRealisasiViewer: React.FC<Props> = ({
                 >
                   Rp{formatCurrency(Math.abs(summary.total_variance))}
                 </div>
+                <div className={styles.summaryCardNote}>
+                  {summary.overall_status === 'OVER_BUDGET' ? 'Over Budget' : 'Under Budget'}
+                </div>
+              </div>
+
+              <div
+                className={`${styles.summaryCard} ${
+                  summary.overall_status === 'OVER_BUDGET' ? styles.red : styles.green
+                }`}
+              >
+                <div className={styles.summaryCardLabel}>Variance %</div>
+                <div className={styles.summaryCardValue} style={{ fontSize: '24px' }}>
+                  {Math.abs(summary.variance_percentage).toFixed(2)}%
+                </div>
+                <div className={styles.summaryCardNote}>Sisa Budget</div>
               </div>
             </div>
           )}
 
-          {/* Grouped Data Table */}
+          {/* Grouped Data Table - SAMA SEPERTI BudgetRealisasiPage */}
           {!loading && groupedData.length > 0 && (
             <div className={styles.tableWrapper}>
               <table className={styles.dataTable}>
@@ -221,6 +235,7 @@ export const PublicRealisasiViewer: React.FC<Props> = ({
                     <th>Total Budget</th>
                     <th>Total Realisasi</th>
                     <th>Variance</th>
+                    <th>Variance %</th>
                     <th className={styles.center}>Status</th>
                     <th className={styles.center}>Aksi</th>
                   </tr>
@@ -236,20 +251,42 @@ export const PublicRealisasiViewer: React.FC<Props> = ({
                         <div className={styles.budgetGroupMeta}>{group.accounts.length} akun</div>
                       </td>
                       <td>
-                        <strong>Rp{formatCurrency(group.total_budget)}</strong>
+                        <strong
+                          style={{
+                            fontSize: `${getAdaptiveFontSize(group.total_budget)}px`,
+                          }}
+                        >
+                          Rp{formatCurrency(group.total_budget)}
+                        </strong>
                       </td>
                       <td>
-                        <strong style={{ color: '#28a745' }}>
+                        <strong
+                          style={{
+                            fontSize: `${getAdaptiveFontSize(group.total_realisasi)}px`,
+                            color: '#28a745',
+                          }}
+                        >
                           Rp{formatCurrency(group.total_realisasi)}
                         </strong>
                       </td>
                       <td>
                         <strong
                           style={{
+                            fontSize: `${getAdaptiveFontSize(Math.abs(group.total_variance))}px`,
                             color: group.total_variance >= 0 ? '#28a745' : '#dc3545',
                           }}
                         >
                           Rp{formatCurrency(Math.abs(group.total_variance))}
+                        </strong>
+                      </td>
+                      <td>
+                        <strong
+                          style={{
+                            fontSize: '14px',
+                            color: group.total_variance >= 0 ? '#28a745' : '#dc3545',
+                          }}
+                        >
+                          {Math.abs(group.variance_percentage).toFixed(2)}%
                         </strong>
                       </td>
                       <td className={styles.center}>
@@ -281,147 +318,160 @@ export const PublicRealisasiViewer: React.FC<Props> = ({
           )}
         </div>
 
-     {/* Detail Modal */}
-{showDetailModal && selectedGroup && (
-  <div className={styles.detailModalOverlay} onClick={handleCloseDetail}>
-    <div className={styles.detailModalContainer} onClick={(e) => e.stopPropagation()}>
-      {/* Header */}
-      <div className={styles.detailCardHeader}>
-        <div>
-          <h3 className={styles.detailCardTitle}>
-            Detail Akun - {selectedGroup.budget_group_name}
-          </h3>
-          <p className={styles.detailCardSubtitle}>
-            Periode: {selectedGroup.period} • {selectedGroup.accounts.length} akun
-          </p>
-        </div>
-        <button onClick={handleCloseDetail} className={styles.detailCloseBtn}>
-          ✕
-        </button>
-      </div>
+        {/* Detail Modal - SAMA SEPERTI BudgetRealisasiPage */}
+        {showDetailModal && selectedGroup && (
+          <div className={styles.detailModalOverlay} onClick={handleCloseDetail}>
+            <div className={styles.detailModalContainer} onClick={(e) => e.stopPropagation()}>
+              <div className={styles.detailModalHeader}>
+                <div className={styles.detailModalHeaderContent}>
+                  <h3>Detail Akun - {selectedGroup.budget_group_name}</h3>
+                  <p>
+                    Periode: {selectedGroup.period} • {selectedGroup.accounts.length} akun
+                  </p>
+                </div>
 
-      {/* Body */}
-      <div className={styles.detailModalContent}>
-        {/* Summary Section */}
-        <div className={styles.detailSummarySection}>
-          <div className={styles.detailSummaryRow}>
-            <div className={styles.detailSummaryItem}>
-              <span className={styles.detailSummaryLabel}>TOTAL BUDGET</span>
-              <span className={styles.detailSummaryValue} style={{ color: '#0066cc' }}>
-                Rp{formatCurrency(selectedGroup.total_budget)}
-              </span>
-            </div>
-            <div className={styles.detailSummaryItem}>
-              <span className={styles.detailSummaryLabel}>TOTAL REALISASI</span>
-              <span className={styles.detailSummaryValue} style={{ color: '#28a745' }}>
-                Rp{formatCurrency(selectedGroup.total_realisasi)}
-              </span>
+                <button onClick={handleCloseDetail} className={styles.detailModalCloseButton}>
+                  ✕
+                </button>
+              </div>
+
+              <div className={styles.detailModalBody}>
+                {/* Summary Cards di Detail Modal */}
+                <div className={styles.detailModalSummaryCards}>
+                  <div className={`${styles.detailModalSummaryCard} ${styles.blue}`}>
+                    <div className={styles.detailModalSummaryCardLabel}>TOTAL BUDGET</div>
+                    <div className={styles.detailModalSummaryCardValue}>
+                      Rp{formatCurrency(selectedGroup.total_budget)}
+                    </div>
+                  </div>
+                  <div className={`${styles.detailModalSummaryCard} ${styles.green}`}>
+                    <div className={styles.detailModalSummaryCardLabel}>TOTAL REALISASI</div>
+                    <div className={styles.detailModalSummaryCardValue}>
+                      Rp{formatCurrency(selectedGroup.total_realisasi)}
+                    </div>
+                  </div>
+                  <div
+                    className={`${styles.detailModalSummaryCard} ${
+                      selectedGroup.status === 'OVER_BUDGET' ? styles.red : styles.cyan
+                    }`}
+                  >
+                    <div className={styles.detailModalSummaryCardLabel}>VARIANCE</div>
+                    <div className={styles.detailModalSummaryCardValue}>
+                      Rp{formatCurrency(Math.abs(selectedGroup.total_variance))}
+                    </div>
+                  </div>
+                  <div
+                    className={`${styles.detailModalSummaryCard} ${
+                      selectedGroup.status === 'OVER_BUDGET' ? styles.red : styles.green
+                    }`}
+                  >
+                    <div className={styles.detailModalSummaryCardLabel}>VARIANCE %</div>
+                    <div className={styles.detailModalSummaryCardValue}>
+                      {Math.abs(selectedGroup.variance_percentage).toFixed(2)}%
+                    </div>
+                    <div className={styles.detailModalSummaryCardNote}>
+                      {selectedGroup.status === 'OVER_BUDGET' ? 'Over Budget' : 'Sisa Budget'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Table */}
+                <div className={styles.detailModalTableWrapper}>
+                  <table className={styles.detailModalTable}>
+                    <thead>
+                      <tr>
+                        <th>Kode Akun</th>
+                        <th>Nama Akun</th>
+                        <th>Tipe</th>
+                        <th>Budget</th>
+                        <th>Realisasi</th>
+                        <th>Variance</th>
+                        <th>Variance %</th>
+                        <th className={styles.center}>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedGroup.accounts.map((account) => (
+                        <tr key={account.id}>
+                          <td>
+                            <code className={styles.detailAccountCode}>{account.account_code}</code>
+                          </td>
+                          <td>
+                            <div className={styles.detailAccountName}>{account.account_name}</div>
+                          </td>
+                          <td>
+                            <span className={styles.detailAccountTypeBadge}>
+                              {account.account_type || '-'}
+                            </span>
+                          </td>
+                          <td>
+                            <strong
+                              style={{
+                                fontSize: `${getAdaptiveFontSize(account.budget_allocated)}px`,
+                              }}
+                            >
+                              Rp{formatCurrency(account.budget_allocated)}
+                            </strong>
+                          </td>
+                          <td>
+                            <strong
+                              style={{
+                                fontSize: `${getAdaptiveFontSize(account.realisasi)}px`,
+                                color: '#28a745',
+                              }}
+                            >
+                              Rp{formatCurrency(account.realisasi)}
+                            </strong>
+                          </td>
+                          <td>
+                            <strong
+                              style={{
+                                fontSize: `${getAdaptiveFontSize(Math.abs(account.variance))}px`,
+                                color: account.variance >= 0 ? '#28a745' : '#dc3545',
+                              }}
+                            >
+                              Rp{formatCurrency(Math.abs(account.variance))}
+                            </strong>
+                          </td>
+                          <td>
+                            <strong
+                              style={{
+                                fontSize: '14px',
+                                color: account.variance >= 0 ? '#28a745' : '#dc3545',
+                              }}
+                            >
+                              {Math.abs(account.variance_percentage).toFixed(2)}%
+                            </strong>
+                          </td>
+                          <td className={styles.center}>
+                            <span
+                              className={`${styles.detailStatusBadge} ${
+                                account.status === 'ON_TRACK'
+                                  ? styles.detailOnTrack
+                                  : styles.detailOverBudget
+                              }`}
+                            >
+                              {account.status === 'ON_TRACK' ? '✓ On Track' : '⚠ Over Budget'}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div className={styles.detailModalFooter}>
+                <button onClick={handleCloseDetail} className={styles.detailModalFooterButton}>
+                  Tutup
+                </button>
+              </div>
             </div>
           </div>
-
-          <div className={styles.detailSummaryRow}>
-            <div className={styles.detailSummaryItem}>
-              <span className={styles.detailSummaryLabel}>VARIANCE</span>
-              <span 
-                className={styles.detailSummaryValue}
-                style={{ color: selectedGroup.total_variance >= 0 ? '#28a745' : '#dc3545' }}
-              >
-                Rp{formatCurrency(Math.abs(selectedGroup.total_variance))}
-              </span>
-            </div>
-            <div className={styles.detailSummaryItem}>
-              <span className={styles.detailSummaryLabel}>VARIANCE %</span>
-              <span 
-                className={styles.detailSummaryValue}
-                style={{ color: selectedGroup.total_variance >= 0 ? '#28a745' : '#dc3545' }}
-              >
-                {Math.abs(selectedGroup.variance_percentage).toFixed(2)}%
-              </span>
-            </div>
-          </div>
-
-          <div className={styles.detailSummaryRow}>
-            <div className={styles.detailSummaryItem}>
-              <span className={styles.detailSummaryLabel}>
-                {selectedGroup.status === 'OVER_BUDGET' ? 'Over Budget' : 'On Track'}
-              </span>
-            </div>
-            <div className={styles.detailSummaryItem}>
-              <span className={styles.detailSummaryLabel}>{selectedGroup.accounts.length}</span>
-              <span className={styles.detailSummarySubtext}>Akun</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Title */}
-        <h4 className={styles.detailTableTitle}>
-          Rincian Per Akun ({selectedGroup.accounts.length})
-        </h4>
-
-        {/* Table */}
-        <div className={styles.detailTableContainer}>
-          <table className={styles.detailTable}>
-            <thead>
-              <tr>
-                <th>Kode Akun</th>
-                <th>Nama Akun</th>
-                <th>Tipe</th>
-                <th>Budget</th>
-                <th>Realisasi</th>
-                <th>Variance</th>
-                <th className={styles.detailTextCenter}>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {selectedGroup.accounts.map((account) => (
-                <tr key={account.id}>
-                  <td>{account.account_code}</td>
-                  <td>{account.account_name}</td>
-                  <td>
-                    <span className={styles.detailTypeBadge}>
-                      {account.account_type || '-'}
-                    </span>
-                  </td>
-                  <td style={{ color: '#0066cc' }}>
-                    Rp{formatCurrency(account.budget_allocated)}
-                  </td>
-                  <td style={{ color: '#28a745' }}>
-                    Rp{formatCurrency(account.realisasi)}
-                  </td>
-                  <td style={{ color: account.variance >= 0 ? '#28a745' : '#dc3545' }}>
-                    Rp{formatCurrency(Math.abs(account.variance))}
-                  </td>
-                  <td className={styles.detailTextCenter}>
-                    <span
-                      className={`${styles.detailStatusIcon} ${
-                        account.status === 'ON_TRACK'
-                          ? styles.detailStatusOnTrack
-                          : styles.detailStatusOver
-                      }`}
-                    >
-                      {account.status === 'ON_TRACK' ? '⚠' : '⚠'}
-                    </span>
-                    {account.status === 'ON_TRACK' ? ' Over Budget' : ' Over Budget'}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Footer */}
-      <div className={styles.detailModalFooter}>
-        <button onClick={handleCloseDetail} className={styles.detailCancelButton}>
-          Tutup
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+        )}
       </div>
     </div>
   );
 };
 
-export default PublicRealisasiViewer
+export default PublicRealisasiViewer;

@@ -672,3 +672,71 @@ export const updateEntityPrivacy = async (entityId: string, isPublic: boolean) =
     return { data: null, error };
   }
 };
+
+export const getAllPublicUsersExceptSelf = async () => {
+  try {
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    
+    if (!currentUser) {
+      return { data: null, error: 'User not authenticated' };
+    }
+
+    const { data, error } = await supabase
+      .from('public_entities')
+      .select('*')
+      .neq('user_id', currentUser.id) // Exclude current user
+      .order('user_email');
+
+    if (error) throw error;
+
+    // Group by user
+    const usersMap = new Map<string, any>();
+    
+    data?.forEach((entity: any) => {
+      if (!usersMap.has(entity.user_id)) {
+        usersMap.set(entity.user_id, {
+          user_id: entity.user_id,
+          user_email: entity.user_email,
+          user_name: entity.user_name || entity.user_email?.split('@')[0],
+          user_avatar: entity.user_avatar,
+          entities: [],
+        });
+      }
+      
+      usersMap.get(entity.user_id)!.entities.push({
+        id: entity.id,
+        entity_name: entity.entity_name,
+        is_connected: entity.is_connected,
+        created_at: entity.created_at,
+      });
+    });
+
+    const users = Array.from(usersMap.values());
+    
+    return { data: users, error: null };
+  } catch (err) {
+    const error = err instanceof Error ? err.message : 'Gagal memuat data users';
+    return { data: null, error };
+  }
+};
+
+/**
+ * Check if entity has realization data
+ */
+export const checkEntityHasRealization = async (entityId: string) => {
+  try {
+    // Check if there are any budget_items for this entity
+    const { data, error } = await supabase
+      .from('budget_items')
+      .select('id', { count: 'exact', head: true })
+      .eq('entity_id', entityId)
+      .limit(1);
+
+    if (error) throw error;
+
+    return { hasData: (data as any) !== null, error: null };
+  } catch (err) {
+    const error = err instanceof Error ? err.message : 'Gagal cek data';
+    return { hasData: false, error };
+  }
+};

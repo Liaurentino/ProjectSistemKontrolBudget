@@ -1,5 +1,6 @@
 /* PublicRealisasiViewer.module.css */
 
+/* Main Modal Overlay */
 .modalOverlay {
   position: fixed;
   top: 0;
@@ -98,7 +99,7 @@
   color: #6c757d;
 }
 
-/* Summary Cards */
+/* ===== SUMMARY CARDS - SAMA SEPERTI BudgetRealisasiPage ===== */
 .summaryCards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -110,23 +111,22 @@
   padding: 20px;
   color: white;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .summaryCard.blue {
-  background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+  background-color: #007bff;
 }
 
 .summaryCard.green {
-  background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
+  background-color: #28a745;
 }
 
 .summaryCard.red {
-  background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+  background-color: #dc3545;
 }
 
 .summaryCard.cyan {
-  background: linear-gradient(135deg, #00bcd4 0%, #0097a7 100%);
+  background-color: #17a2b8;
 }
 
 .summaryCardLabel {
@@ -135,15 +135,19 @@
   margin-bottom: 8px;
   text-transform: uppercase;
   opacity: 0.9;
-  letter-spacing: 0.5px;
 }
 
 .summaryCardValue {
   font-weight: 600;
-  line-height: 1.2;
 }
 
-/* Table */
+.summaryCardNote {
+  font-size: 11px;
+  margin-top: 4px;
+  opacity: 0.9;
+}
+
+/* ===== TABLE - SAMA SEPERTI BudgetRealisasiPage ===== */
 .tableWrapper {
   overflow-x: auto;
   border: 1px solid #dee2e6;
@@ -168,6 +172,7 @@
   letter-spacing: 0.5px;
   color: #495057;
   border-bottom: 2px solid #dee2e6;
+  border-right: 1px solid #dee2e6;
 }
 
 .dataTable thead th.center {
@@ -187,6 +192,7 @@
   padding: 14px 16px;
   font-size: 14px;
   color: #212529;
+  border-right: 1px solid #dee2e6;
 }
 
 .dataTable tbody td.center {
@@ -198,13 +204,11 @@
   background-color: #e7f3ff;
   border-radius: 4px;
   font-size: 13px;
-  font-weight: 500;
 }
 
 .budgetGroupName {
   font-weight: 600;
   color: #007bff;
-  font-size: 15px;
 }
 
 .budgetGroupMeta {
@@ -218,7 +222,6 @@
   border-radius: 12px;
   font-size: 12px;
   font-weight: 600;
-  display: inline-block;
 }
 
 .statusBadge.onTrack {
@@ -247,20 +250,19 @@
   background-color: #0056b3;
 }
 
-/* Detail Modal */
+/* ===== DETAIL MODAL - SAMA SEPERTI BudgetRealisasiPage ===== */
 .detailModalOverlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.6);
+  background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 2100;
   padding: 20px;
-  animation: fadeIn 0.2s ease-out;
 }
 
 .detailModalContainer {
@@ -268,208 +270,253 @@
   border-radius: 8px;
   max-width: 1200px;
   width: 100%;
-  max-height: 85vh;
+  max-height: 90vh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
-.detailCardHeader {
-  padding: 16px 24px;
+/* Detail Modal Header */
+.detailModalHeader {
+  padding: 20px 24px;
   border-bottom: 1px solid #dee2e6;
-  background-color: #fff;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.detailCardTitle {
+.detailModalHeaderContent h3 {
   margin: 0;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 600;
-  color: #212529;
 }
 
-.detailCardSubtitle {
+.detailModalHeaderContent p {
   margin: 4px 0 0;
   font-size: 14px;
   color: #6c757d;
 }
 
-.detailCloseBtn {
-  background: none;
-  border: none;
-  font-size: 24px;
+.detailModalCloseButton {
+  padding: 8px 12px;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
   cursor: pointer;
-  color: #6c757d;
-  padding: 4px;
-  line-height: 1;
-  transition: color 0.2s;
+  font-size: 18px;
+  font-weight: 600;
 }
 
-.detailCloseBtn:hover {
-  color: #212529;
+.detailModalCloseButton:hover {
+  background-color: #e9ecef;
 }
 
-.detailModalContent {
-  padding: 0;
+/* Detail Modal Body */
+.detailModalBody {
+  padding: 20px 24px;
   overflow-y: auto;
   flex: 1;
 }
 
-/* Summary Section - Text Layout */
-.detailSummarySection {
-  padding: 20px 24px;
-  background-color: #fff;
-  border-bottom: 1px solid #dee2e6;
+/* Detail Modal Summary Cards */
+.detailModalSummaryCards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
 }
 
-.detailSummaryRow {
-  display: flex;
-  gap: 40px;
-  margin-bottom: 12px;
+.detailModalSummaryCard {
+  padding: 16px;
+  color: white;
+  border-radius: 6px;
 }
 
-.detailSummaryRow:last-child {
-  margin-bottom: 0;
+.detailModalSummaryCard.blue {
+  background-color: #007bff;
 }
 
-.detailSummaryItem {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+.detailModalSummaryCard.green {
+  background-color: #28a745;
 }
 
-.detailSummaryLabel {
+.detailModalSummaryCard.red {
+  background-color: #dc3545;
+}
+
+.detailModalSummaryCard.cyan {
+  background-color: #17a2b8;
+}
+
+.detailModalSummaryCardLabel {
   font-size: 11px;
+  margin-bottom: 6px;
+  opacity: 0.9;
+}
+
+.detailModalSummaryCardValue {
+  font-size: 18px;
   font-weight: 600;
-  color: #212529;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
-.detailSummaryValue {
-  font-size: 16px;
-  font-weight: 600;
-  color: #212529;
+.detailModalSummaryCardNote {
+  font-size: 11px;
+  margin-top: 4px;
+  opacity: 0.9;
 }
 
-.detailSummarySubtext {
-  font-size: 12px;
-  color: #6c757d;
-  margin-top: 2px;
-}
-
-/* Table Title */
-.detailTableTitle {
-  margin: 0;
-  padding: 16px 24px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #212529;
-  background-color: #fff;
-}
-
-/* Table */
-.detailTableContainer {
+/* Detail Modal Table */
+.detailModalTableWrapper {
   overflow-x: auto;
-  padding: 0 24px 24px;
 }
 
-.detailTable {
+.detailModalTable {
   width: 100%;
   border-collapse: collapse;
 }
 
-.detailTable thead {
+.detailModalTable thead {
   background-color: #f8f9fa;
 }
 
-.detailTable th {
-  padding: 12px 16px;
+.detailModalTable thead th {
+  padding: 14px 16px;
   text-align: left;
   font-size: 13px;
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
   color: #495057;
-  border-bottom: 1px solid #dee2e6;
+  border-bottom: 2px solid #dee2e6;
+  border-right: 1px solid #dee2e6;
 }
 
-.detailTable td {
-  padding: 12px 16px;
-  text-align: left;
-  font-size: 14px;
-  color: #212529;
-  border-bottom: 1px solid #dee2e6;
-}
-
-.detailTable tbody tr:hover {
-  background-color: #f8f9fa;
-}
-
-.detailTextCenter {
+.detailModalTable thead th.center {
   text-align: center;
 }
 
-.detailTypeBadge {
+.detailModalTable tbody tr {
+  border-bottom: 1px solid #dee2e6;
+}
+
+.detailModalTable tbody td {
+  padding: 14px 16px;
+  font-size: 14px;
+  color: #212529;
+  border-right: 1px solid #dee2e6;
+}
+
+.detailModalTable tbody td.center {
+  text-align: center;
+}
+
+.detailAccountCode {
   padding: 4px 8px;
-  background-color: #e9ecef;
+  background-color: #e7f3ff;
   border-radius: 4px;
-  font-size: 12px;
-  color: #495057;
+  font-size: 13px;
   font-weight: 500;
 }
 
-.detailStatusIcon {
-  font-size: 14px;
+.detailAccountName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 250px;
 }
 
-.detailStatusOnTrack {
-  color: #28a745;
+.detailAccountTypeBadge {
+  padding: 4px 8px;
+  background-color: #f0f0f0;
+  border-radius: 4px;
+  font-size: 12px;
 }
 
-.detailStatusOver {
-  color: #dc3545;
+.detailStatusBadge {
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
 }
 
-/* Footer */
+.detailOnTrack {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.detailOverBudget {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+/* Detail Modal Footer */
 .detailModalFooter {
   padding: 16px 24px;
   border-top: 1px solid #dee2e6;
-  background-color: #fff;
   display: flex;
   justify-content: flex-end;
 }
 
-.detailCancelButton {
-  padding: 8px 20px;
+.detailModalFooterButton {
+  padding: 10px 24px;
   background-color: #6c757d;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
-  font-weight: 500;
-  transition: background-color 0.2s;
+  font-weight: 600;
 }
 
-.detailCancelButton:hover {
+.detailModalFooterButton:hover {
   background-color: #5a6268;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Scrollbar */
+.modalBody::-webkit-scrollbar,
+.detailModalBody::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modalBody::-webkit-scrollbar-track,
+.detailModalBody::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.modalBody::-webkit-scrollbar-thumb,
+.detailModalBody::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.modalBody::-webkit-scrollbar-thumb:hover,
+.detailModalBody::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
-  .detailSummaryRow {
-    flex-direction: column;
-    gap: 12px;
+  .summaryCards {
+    grid-template-columns: 1fr;
   }
 
-  .detailTable {
+  .detailModalSummaryCards {
+    grid-template-columns: 1fr;
+  }
+
+  .dataTable,
+  .detailModalTable {
     font-size: 13px;
-  }
-
-  .detailTable th,
-  .detailTable td {
-    padding: 10px 12px;
   }
 }

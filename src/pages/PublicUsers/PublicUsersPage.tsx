@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { getAllPublicUsers } from '../../lib/supabase';
+import { getAllPublicUsersExceptSelf } from '../../lib/supabase';
+import { getBudgetRealizationsLive } from '../../lib/accurate';
 import PublicRealisasiViewer from '../../components/PublicRealisasi/PublicRealisasiViewer';
 import styles from './PublicUsersPage.module.css';
 
@@ -13,6 +14,7 @@ interface PublicUser {
     entity_name: string;
     is_connected: boolean;
     created_at: string;
+    has_realization?: boolean;
   }>;
 }
 
@@ -23,7 +25,7 @@ export const PublicProfilesPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Expanded state - ubah dari hover jadi click
+  // Expanded state
   const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
 
   // Selected entity for realisasi viewer
@@ -41,17 +43,45 @@ export const PublicProfilesPage: React.FC = () => {
     setError(null);
 
     try {
-      const { data, error: err } = await getAllPublicUsers();
+      const { data, error: err } = await getAllPublicUsersExceptSelf();
 
       if (err) throw new Error(err);
 
-      // Filter users yang punya minimal 1 public entity
-      const usersWithPublicEntities = (data || []).filter(
+      // Check realization for each entity
+      const usersWithRealizationCheck = await Promise.all(
+        (data || []).map(async (user) => {
+          const entitiesWithCheck = await Promise.all(
+            user.entities.map(async (entity: any) => {
+              // Check if entity has realization data
+              const { data: realizationData } = await getBudgetRealizationsLive(entity.id);
+              const hasRealization = (realizationData?.length || 0) > 0;
+
+              return {
+                ...entity,
+                has_realization: hasRealization,
+              };
+            })
+          );
+
+          // Only include entities that are connected AND have realization data
+          const validEntities = entitiesWithCheck.filter(
+            (e) => e.is_connected && e.has_realization
+          );
+
+          return {
+            ...user,
+            entities: validEntities,
+          };
+        })
+      );
+
+      // Filter out users with no valid entities
+      const usersWithValidEntities = usersWithRealizationCheck.filter(
         (user) => user.entities.length > 0
       );
 
-      setUsers(usersWithPublicEntities);
-      setFilteredUsers(usersWithPublicEntities);
+      setUsers(usersWithValidEntities);
+      setFilteredUsers(usersWithValidEntities);
     } catch (err: any) {
       setError('Gagal memuat data users: ' + err.message);
     } finally {
@@ -76,7 +106,6 @@ export const PublicProfilesPage: React.FC = () => {
   }, [searchQuery, users]);
 
   const handleToggleEntities = (userId: string) => {
-    // Toggle: jika sudah expanded, tutup. Jika belum, buka.
     setExpandedUserId(expandedUserId === userId ? null : userId);
   };
 
@@ -109,6 +138,14 @@ export const PublicProfilesPage: React.FC = () => {
         </div>
       )}
 
+      {/* Info Box */}
+      <div className={styles.infoBox}>
+        <div className={styles.infoIcon}>ℹ️</div>
+        <div className={styles.infoContent}>
+          <strong>Informasi:</strong> Anda hanya dapat melihat data realisasi dari user lain yang sudah mempublikasikan entitas mereka dan memiliki data realisasi.
+        </div>
+      </div>
+
       {/* Search */}
       <div className={styles.searchSection}>
         <input
@@ -135,7 +172,7 @@ export const PublicProfilesPage: React.FC = () => {
                 <strong>{searchQuery}</strong>"
               </>
             ) : (
-              <>📋 Belum ada user yang mempublikasikan entitasnya</>
+              <>📋 Belum ada user lain yang mempublikasikan entitas dengan data realisasi</>
             )}
           </div>
         ) : (
@@ -211,13 +248,19 @@ export const PublicProfilesPage: React.FC = () => {
                                         : styles.disconnected
                                     }`}
                                   >
-                                    {entity.is_connected ? '✓ Terhubung' : '✗ Tidak Terhubung'}
+                                    {entity.is_connected ? '✓ Terhubung ke Accurate' : '✗ Belum Terhubung ke Accurate'}
                                   </span>
                                 </div>
 
                                 <div className={styles.entityMeta}>
-                                  Dibuat:{' '}
-                                  {new Date(entity.created_at).toLocaleDateString('id-ID')}
+                                  <div>📅 Dibuat: {new Date(entity.created_at).toLocaleDateString('id-ID')}</div>
+                                  <div className={styles.entityStatus}>
+                                    {entity.has_realization && (
+                                      <span className={styles.hasDataBadge}>
+                                        ✓ Memiliki Data Realisasi
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
 
                                 <button
@@ -225,11 +268,8 @@ export const PublicProfilesPage: React.FC = () => {
                                     handleViewRealisasi(entity.id, entity.entity_name)
                                   }
                                   className={styles.viewRealisasiButton}
-                                  disabled={!entity.is_connected}
                                 >
-                                  {entity.is_connected
-                                    ? '📊 Lihat Realisasi'
-                                    : '🔒 Tidak Tersedia'}
+                                  📊 Lihat Realisasi
                                 </button>
                               </div>
                             ))}

@@ -113,6 +113,7 @@
   border: 1px solid #bee5eb;
   border-radius: 6px;
   margin-bottom: 24px;
+  margin-top: 24px;
 }
 
 .summaryContent {
@@ -332,6 +333,7 @@
   border-radius: 6px;
   color: #6c757d;
   font-size: 14px;
+  margin-bottom: 24px;  
 }
 
 .tableWrapper {

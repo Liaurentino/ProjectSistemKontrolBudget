@@ -358,56 +358,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
             </div>
           </div>
 
-          {/* Deskripsi */}
-          <div className={styles.fullWidth}>
-            <label className={styles.label}>Deskripsi</label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={3}
-              maxLength={500}
-              disabled={loading}
-              placeholder="Deskripsi budget (opsional)..."
-              className={styles.textarea}
-            />
-            <div className={styles.charCount}>{description.length}/500 karakter</div>
-          </div>
-        </div>
-
-        {/* Budget Summary */}
-        <div className={styles.summaryBox}>
-          <div className={styles.summaryContent}>
-            <div>
-              <div className={styles.totalLabel}>Total Budget</div>
-              <div
-                className={styles.totalAmount}
-                style={{ fontSize: `${getAdaptiveFontSize(totalBudget)}px` }}
-              >
-                Rp {formatCurrency(totalBudget)}
-              </div>
-              
-              {totalRealisasi > 0 && (
-                <div className={styles.totalHint} style={{ marginTop: '8px' }}>
-                  <span>📊</span>
-                  <span>Total Realisasi: Rp {formatCurrency(totalRealisasi)}</span>
-                </div>
-              )}
-              
-              <div className={styles.totalHint}>
-                <span>💡</span>
-                <span>Dihitung otomatis dari {budgetItems.length} akun yang dialokasikan</span>
-              </div>
-            </div>
-
-            {budgetItems.length > 0 && (
-              <div className={styles.accountCountBadge}>
-                <div className={styles.accountCountNumber}>{budgetItems.length}</div>
-                <div className={styles.accountCountLabel}>Akun</div>
-              </div>
-            )}
-          </div>
-        </div>
-
+    
         {/* Section: Alokasi Budget */}
         <div>
           <div className={styles.allocationHeader}>
@@ -653,6 +604,56 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
               </table>
             </div>
           )}
+        </div>
+
+        {/* Budget Summary */}
+        <div className={styles.summaryBox}>
+          <div className={styles.summaryContent}>
+            <div>
+              <div className={styles.totalLabel}>Total Budget</div>
+              <div
+                className={styles.totalAmount}
+                style={{ fontSize: `${getAdaptiveFontSize(totalBudget)}px` }}
+              >
+                Rp {formatCurrency(totalBudget)}
+              </div>
+              
+              {totalRealisasi > 0 && (
+                <div className={styles.totalHint} style={{ marginTop: '8px' }}>
+                  <span>📊</span>
+                  <span>Total Realisasi: Rp {formatCurrency(totalRealisasi)}</span>
+                </div>
+              )}
+              
+              <div className={styles.totalHint}>
+                <span>💡</span>
+                <span>Dihitung otomatis dari {budgetItems.length} akun yang dialokasikan</span>
+              </div>
+            </div>
+
+            {budgetItems.length > 0 && (
+              <div className={styles.accountCountBadge}>
+                <div className={styles.accountCountNumber}>{budgetItems.length}</div>
+                <div className={styles.accountCountLabel}>Akun</div>
+              </div>
+            )}
+          </div>
+        </div>
+
+         {/* Deskripsi */}
+        <div className={styles.fullWidth}>
+            <label className={styles.label}>Deskripsi</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+              maxLength={500}
+              disabled={loading}
+              placeholder="Deskripsi budget (opsional)..."
+              className={styles.textarea}
+            />
+            <div className={styles.charCount}>{description.length}/500 karakter</div>
+          </div>
         </div>
 
         {/* Action Buttons */}

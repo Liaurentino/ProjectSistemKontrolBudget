@@ -1,8 +1,10 @@
 /* ===== PAGE CONTAINER ===== */
 .pageContainer {
   padding: 24px;
+  width: 900px;
   max-width: 1400px;
   margin: 0 auto;
+  
 }
 
 /* ===== HEADER SECTION ===== */
@@ -106,7 +108,7 @@
 
 .filterGrid {
   display: grid;
-  grid-template-columns: 150px 250px 150px 200px 200px;
+  grid-template-columns: 150px 1fr;
   gap: 16px;
   align-items: end;
   margin-bottom: 12px;
@@ -129,7 +131,7 @@
 }
 
 .searchColumn {
-  grid-column: span 4;
+  /* Not needed anymore but keep for compatibility */
 }
 
 .filterInfo {
@@ -169,6 +171,11 @@
   background-color: #f8f9fa;
   border-bottom: 1px solid #dee2e6;
   cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.budgetHeader:hover {
+  background-color: #e9ecef;
 }
 
 .budgetHeaderContent {
@@ -178,17 +185,12 @@
   gap: 24px;
 }
 
-/* Budget Info */
-.budgetInfo {
-  flex: 1;
-  min-width: 0;
-}
-
+/* Budget Title Row */
 .budgetTitleRow {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 6px;
+  flex: 1;
 }
 
 .budgetTitle {
@@ -208,34 +210,6 @@
   white-space: nowrap;
 }
 
-.budgetDescription {
-  font-size: 13px;
-  color: #6c757d;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* Budget Total */
-.budgetTotal {
-  width: 180px;
-  text-align: right;
-  flex-shrink: 0;
-}
-
-.budgetTotalLabel {
-  font-size: 11px;
-  color: #6c757d;
-  margin-bottom: 2px;
-  text-transform: uppercase;
-  font-weight: 600;
-}
-
-.budgetTotalValue {
-  font-weight: 600;
-  color: #212529;
-}
-
 /* Expand Button */
 .expandButton {
   width: 40px;
@@ -253,6 +227,10 @@
   justify-content: center;
 }
 
+.expandButton:hover {
+  background-color: #dee2e6;
+}
+
 .expandButton.expanded {
   transform: rotate(180deg);
 }
@@ -260,115 +238,6 @@
 /* ===== BUDGET DETAILS (EXPANDED) ===== */
 .budgetDetails {
   padding: 20px 24px;
-}
-
-/* Summary Box */
-.summaryBox {
-  padding: 16px;
-  border-radius: 6px;
-  margin-bottom: 16px;
-}
-
-.summaryBox.overBudget {
-  background-color: #fff3cd;
-  border: 1px solid #ffc107;
-}
-
-.summaryBox.fullyAllocated {
-  background-color: #d4edda;
-  border: 1px solid #c3e6cb;
-}
-
-.summaryBox.available {
-  background-color: #d1ecf1;
-  border: 1px solid #bee5eb;
-}
-
-.summaryGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr;
-  gap: 16px;
-}
-
-.summaryItem {
-  /* Container untuk setiap summary item */
-}
-
-.summaryLabel {
-  font-size: 12px;
-  color: #6c757d;
-  margin-bottom: 4px;
-  text-transform: uppercase;
-  font-weight: 600;
-}
-
-.summaryValue {
-  font-weight: 600;
-}
-
-/* Status Badge */
-.statusBadge {
-  font-size: 13px;
-  font-weight: 600;
-  padding: 6px 12px;
-  border-radius: 12px;
-  display: inline-block;
-  color: white;
-}
-
-.statusBadge.overBudget {
-  background-color: #dc3545;
-}
-
-.statusBadge.fullyAllocated {
-  background-color: #28a745;
-}
-
-.statusBadge.available {
-  background-color: #17a2b8;
-}
-
-/* Action Buttons */
-.actionButtons {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.editButton {
-  padding: 8px 16px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.editButton.active {
-  cursor: pointer;
-}
-
-.editButton.disabled {
-  cursor: not-allowed;
-}
-
-.deleteButton {
-  padding: 8px 16px;
-  background-color: #dc3545;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.deleteButton.active {
-  cursor: pointer;
-}
-
-.deleteButton.disabled {
-  cursor: not-allowed;
 }
 
 /* Empty Items State */
@@ -379,6 +248,7 @@
   border: 1px solid #dee2e6;
   border-radius: 6px;
   color: #6c757d;
+  margin-bottom: 16px;
 }
 
 /* ===== ITEMS TABLE ===== */
@@ -386,6 +256,7 @@
   overflow-x: auto;
   border: 1px solid #dee2e6;
   border-radius: 6px;
+  margin-bottom: 16px;
 }
 
 .itemsTable {
@@ -449,4 +320,157 @@
   max-width: 200px;
   color: #6c757d;
   font-size: 13px;
+}
+
+/* ===== SUMMARY BOX (MOVED TO BOTTOM) ===== */
+.summaryBox {
+  padding: 16px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+}
+
+.summaryBox.overBudget {
+  background-color: #fff3cd;
+  border: 1px solid #ffc107;
+}
+
+.summaryBox.fullyAllocated {
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+}
+
+.summaryBox.available {
+  background-color: #d1ecf1;
+  border: 1px solid #bee5eb;
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.summaryItem {
+  /* Container untuk setiap summary item */
+}
+
+.summaryLabel {
+  font-size: 12px;
+  color: #6c757d;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.summaryValue {
+  font-weight: 600;
+  color: #212529;
+}
+
+/* Status Badge */
+.statusBadge {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 12px;
+  display: inline-block;
+  color: white;
+}
+
+.statusBadge.overBudget {
+  background-color: #dc3545;
+}
+
+.statusBadge.fullyAllocated {
+  background-color: #28a745;
+}
+
+.statusBadge.available {
+  background-color: #17a2b8;
+}
+
+/* Description Section - NEW (di dalam summary box) */
+.descriptionSection {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.descriptionLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6c757d;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+
+.descriptionText {
+  font-size: 14px;
+  color: #495057;
+  line-height: 1.5;
+}
+
+/* ===== ACTION BUTTONS (MOVED TO BOTTOM) ===== */
+.actionButtons {
+  display: flex;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid #dee2e6;
+}
+
+.editButton {
+  padding: 8px 16px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.editButton.active {
+  cursor: pointer;
+}
+
+.editButton.active:hover {
+  background-color: #0056b3;
+}
+
+.editButton.disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.deleteButton {
+  padding: 8px 16px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.deleteButton.active {
+  cursor: pointer;
+}
+
+.deleteButton.active:hover {
+  background-color: #c82333;
+}
+
+.deleteButton.disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .summaryGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .filterGrid {
+    grid-template-columns: 1fr;
+  }
 }

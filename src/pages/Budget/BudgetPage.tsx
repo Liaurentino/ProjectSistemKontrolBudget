@@ -335,220 +335,209 @@ const BudgetPage: React.FC = () => {
                 const budgetDetails = expandedBudgets.get(budget.id);
 
                 return (
-                  <div key={budget.id} className={styles.budgetCard}>
-                    {/* Budget Header */}
-                    <div
-                      className={styles.budgetHeader}
-                      onClick={() => toggleExpandBudget(budget.id)}
-                    >
-                      <div className={styles.budgetHeaderContent}>
-                        {/* Budget Info */}
-                        <div className={styles.budgetInfo}>
-                          <div className={styles.budgetTitleRow}>
-                            <h3 className={styles.budgetTitle}>
-                              {budget.name}
-                            </h3>
-                            <span className={styles.budgetPeriodBadge}>
-                              {budget.period}
-                            </span>
-                          </div>
-                          {budget.description && (
-                            <div className={styles.budgetDescription}>
-                              {budget.description}
-                            </div>
-                          )}
-                        </div>
+                 <div key={budget.id} className={styles.budgetCard}>
+  {/* Budget Header - HANYA NAMA & PERIODE */}
+  <div
+    className={styles.budgetHeader}
+    onClick={() => toggleExpandBudget(budget.id)}
+  >
+    <div className={styles.budgetHeaderContent}>
+      {/* Budget Title Only */}
+      <div className={styles.budgetTitleRow}>
+        <h3 className={styles.budgetTitle}>
+          {budget.name}
+        </h3>
+        <span className={styles.budgetPeriodBadge}>
+          {budget.period}
+        </span>
+      </div>
 
-                        {/* Right Section: Total Budget + Account Count */}
-                        <div className={styles.budgetMetrics}>
-                          <div className={styles.budgetTotal}>
-                            <div className={styles.budgetTotalLabel}>
-                              Total Budget
-                            </div>
-                            <div 
-                              className={styles.budgetTotalValue}
-                              style={{ fontSize: `${getAdaptiveFontSize(budget.total_budget)}px` }}
-                            >
-                              Rp {formatCurrency(budget.total_budget)}
-                            </div>
-                          </div>
+      {/* Expand Button */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          toggleExpandBudget(budget.id);
+        }}
+        className={`${styles.expandButton} ${
+          isExpanded ? styles.expanded : ''
+        }`}
+      >
+        ▼
+      </button>
+    </div>
+  </div>
 
-                          {budgetDetails && (
-                            <div className={styles.accountCountMetric}>
-                              <div className={styles.budgetTotalLabel}>
-                                Akun
-                              </div>
-                              <div className={styles.accountCountValue}>
-                                {budgetDetails.items.length}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Expand Button */}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleExpandBudget(budget.id);
-                          }}
-                          className={`${styles.expandButton} ${
-                            isExpanded ? styles.expanded : ''
-                          }`}
-                        >
-                          ▼
-                        </button>
-                      </div>
+  {/* Budget Details (Expanded) */}
+  {isExpanded && budgetDetails && (
+    <div className={styles.budgetDetails}>
+      {/* Items Table LANGSUNG DI ATAS */}
+      {budgetDetails.items.length === 0 ? (
+        <div className={styles.emptyItems}>
+          Belum ada alokasi akun. Klik "Edit" untuk menambahkan.
+        </div>
+      ) : (
+        <div className={styles.itemsTableWrapper}>
+          <table className={styles.itemsTable}>
+            <thead>
+              <tr>
+                <th>Kode Akun</th>
+                <th>Nama Akun</th>
+                <th>Tipe</th>
+                <th>Budget</th>
+                <th>Realisasi</th>
+                <th>Catatan</th>
+              </tr>
+            </thead>
+            <tbody>
+              {budgetDetails.items.map((item) => (
+                <tr key={item.id}>
+                  <td>
+                    <code className={styles.accountCode}>
+                      {item.account_code}
+                    </code>
+                  </td>
+                  <td>
+                    <div className={styles.accountName}>
+                      {item.account_name}
                     </div>
+                  </td>
+                  <td>
+                    <span className={styles.accountTypeBadge}>
+                      {item.account_type}
+                    </span>
+                  </td>
+                  <td>
+                    <strong
+                      style={{
+                        fontSize: `${getAdaptiveFontSize(item.allocated_amount)}px`,
+                      }}
+                    >
+                      Rp {formatCurrency(item.allocated_amount)}
+                    </strong>
+                  </td>
+                  <td>
+                    <span
+                      style={{
+                        fontSize: `${getAdaptiveFontSize(item.realisasi_snapshot || 0)}px`,
+                        color: '#0369a1',
+                      }}
+                    >
+                      Rp {formatCurrency(item.realisasi_snapshot || 0)}
+                    </span>
+                  </td>
+                  <td>
+                    <div className={styles.itemDescription}>
+                      {item.description || '-'}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
-                    {/* Budget Details (Expanded) */}
-                    {isExpanded && budgetDetails && (
-                      <div className={styles.budgetDetails}>
-                        {/* Summary */}
-                        <div className={`${styles.summaryBox} ${
-                          budgetDetails.status === 'OVER_BUDGET'
-                            ? styles.overBudget
-                            : budgetDetails.status === 'FULLY_ALLOCATED'
-                            ? styles.fullyAllocated
-                            : styles.available
-                        }`}>
-                          <div className={styles.summaryGrid}>
-                            <div className={styles.summaryItem}>
-                              <div className={styles.summaryLabel}>
-                                Total Budget (Target)
-                              </div>
-                              <div 
-                                className={styles.summaryValue}
-                                style={{ fontSize: `${getAdaptiveFontSize(budgetDetails.total_allocated)}px` }}
-                              >
-                                Rp {formatCurrency(budgetDetails.total_allocated)}
-                              </div>
-                            </div>
+      {/* Summary Box - DI BAWAH TABLE */}
+      <div className={`${styles.summaryBox} ${
+        budgetDetails.status === 'OVER_BUDGET'
+          ? styles.overBudget
+          : budgetDetails.status === 'FULLY_ALLOCATED'
+          ? styles.fullyAllocated
+          : styles.available
+      }`}>
+        <div className={styles.summaryGrid}>
+          <div className={styles.summaryItem}>
+            <div className={styles.summaryLabel}>
+              Total Budget (Target)
+            </div>
+            <div
+              className={styles.summaryValue}
+              style={{ fontSize: `${getAdaptiveFontSize(budgetDetails.total_allocated)}px` }}
+            >
+              Rp {formatCurrency(budgetDetails.total_allocated)}
+            </div>
+          </div>
 
-                            {/* NEW: Total Realisasi */}
-                            <div className={styles.summaryItem}>
-                              <div className={styles.summaryLabel}>
-                                Total Realisasi (Aktual)
-                              </div>
-                              <div 
-                                className={styles.summaryValue}
-                                style={{ 
-                                  fontSize: `${getAdaptiveFontSize(budgetDetails.total_realisasi || 0)}px`,
-                                  color: '#0369a1'
-                                }}
-                              >
-                                Rp {formatCurrency(budgetDetails.total_realisasi || 0)}
-                              </div>
-                            </div>
-            
-                            <div className={styles.summaryItem}>
-                              <div className={styles.summaryLabel}>
-                                Status
-                              </div>
-                              <div className={`${styles.statusBadge} ${
-                                budgetDetails.status === 'OVER_BUDGET'
-                                  ? styles.overBudget
-                                  : budgetDetails.status === 'FULLY_ALLOCATED'
-                                  ? styles.fullyAllocated
-                                  : styles.available
-                              }`}>
-                                {budgetDetails.status === 'OVER_BUDGET'
-                                  ? 'Over'
-                                  : budgetDetails.status === 'FULLY_ALLOCATED'
-                                  ? '✓ Penuh'
-                                  : '○ Tersedia'}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
+          <div className={styles.summaryItem}>
+            <div className={styles.summaryLabel}>
+              Total Realisasi (Aktual)
+            </div>
+            <div
+              className={styles.summaryValue}
+              style={{
+                fontSize: `${getAdaptiveFontSize(budgetDetails.total_realisasi || 0)}px`,
+                color: '#0369a1',
+              }}
+            >
+              Rp {formatCurrency(budgetDetails.total_realisasi || 0)}
+            </div>
+          </div>
 
-                        {/* Actions */}
-                        <div className={styles.actionButtons}>
-                          <button
-                            onClick={() => handleEditBudget(budget.id)}
-                            disabled={loading}
-                            className={`${styles.editButton} ${
-                              loading ? styles.disabled : styles.active
-                            }`}
-                          >
-                            Edit
-                          </button>
+          <div className={styles.summaryItem}>
+            <div className={styles.summaryLabel}>
+              Jumlah Akun
+            </div>
+            <div className={styles.summaryValue} style={{ fontSize: '20px' }}>
+              {budgetDetails.items.length} akun
+            </div>
+          </div>
 
-                          <button
-                            onClick={() => handleDeleteBudget(budget.id, budget.name)}
-                            disabled={loading}
-                            className={`${styles.deleteButton} ${
-                              loading ? styles.disabled : styles.active
-                            }`}
-                          >
-                            Hapus
-                          </button>
-                        </div>
+          <div className={styles.summaryItem}>
+            <div className={styles.summaryLabel}>
+              Status
+            </div>
+            <div
+              className={`${styles.statusBadge} ${
+                budgetDetails.status === 'OVER_BUDGET'
+                  ? styles.overBudget
+                  : budgetDetails.status === 'FULLY_ALLOCATED'
+                  ? styles.fullyAllocated
+                  : styles.available
+              }`}
+            >
+              {budgetDetails.status === 'OVER_BUDGET'
+                ? '⚠ Over'
+                : budgetDetails.status === 'FULLY_ALLOCATED'
+                ? '✓ Penuh'
+                : '○ Tersedia'}
+            </div>
+          </div>
+        </div>
 
-                        {/* Items Table */}
-                        {budgetDetails.items.length === 0 ? (
-                          <div className={styles.emptyItems}>
-                            Belum ada alokasi akun. Klik "Edit" untuk menambahkan.
-                          </div>
-                        ) : (
-                          <div className={styles.itemsTableWrapper}>
-                            <table className={styles.itemsTable}>
-                              <thead>
-                                <tr>
-                                  <th>Kode Akun</th>
-                                  <th>Nama Akun</th>
-                                  <th>Tipe</th>
-                                  <th>Budget</th>
-                                  <th>Realisasi</th>
-                                  <th>Catatan</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {budgetDetails.items.map((item) => (
-                                  <tr key={item.id}>
-                                    <td>
-                                      <code className={styles.accountCode}>
-                                        {item.account_code}
-                                      </code>
-                                    </td>
-                                    <td>
-                                      <div className={styles.accountName}>
-                                        {item.account_name}
-                                      </div>
-                                    </td>
-                                    <td>
-                                      <span className={styles.accountTypeBadge}>
-                                        {item.account_type}
-                                      </span>
-                                    </td>
-                                    <td>
-                                      <strong style={{
-                                        fontSize: `${getAdaptiveFontSize(item.allocated_amount)}px`,
-                                      }}>
-                                        Rp {formatCurrency(item.allocated_amount)}
-                                      </strong>
-                                    </td>
-                                    <td>
-                                      <span style={{
-                                        fontSize: `${getAdaptiveFontSize(item.realisasi_snapshot || 0)}px`,
-                                        color: '#0369a1',
-                                      }}>
-                                        Rp {formatCurrency(item.realisasi_snapshot || 0)}
-                                      </span>
-                                    </td>
-                                    <td>
-                                      <div className={styles.itemDescription}>
-                                        {item.description || '-'}
-                                      </div>
-                                    </td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
+        {/* Deskripsi - JIKA ADA */}
+        {budget.description && (
+          <div className={styles.descriptionSection}>
+            <div className={styles.descriptionLabel}>Deskripsi:</div>
+            <div className={styles.descriptionText}>{budget.description}</div>
+          </div>
+        )}
+      </div>
+
+      {/* Action Buttons - PALING BAWAH */}
+      <div className={styles.actionButtons}>
+        <button
+          onClick={() => handleEditBudget(budget.id)}
+          disabled={loading}
+          className={`${styles.editButton} ${
+            loading ? styles.disabled : styles.active
+          }`}
+        >
+          ✏️ Edit
+        </button>
+
+        <button
+          onClick={() => handleDeleteBudget(budget.id, budget.name)}
+          disabled={loading}
+          className={`${styles.deleteButton} ${
+            loading ? styles.disabled : styles.active
+          }`}
+        >
+          🗑️ Hapus
+        </button>
+      </div>
+    </div>
+  )}
+</div>
                 );
               })}
             </div>
