@@ -1,5 +1,5 @@
-import { Routes, Route, NavLink, Navigate } from "react-router-dom";
-import { useState } from "react";
+import { Routes, Route, NavLink, Navigate, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
 
 import BudgetPage from "./pages/Budget/BudgetPage";
 import BudgetRealizationPage from "./pages/Realisasi/BudgetRealisasiPage";
@@ -11,10 +11,18 @@ import { useAuth } from "./contexts/AuthContext";
 import AuthPage from "./pages/Auth/AuthPage";
 import ResetPasswordPage from "./pages/Auth/ResetPasswordPage";
 
-
 export default function App() {
   const { user, loading, signOut } = useAuth();
   const [expandedMenu, setExpandedMenu] = useState<string | null>("master-data");
+  const location = useLocation();
+  const [previousUser, setPreviousUser] = useState(user);
+
+  // Detect when user just logged in (transition from null to user)
+  const isJustLoggedIn = !previousUser && user;
+
+  useEffect(() => {
+    setPreviousUser(user);
+  }, [user]);
 
   const handleLogout = async () => {
     await signOut();
@@ -24,14 +32,29 @@ export default function App() {
     setExpandedMenu(expandedMenu === menuId ? null : menuId);
   };
 
+  // Guard: Show loading screen while auth state is being determined
   if (loading) {
-    return <div className="app-loading">Loading...</div>;
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+        <p className="loading-text">Loading...</p>
+      </div>
+    );
   }
+
+  // Check if we're on auth pages
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/reset-password';
+
+  // Show sidebar only when:
+  // 1. User is logged in
+  // 2. NOT on auth pages
+  // 3. NOT just logged in (to prevent flash during redirect)
+  const shouldShowSidebar = user && !isAuthPage && !isJustLoggedIn;
 
   return (
     <div className="fade-in app-layout">
       {/* Sidebar */}
-      {user && (
+      {shouldShowSidebar && (
         <aside className="app-sidebar">
           {/* Sidebar Header */}
           <div className="sidebar-header">
@@ -113,7 +136,7 @@ export default function App() {
               <span className="sidebar-menu-label">Realisasi</span>
             </NavLink>
 
-            {/* ✨ TAMBAH INI - Community Profiles */}
+            {/* Community Profiles */}
             <NavLink
               to="/community"
               className={({ isActive }) =>
@@ -131,24 +154,23 @@ export default function App() {
               <span className="sidebar-status-text">{user?.email || "User"}</span>
             </div>
 
-            {user && (
-              <button
-                onClick={handleLogout}
-                className="btn btn-outline btn-sm btn-full"
-              >
-                Logout
-              </button>
-            )}
+            <button
+              onClick={handleLogout}
+              className="btn btn-outline btn-sm btn-full"
+            >
+              Logout
+            </button>
           </div>
         </aside>
       )}
 
       {/* Main Content */}
-      <div className={`app-main-content ${!user ? "no-sidebar" : ""}`}>
+      <div className={`app-main-content ${!shouldShowSidebar ? "no-sidebar" : ""}`}>
         {/* Page Content */}
         <main className="app-container">
           <Routes>
             <Route path="/login" element={<AuthPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
 
             <Route
               path="/entitas"
@@ -172,13 +194,10 @@ export default function App() {
               path="/dashboard"
               element={user ? <DashboardPage /> : <Navigate to="/login" />}
             />
-            
-            {/* ✨ TAMBAH INI - Route Community */}
             <Route
               path="/community"
               element={user ? <PublicProfilesPage /> : <Navigate to="/login" />}
             />
-            <Route path="/reset-password" element={<ResetPasswordPage />} />
 
             <Route path="/" element={<Navigate to="/dashboard" />} />
             <Route path="*" element={<Navigate to="/dashboard" />} />
