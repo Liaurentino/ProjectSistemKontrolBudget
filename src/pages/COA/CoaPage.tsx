@@ -69,7 +69,7 @@ const CoaPage: React.FC = () => {
   // Handle refresh with success message
   const handleRefresh = async () => {
     await loadCoaFromDatabase();
-    setSuccessMessage('✓ Data COA berhasil di-refresh!');
+    setSuccessMessage('Data COA berhasil di-refresh!');
     setTimeout(() => setSuccessMessage(''), 3000);
   };
 
@@ -93,7 +93,7 @@ const CoaPage: React.FC = () => {
             Silakan pilih entitas terlebih dahulu di halaman Manajemen Entitas
           </p>
           <button
-            onClick={() => window.location.href = '/entities'}
+            onClick={() => window.location.href = '/entitas'}
             className={styles.noEntityWarningButton}
           >
             Ke Halaman Entitas →

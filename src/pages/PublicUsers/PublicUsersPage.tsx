@@ -122,7 +122,7 @@ export const PublicProfilesPage: React.FC = () => {
       {/* Header */}
       <div className={styles.header}>
         <div className={styles.headerContent}>
-          <h1>🌐 Community Profiles</h1>
+          <h1>Lihat User Lain</h1>
           <p>Lihat data realisasi budget dari user lain yang dipublikasikan</p>
         </div>
 

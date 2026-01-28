@@ -136,14 +136,14 @@ export default function App() {
               <span className="sidebar-menu-label">Realisasi</span>
             </NavLink>
 
-            {/* Community Profiles */}
+            {/* Lihat User Lain */}
             <NavLink
               to="/community"
               className={({ isActive }) =>
                 `sidebar-menu-item ${isActive ? "active" : ""}`
               }
             >
-              <span className="sidebar-menu-label">🌐 Community</span>
+              <span className="sidebar-menu-label">Lihat User Lain</span>
             </NavLink>
           </nav>
 

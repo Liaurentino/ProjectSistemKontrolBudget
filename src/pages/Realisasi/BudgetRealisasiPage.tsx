@@ -272,6 +272,12 @@ const BudgetRealizationPage: React.FC = () => {
           <p>
             Silakan pilih entitas terlebih dahulu di halaman Manajemen Entitas
           </p>
+            <button
+            onClick={() => window.location.href = '/entitas'}
+            className={styles.noEntityWarningButton}
+          >
+            Ke Halaman Entitas →
+          </button>
         </div>
       )}
 

@@ -1,3 +1,7 @@
+/* ==========================================
+   ENTITAS MODULE CSS - CONSISTENT VERSION
+   ========================================== */
+
 /* ===== HEADER SECTION ===== */
 .header {
   display: flex;
@@ -29,13 +33,15 @@
   padding-top: 0.25rem;
 }
 
-/* ===== ERROR ALERT ===== */
+/* ===== ALERTS ===== */
 .errorAlert {
-  padding: 1rem;
-  background-color: #ffebee;
+  padding: 1rem 1.25rem;
+  background-color: #fee;
+  border: 1px solid #fcc;
+  border-left: 4px solid var(--danger-color);
   color: #c62828;
-  border-radius: 8px;
-  margin-bottom: 1rem;
+  border-radius: calc(var(--radius) - 4px);
+  margin-bottom: 1.5rem;
   animation: slideDown 0.3s ease;
 }
 
@@ -73,7 +79,7 @@
 
 /* ===== FORM CONTAINER ===== */
 .formContainer {
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   animation: fadeIn 0.3s ease;
 }
 
@@ -86,19 +92,23 @@
   }
 }
 
-/* ===== TABLE SPECIFIC (ENTITAS) ===== */
-/* Hanya style yang SPESIFIK untuk Entitas, sisanya pakai global .shared-table */
-
+/* ===== TABLE COLUMNS (ENTITAS SPECIFIC) ===== */
 .colActive {
   width: 60px;
   text-align: center;
 }
 
-.colActions {
+.colPrivacy {
+  width: 150px;
   text-align: center;
 }
 
-/* ===== TABLE CELLS (ENTITAS SPECIFIC) ===== */
+.colActions {
+  width: 120px;
+  text-align: center;
+}
+
+/* ===== TABLE CELLS ===== */
 .cellCenter {
   text-align: center;
 }
@@ -110,7 +120,7 @@
 
 .cellDatabase {
   font-size: 0.9rem;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .databaseInfo {
@@ -126,36 +136,85 @@
 
 .databaseId {
   font-size: 0.75rem;
-  color: #999;
+  color: var(--text-tertiary);
   font-family: 'Monaco', 'Courier New', monospace;
 }
 
 .databaseError {
-  color: #f44336;
+  color: var(--danger-color);
+  font-weight: 500;
 }
 
-/* ===== STATUS BADGE (ENTITAS SPECIFIC) ===== */
+/* ===== STATUS BADGE ===== */
 .statusBadge {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem 0.875rem;
   color: #fff;
-  border-radius: 4px;
-  font-size: 0.85rem;
-  font-weight: 500;
+  border-radius: calc(var(--radius) - 6px);
+  font-size: 0.813rem;
+  font-weight: 600;
   transition: var(--transition);
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
 }
 
 .statusConnected {
-  background-color: #4caf50;
+  background-color: var(--secondary-color); /* atau #10b981 */
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
 }
 
 .statusDisconnected {
-  background-color: #f44336;
+  background-color: var(--danger-color); /* atau #ef4444 */
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
 }
 
 .statusBadge:hover {
   transform: translateY(-1px);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
+}
+
+/* ===== PRIVACY TOGGLE ===== */
+.privacyToggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  padding: 0.25rem;
+  border-radius: calc(var(--radius) - 6px);
+  transition: var(--transition);
+}
+
+.privacyToggle:hover {
+  background-color: var(--background);
+}
+
+.privacyCheckbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--primary-color);
+  transition: var(--transition);
+}
+
+.privacyCheckbox:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.privacyLabel {
+  font-size: 0.813rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  transition: var(--transition);
+}
+
+.privacyToggle:hover .privacyLabel {
+  color: var(--primary-color);
 }
 
 /* ===== RADIO INPUT ===== */
@@ -164,6 +223,7 @@
   width: 18px;
   height: 18px;
   accent-color: var(--primary-color);
+  transition: var(--transition);
 }
 
 .radioInput:disabled {
@@ -171,23 +231,27 @@
   opacity: 0.5;
 }
 
-/* ===== ACTION BUTTONS (ENTITAS SPECIFIC) ===== */
+/* ===== ACTION BUTTONS ===== */
 .actionButtons {
   display: inline-flex;
-  gap: 6px;
+  gap: 0.5rem;
+  justify-content: center;
 }
 
 /* ===== LEGEND ===== */
 .legend {
   margin-top: 1.5rem;
-  padding-top: 1rem;
-  border-top: 1px solid #eee;
-  font-size: 0.85rem;
+  padding: 1.25rem;
+  background-color: var(--background);
+  border-radius: calc(var(--radius) - 4px);
+  border: 1px solid var(--border-color);
 }
 
 .legendTitle {
   font-weight: 700;
-  margin-bottom: 0.5rem;
+  font-size: 0.938rem;
+  color: var(--text-primary);
+  margin-bottom: 0.75rem;
   display: block;
 }
 
@@ -198,33 +262,38 @@
 .legendItem {
   margin-bottom: 0.5rem;
   line-height: 1.6;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
 }
 
 .legendConnected {
-  color: #4caf50;
-  font-weight: bold;
+  color: var(--secondary-color);
+  font-weight: 700;
 }
 
 .legendDisconnected {
-  color: #f44336;
-  font-weight: bold;
+  color: var(--danger-color);
+  font-weight: 700;
 }
 
 .legendImportant {
-  font-weight: bold;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
-/* ===== EMPTY STATE ===== */
+/* ===== EMPTY & LOADING STATES ===== */
 .emptyState {
   text-align: center;
   padding: 3rem 2rem;
   color: var(--text-secondary);
+  font-size: 0.938rem;
 }
 
 .loadingState {
   text-align: center;
   padding: 2rem;
   color: var(--text-secondary);
+  font-size: 0.938rem;
 }
 
 /* ===== RESPONSIVE ===== */
@@ -236,6 +305,10 @@
 
   .headerActions {
     padding-top: 0;
+  }
+
+  .headerContent h1 {
+    font-size: 1.5rem;
   }
 
   .cardHeader {
@@ -250,6 +323,11 @@
 
   .actionButtons {
     flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .privacyToggle {
+    justify-content: center;
   }
 }
 
@@ -267,43 +345,12 @@
   }
 
   .legend {
-    font-size: 0.8rem;
+    font-size: 0.813rem;
+    padding: 1rem;
   }
-}
 
-/* Privacy Toggle */
-.colPrivacy {
-  width: 150px;
-  text-align: center;
-}
-
-.privacyToggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  cursor: pointer;
-  user-select: none;
-}
-
-.privacyCheckbox {
-  width: 18px;
-  height: 18px;
-  cursor: pointer;
-  accent-color: #667eea;
-}
-
-.privacyCheckbox:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
-.privacyLabel {
-  font-size: 13px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.privacyToggle:hover .privacyLabel {
-  color: #667eea;
+  .statusBadge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.625rem;
+  }
 }

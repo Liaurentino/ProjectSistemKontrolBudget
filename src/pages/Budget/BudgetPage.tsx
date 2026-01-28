@@ -239,7 +239,7 @@ const BudgetPage: React.FC = () => {
           <p>
             Silakan pilih entitas terlebih dahulu di halaman <strong>Manajemen Entitas</strong>
           </p>
-          <a href="/entities">
+          <a href="/entitas">
             Ke Halaman Entitas →
           </a>
         </div>
