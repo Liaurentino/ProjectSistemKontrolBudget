@@ -265,19 +265,16 @@ const BudgetRealizationPage: React.FC = () => {
         </button>
       </div>
 
-      {/* No Entity Warning */}
+       {/* No Active Entity Warning */}
       {!activeEntity && (
         <div className={styles.noEntityWarning}>
           <h3>Belum Ada Entitas Aktif</h3>
           <p>
-            Silakan pilih entitas terlebih dahulu di halaman Manajemen Entitas
+            Silakan pilih entitas terlebih dahulu di halaman <strong>Manajemen Entitas</strong>
           </p>
-            <button
-            onClick={() => window.location.href = '/entitas'}
-            className={styles.noEntityWarningButton}
-          >
+          <a href="/entitas">
             Ke Halaman Entitas →
-          </button>
+          </a>
         </div>
       )}
 

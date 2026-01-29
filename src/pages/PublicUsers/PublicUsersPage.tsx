@@ -25,8 +25,8 @@ export const PublicProfilesPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Expanded state
-  const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
+  // Modal state - Replace expanded state
+  const [modalUser, setModalUser] = useState<PublicUser | null>(null);
 
   // Selected entity for realisasi viewer
   const [selectedEntity, setSelectedEntity] = useState<{
@@ -105,16 +105,27 @@ export const PublicProfilesPage: React.FC = () => {
     setFilteredUsers(filtered);
   }, [searchQuery, users]);
 
-  const handleToggleEntities = (userId: string) => {
-    setExpandedUserId(expandedUserId === userId ? null : userId);
+  const handleOpenModal = (user: PublicUser) => {
+    setModalUser(user);
+  };
+
+  const handleCloseModal = () => {
+    setModalUser(null);
   };
 
   const handleViewRealisasi = (entityId: string, entityName: string) => {
     setSelectedEntity({ id: entityId, name: entityName });
+    // DON'T close modal - keep it in background
   };
 
   const handleCloseViewer = () => {
     setSelectedEntity(null);
+    // Modal akan muncul kembali karena modalUser masih ada
+  };
+
+  const handleCloseAll = () => {
+    setSelectedEntity(null);
+    setModalUser(null);
   };
 
   return (
@@ -127,7 +138,7 @@ export const PublicProfilesPage: React.FC = () => {
         </div>
 
         <button onClick={loadUsers} className={styles.refreshButton} disabled={loading}>
-          {loading ? '⏳ Loading...' : '🔄 Refresh'}
+          {loading ? 'Loading...' : 'Refresh'}
         </button>
       </div>
 
@@ -138,23 +149,30 @@ export const PublicProfilesPage: React.FC = () => {
         </div>
       )}
 
-      {/* Info Box */}
-      <div className={styles.infoBox}>
-        <div className={styles.infoIcon}>ℹ️</div>
-        <div className={styles.infoContent}>
-          <strong>Informasi:</strong> Anda hanya dapat melihat data realisasi dari user lain yang sudah mempublikasikan entitas mereka dan memiliki data realisasi.
-        </div>
-      </div>
-
-      {/* Search */}
+    
+     {/* Search Section dengan Info Text */}
       <div className={styles.searchSection}>
-        <input
-          type="text"
-          placeholder="🔍 Cari user berdasarkan nama atau email..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className={styles.searchInput}
-        />
+
+           {/* Judul */}
+       <div className={styles.searchTitle}>
+        <strong>Cari Informasi User Lain</strong>
+    </div>
+  
+    {/* Search Input */}
+    <input
+      type="text"
+      placeholder="Cari user berdasarkan nama atau email..."
+      value={searchQuery}
+      onChange={(e) => setSearchQuery(e.target.value)}
+      className={styles.searchInput}
+      />
+  
+      {/* Info Text - Tanpa prefix "Informasi:" */}
+    <div className={styles.infoText}>
+        Anda hanya dapat melihat data realisasi dari user lain yang sudah mempublikasikan entitas mereka dan memiliki data realisasi.
+      </div>
+        
+        {/* Count Info */}
         <div className={styles.searchInfo}>
           Menampilkan <strong>{filteredUsers.length}</strong> dari {users.length} users
         </div>
@@ -163,16 +181,15 @@ export const PublicProfilesPage: React.FC = () => {
       {/* Users Table */}
       <div className={styles.tableContainer}>
         {loading && users.length === 0 ? (
-          <div className={styles.loadingState}>⏳ Memuat data users...</div>
+          <div className={styles.loadingState}>Memuat data users...</div>
         ) : filteredUsers.length === 0 ? (
           <div className={styles.emptyState}>
             {searchQuery ? (
               <>
-                🔍 Tidak ada user yang cocok dengan pencarian "
-                <strong>{searchQuery}</strong>"
+                Tidak ada user yang cocok dengan pencarian "<strong>{searchQuery}</strong>"
               </>
             ) : (
-              <>📋 Belum ada user lain yang mempublikasikan entitas dengan data realisasi</>
+              <>Belum ada user lain yang mempublikasikan entitas dengan data realisasi</>
             )}
           </div>
         ) : (
@@ -188,102 +205,132 @@ export const PublicProfilesPage: React.FC = () => {
             </thead>
             <tbody>
               {filteredUsers.map((user) => (
-                <React.Fragment key={user.user_id}>
-                  <tr className={styles.userRow}>
-                    <td className={styles.avatarCell}>
-                      {user.user_avatar ? (
-                        <img
-                          src={user.user_avatar}
-                          alt={user.user_name}
-                          className={styles.avatar}
-                        />
-                      ) : (
-                        <div className={styles.avatarPlaceholder}>
-                          {user.user_name.charAt(0).toUpperCase()}
-                        </div>
-                      )}
-                    </td>
-                    <td>
-                      <div className={styles.userName}>{user.user_name}</div>
-                    </td>
-                    <td>
-                      <div className={styles.userEmail}>{user.user_email}</div>
-                    </td>
-                    <td>
-                      <span className={styles.entitiesCount}>
-                        {user.entities.length} entitas
-                      </span>
-                    </td>
-                    <td className={styles.center}>
-                      <button
-                        onClick={() => handleToggleEntities(user.user_id)}
-                        className={`${styles.viewButton} ${
-                          expandedUserId === user.user_id ? styles.viewButtonActive : ''
-                        }`}
-                      >
-                        {expandedUserId === user.user_id ? '🔼 Tutup' : '👁️ Lihat Entitas'}
-                      </button>
-                    </td>
-                  </tr>
-
-                  {/* Expanded Row - Entities List */}
-                  {expandedUserId === user.user_id && (
-                    <tr className={styles.entitiesRow}>
-                      <td colSpan={5}>
-                        <div className={styles.entitiesContainer}>
-                          <h4 className={styles.entitiesTitle}>
-                            📂 Entitas dari {user.user_name}
-                          </h4>
-                          <div className={styles.entitiesGrid}>
-                            {user.entities.map((entity) => (
-                              <div key={entity.id} className={styles.entityCard}>
-                                <div className={styles.entityHeader}>
-                                  <h5 className={styles.entityName}>
-                                    {entity.entity_name}
-                                  </h5>
-                                  <span
-                                    className={`${styles.connectionBadge} ${
-                                      entity.is_connected
-                                        ? styles.connected
-                                        : styles.disconnected
-                                    }`}
-                                  >
-                                    {entity.is_connected ? '✓ Terhubung ke Accurate' : '✗ Belum Terhubung ke Accurate'}
-                                  </span>
-                                </div>
-
-                                <div className={styles.entityMeta}>
-                                  <div>📅 Dibuat: {new Date(entity.created_at).toLocaleDateString('id-ID')}</div>
-                                  <div className={styles.entityStatus}>
-                                    {entity.has_realization && (
-                                      <span className={styles.hasDataBadge}>
-                                        ✓ Memiliki Data Realisasi
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-
-                                <button
-                                  onClick={() =>
-                                    handleViewRealisasi(entity.id, entity.entity_name)
-                                  }
-                                  className={styles.viewRealisasiButton}
-                                >
-                                  📊 Lihat Realisasi
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </React.Fragment>
+                <tr key={user.user_id} className={styles.userRow}>
+                  <td className={styles.avatarCell}>
+                    {user.user_avatar ? (
+                      <img
+                        src={user.user_avatar}
+                        alt={user.user_name}
+                        className={styles.avatar}
+                      />
+                    ) : (
+                      <div className={styles.avatarPlaceholder}>
+                        {user.user_name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                  </td>
+                  <td>
+                    <div className={styles.userName}>{user.user_name}</div>
+                  </td>
+                  <td>
+                    <div className={styles.userEmail}>{user.user_email}</div>
+                  </td>
+                  <td>
+                    <span className={styles.entitiesCount}>
+                      {user.entities.length} entitas
+                    </span>
+                  </td>
+                  <td className={styles.center}>
+                    <button
+                      onClick={() => handleOpenModal(user)}
+                      className={styles.viewButton}
+                    >
+                      Lihat Entitas
+                    </button>
+                  </td>
+                </tr>
               ))}
             </tbody>
           </table>
         )}
       </div>
+
+      {/* Modal Overlay - Entitas List (hidden when realisasi viewer is open) */}
+      {modalUser && !selectedEntity && (
+        <>
+          {/* Overlay Background */}
+          <div 
+            className={styles.modalOverlay}
+            onClick={handleCloseModal}
+          />
+
+          {/* Modal Content */}
+          <div className={styles.modalContent}>
+            {/* Modal Header */}
+            <div className={styles.modalHeader}>
+              <div className={styles.modalHeaderLeft}>
+                {modalUser.user_avatar ? (
+                  <img
+                    src={modalUser.user_avatar}
+                    alt={modalUser.user_name}
+                    className={styles.modalAvatar}
+                  />
+                ) : (
+                  <div className={styles.modalAvatarPlaceholder}>
+                    {modalUser.user_name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div>
+                  <h3 className={styles.modalTitle}>
+                    Entitas dari {modalUser.user_name}
+                  </h3>
+                  <p className={styles.modalSubtitle}>
+                    {modalUser.user_email}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={handleCloseModal}
+                className={styles.modalCloseButton}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Modal Body - Entities Grid */}
+            <div className={styles.modalBody}>
+              <div className={styles.entitiesGrid}>
+                {modalUser.entities.map((entity) => (
+                  <div key={entity.id} className={styles.entityCard}>
+                    <div className={styles.entityHeader}>
+                      <h5 className={styles.entityName}>
+                        {entity.entity_name}
+                      </h5>
+                      <span
+                        className={`${styles.connectionBadge} ${
+                          entity.is_connected
+                            ? styles.connected
+                            : styles.disconnected
+                        }`}
+                      >
+                        {entity.is_connected ? 'Terhubung' : 'Belum Terhubung'}
+                      </span>
+                    </div>
+
+                    <div className={styles.entityMeta}>
+                      <div>Dibuat: {new Date(entity.created_at).toLocaleDateString('id-ID')}</div>
+                      <div className={styles.entityStatus}>
+                        {entity.has_realization && (
+                          <span className={styles.hasDataBadge}>
+                            Memiliki Data Realisasi
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => handleViewRealisasi(entity.id, entity.entity_name)}
+                      className={styles.viewRealisasiButton}
+                    >
+                      Lihat Realisasi
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Realisasi Viewer Modal */}
       {selectedEntity && (
@@ -291,6 +338,7 @@ export const PublicProfilesPage: React.FC = () => {
           entityId={selectedEntity.id}
           entityName={selectedEntity.name}
           onClose={handleCloseViewer}
+          onCloseAll={handleCloseAll}
         />
       )}
     </div>

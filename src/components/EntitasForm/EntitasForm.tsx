@@ -20,7 +20,6 @@ export const EntitasForm: React.FC<Props> = ({
   onSuccess,
   onCancel,
 }) => {
-  // ✅ Tab selector state
   const [selectedMethod, setSelectedMethod] = useState<EntityMethod>('accurate');
 
   // Form states
@@ -55,7 +54,6 @@ export const EntitasForm: React.FC<Props> = ({
 
   useEffect(() => {
     if (mode === 'edit' && initialData) {
-      // Detect method dari data
       const method: EntityMethod = initialData.method || (initialData.api_token ? 'accurate' : 'manual');
       setSelectedMethod(method);
       
@@ -97,7 +95,6 @@ export const EntitasForm: React.FC<Props> = ({
     setFormatError('');
     setTokenDuplicate(false);
     
-    // Reset form
     setFormData({
       entity_name: '',
       description: '',
@@ -116,7 +113,6 @@ export const EntitasForm: React.FC<Props> = ({
     setError('');
     setSuccess('');
 
-    // Token validation (only for accurate method)
     if (name === 'api_token' && selectedMethod === 'accurate') {
       setTokenValidated(false);
       setOwnershipValidated(false);
@@ -179,7 +175,6 @@ export const EntitasForm: React.FC<Props> = ({
         return;
       }
 
-      // STEP 1: Validate ownership
       console.log('Step 1: Validating token ownership...');
       const ownershipResult = await validateAccurateTokenOwnership(formData.api_token);
 
@@ -200,9 +195,8 @@ export const EntitasForm: React.FC<Props> = ({
       }
 
       setOwnershipValidated(true);
-      console.log('✓ Ownership validated:', ownershipResult.accurateUserInfo);
+      console.log('Ownership validated:', ownershipResult.accurateUserInfo);
 
-      // STEP 2: Validate token & get database info
       console.log('Step 2: Validating token and fetching database info...');
       const result = await validateAccurateApiToken(formData.api_token);
 
@@ -210,7 +204,7 @@ export const EntitasForm: React.FC<Props> = ({
 
       if (result.isValid) {
         setSuccess(
-          `✓ Token valid dan milik akun Anda (${ownershipResult.accurateUserInfo?.email})\n` +
+          `Token valid dan milik akun Anda (${ownershipResult.accurateUserInfo?.email})\n` +
           result.message
         );
         setTokenValidated(true);
@@ -256,7 +250,6 @@ export const EntitasForm: React.FC<Props> = ({
     setLoading(true);
 
     try {
-      // Validate nama entitas
       if (!formData.entity_name.trim()) {
         if (selectedMethod === 'accurate') {
           setError('Nama Entitas tidak boleh kosong. Silakan validasi token terlebih dahulu.');
@@ -267,7 +260,6 @@ export const EntitasForm: React.FC<Props> = ({
         return;
       }
 
-      // Validate untuk method accurate
       if (selectedMethod === 'accurate') {
         if (!formData.api_token.trim()) {
           setError('API Token tidak boleh kosong');
@@ -313,7 +305,6 @@ export const EntitasForm: React.FC<Props> = ({
         }
       }
 
-      // Prepare data
       const dataToSave: any = {
         entity_name: formData.entity_name.trim(),
         method: selectedMethod,
@@ -326,7 +317,6 @@ export const EntitasForm: React.FC<Props> = ({
         dataToSave.api_token = null;
       }
 
-      // Save to database
       if (mode === 'create') {
         const result = await insertEntity(dataToSave);
         if (result.error) {
@@ -364,7 +354,6 @@ export const EntitasForm: React.FC<Props> = ({
       </div>
 
       <div className="card-body">
-        {/* ✅ TAB SELECTOR (only for create mode) */}
         {mode === 'create' && (
           <div className={styles.methodSelectorContainer}>
             <label className={`form-label ${styles.methodSelectorLabel}`}>
@@ -378,7 +367,6 @@ export const EntitasForm: React.FC<Props> = ({
                   selectedMethod === 'accurate' ? styles.active : styles.inactive
                 }`}
               >
-                <div className={styles.methodIcon}>🔗</div>
                 <div className={styles.methodTitle}>Via Accurate</div>
                 <div className={styles.methodDescription}>Validasi & auto-fill data</div>
               </button>
@@ -390,7 +378,6 @@ export const EntitasForm: React.FC<Props> = ({
                   selectedMethod === 'manual' ? styles.active : styles.inactive
                 }`}
               >
-                <div className={styles.methodIcon}>✍️</div>
                 <div className={styles.methodTitle}>Input Manual</div>
                 <div className={styles.methodDescription}>Tanpa API, langsung simpan</div>
               </button>
@@ -398,23 +385,20 @@ export const EntitasForm: React.FC<Props> = ({
           </div>
         )}
 
-        {/* ✅ INFO METHOD (for edit mode) */}
         {mode === 'edit' && (
           <div className={styles.methodInfo}>
             <small className={styles.methodInfoText}>
               <strong>Metode: </strong>
-              {selectedMethod === 'accurate' ? '🔗 Via Accurate' : '✍️ Input Manual'}
+              {selectedMethod === 'accurate' ? 'Via Accurate' : 'Input Manual'}
             </small>
           </div>
         )}
 
-        {/* ERROR MESSAGE */}
         {error && (
           <div className={`${styles.errorAlert} ${error.includes('Email Akun') ? styles.critical : ''}`}>
             {error.includes('Email Akun') ? (
               <div>
                 <div className={styles.errorAlertHeader}>
-                  <span className={styles.errorAlertIcon}>🚫</span>
                   <strong className={styles.errorAlertTitle}>Token Tidak Cocok dengan Akun Anda!</strong>
                 </div>
                 <div className={styles.errorAlertMessage}>{error}</div>
@@ -425,14 +409,12 @@ export const EntitasForm: React.FC<Props> = ({
           </div>
         )}
 
-        {/* SUCCESS MESSAGE */}
         {success && (
           <div className={styles.successAlert}>
             {success}
           </div>
         )}
 
-        {/* ========== FORM ACCURATE ========== */}
         {selectedMethod === 'accurate' && (
           <>
             <div className="form-group">
@@ -461,14 +443,12 @@ export const EntitasForm: React.FC<Props> = ({
 
               {formatError && !tokenDuplicate && (
                 <div className={styles.formatError}>
-                  <span>⚠️</span>
                   <span>{formatError}</span>
                 </div>
               )}
 
               {tokenDuplicate && formData.api_token !== initialData?.api_token && (
                 <div className={styles.tokenDuplicateWarning}>
-                  <span>⚠️</span>
                   <span>
                     <strong>Token Sudah Terdaftar!</strong> Token ini sudah digunakan oleh entitas
                     "{tokenDuplicateEntity}". Gunakan token yang berbeda.
@@ -502,7 +482,6 @@ export const EntitasForm: React.FC<Props> = ({
 
             {mode === 'create' && formData.api_token && !tokenValidated && !tokenDuplicate && !formatError && (
               <div className={styles.pendingValidationWarning}>
-                <span className={styles.pendingValidationIcon}>⚠️</span>
                 <div>
                   <strong className={styles.pendingValidationTitle}>
                     Token Belum Divalidasi
@@ -528,7 +507,7 @@ export const EntitasForm: React.FC<Props> = ({
                   readOnly
                 />
                 <small className={styles.helperText}>
-                  {mode === 'edit' ? '✓ Nama entitas yang tersimpan' : '✓ Nama diambil otomatis dari database Accurate'}
+                  {mode === 'edit' ? 'Nama entitas yang tersimpan' : 'Nama diambil otomatis dari database Accurate'}
                 </small>
               </div>
             )}
@@ -536,7 +515,7 @@ export const EntitasForm: React.FC<Props> = ({
             {tokenValidated && validationResult?.primaryDatabase && (
               <div className={styles.databaseBox}>
                 <h4 className={styles.databaseBoxTitle}>
-                  ✓ Database Terdeteksi
+                  Database Terdeteksi
                 </h4>
 
                 <div>
@@ -569,17 +548,15 @@ export const EntitasForm: React.FC<Props> = ({
             )}
 
             <div className={styles.securityWarning}>
-              <strong>Penting! :</strong> API Token Anda Bersifat Rahasia. Jangan
-              bagikan dengan orang lain.
+              <strong>Penting!</strong> API Token Anda Bersifat Rahasia. Jangan bagikan dengan orang lain.
             </div>
           </>
         )}
 
-        {/* ========== FORM MANUAL ========== */}
         {selectedMethod === 'manual' && (
           <>
             <div className="form-group">
-              <label className="form-label">Nama Entitas </label>
+              <label className="form-label">Nama Entitas</label>
               <input
                 type="text"
                 name="entity_name"
@@ -596,7 +573,7 @@ export const EntitasForm: React.FC<Props> = ({
             </div>
 
             <div className={styles.infoBox}>
-              <strong>ℹ️ Info:</strong> Entitas manual tidak terhubung dengan Accurate. Data akan disimpan langsung tanpa validasi API.
+              <strong>Info:</strong> Entitas manual tidak terhubung dengan Accurate. Data akan disimpan langsung tanpa validasi API.
             </div>
           </>
         )}

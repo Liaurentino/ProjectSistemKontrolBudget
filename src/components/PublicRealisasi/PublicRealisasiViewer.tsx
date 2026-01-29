@@ -21,6 +21,7 @@ interface Props {
   entityId: string;
   entityName: string;
   onClose: () => void;
+  onCloseAll: () => void;
 }
 
 const formatCurrency = (amount: number): string => {
@@ -37,6 +38,7 @@ export const PublicRealisasiViewer: React.FC<Props> = ({
   entityId,
   entityName,
   onClose,
+  onCloseAll,
 }) => {
   const [realizations, setRealizations] = useState<BudgetRealization[]>([]);
   const [groupedData, setGroupedData] = useState<GroupedBudgetRealization[]>([]);
@@ -159,16 +161,21 @@ export const PublicRealisasiViewer: React.FC<Props> = ({
             <h2>Realisasi - {entityName}</h2>
             <p>Data publik dari entitas ini</p>
           </div>
-          <button onClick={onClose} className={styles.closeButton}>
-            ✕
-          </button>
+          <div className={styles.modalHeaderActions}>
+            <button onClick={onClose} className={styles.backButton}>
+              ← Kembali
+            </button>
+            <button onClick={onCloseAll} className={styles.closeButton}>
+              ✕
+            </button>
+          </div>
         </div>
 
         <div className={styles.modalBody}>
-          {loading && <div className={styles.loading}>⏳ Memuat data...</div>}
+          {loading && <div className={styles.loading}>Memuat data...</div>}
           {error && <div className={styles.error}>{error}</div>}
 
-          {/* Summary Cards - SAMA SEPERTI BudgetRealisasiPage */}
+          {/* Summary Cards */}
           {summary && (
             <div className={styles.summaryCards}>
               <div className={`${styles.summaryCard} ${styles.blue}`}>
@@ -224,7 +231,7 @@ export const PublicRealisasiViewer: React.FC<Props> = ({
             </div>
           )}
 
-          {/* Grouped Data Table - SAMA SEPERTI BudgetRealisasiPage */}
+          {/* Grouped Data Table */}
           {!loading && groupedData.length > 0 && (
             <div className={styles.tableWrapper}>
               <table className={styles.dataTable}>
@@ -295,7 +302,7 @@ export const PublicRealisasiViewer: React.FC<Props> = ({
                             group.status === 'ON_TRACK' ? styles.onTrack : styles.overBudget
                           }`}
                         >
-                          {group.status === 'ON_TRACK' ? '✓ On Track' : '⚠ Over Budget'}
+                          {group.status === 'ON_TRACK' ? 'On Track' : 'Over Budget'}
                         </span>
                       </td>
                       <td className={styles.center}>
@@ -303,7 +310,7 @@ export const PublicRealisasiViewer: React.FC<Props> = ({
                           onClick={() => handleOpenDetail(group)}
                           className={styles.detailButton}
                         >
-                          📋 Detail
+                          Detail
                         </button>
                       </td>
                     </tr>
@@ -318,7 +325,7 @@ export const PublicRealisasiViewer: React.FC<Props> = ({
           )}
         </div>
 
-        {/* Detail Modal - SAMA SEPERTI BudgetRealisasiPage */}
+        {/* Detail Modal */}
         {showDetailModal && selectedGroup && (
           <div className={styles.detailModalOverlay} onClick={handleCloseDetail}>
             <div className={styles.detailModalContainer} onClick={(e) => e.stopPropagation()}>
@@ -451,7 +458,7 @@ export const PublicRealisasiViewer: React.FC<Props> = ({
                                   : styles.detailOverBudget
                               }`}
                             >
-                              {account.status === 'ON_TRACK' ? '✓ On Track' : '⚠ Over Budget'}
+                              {account.status === 'ON_TRACK' ? 'On Track' : 'Over Budget'}
                             </span>
                           </td>
                         </tr>

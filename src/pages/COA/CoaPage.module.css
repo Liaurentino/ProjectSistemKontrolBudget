@@ -6,7 +6,7 @@
 .container {
   padding: 2rem;
   max-width: 1400px;
-  width: 1000px;
+  width : 800px;
   margin: 0 auto;
 }
 
@@ -34,6 +34,7 @@
 }
 
 /* ===== ALERTS ===== */
+/* ===== WARNING BOX (NO ENTITY) ===== */
 .noEntityWarning {
   padding: 1.5rem;
   background-color: #fff8e1;
@@ -41,37 +42,50 @@
   border-left: 4px solid var(--warning-color);
   border-radius: calc(var(--radius) - 4px);
   margin-bottom: 1.5rem;
+  text-align: center;
+  animation: slideDown 0.3s ease;
 }
 
-.noEntityWarningTitle {
-  margin: 0 0 0.75rem 0;
+.noEntityWarning h3 {
+  margin: 0 0 0.5rem;
   color: #856404;
-  font-weight: 700;
   font-size: 1.125rem;
+  font-weight: 700;
 }
 
-.noEntityWarningText {
-  margin: 0 0 1rem 0;
+.noEntityWarning p {
+  margin: 0 0 1rem;
   color: #856404;
   line-height: 1.6;
 }
 
-.noEntityWarningButton {
+.noEntityWarning a {
+  display: inline-block;
   padding: 0.625rem 1.25rem;
   background-color: var(--warning-color);
   color: #212529;
-  border: none;
+  text-decoration: none;
   border-radius: calc(var(--radius) - 4px);
-  cursor: pointer;
-  font-size: 0.875rem;
   font-weight: 600;
   transition: var(--transition);
+  box-shadow: var(--shadow-sm);
 }
 
-.noEntityWarningButton:hover {
+.noEntityWarning a:hover {
   background-color: var(--warning-dark);
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .errorAlert {

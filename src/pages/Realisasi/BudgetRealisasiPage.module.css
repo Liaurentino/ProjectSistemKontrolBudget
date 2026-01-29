@@ -5,8 +5,9 @@
 /* ===== PAGE CONTAINER ===== */
 .pageContainer {
   padding: 2rem;
-  width: 1000px;
+  width: 900px;
   max-width: 1400px;
+  width: 800px;
   margin: 0 auto;
 }
 
@@ -82,10 +83,29 @@
 }
 
 .noEntityWarning p {
-  margin: 0;
+  margin: 0 0 1rem;
   color: #856404;
   line-height: 1.6;
 }
+
+.noEntityWarning a {
+  display: inline-block;
+  padding: 0.625rem 1.25rem;
+  background-color: var(--warning-color);
+  color: #212529;
+  text-decoration: none;
+  border-radius: calc(var(--radius) - 4px);
+  font-weight: 600;
+  transition: var(--transition);
+  box-shadow: var(--shadow-sm);
+}
+
+.noEntityWarning a:hover {
+  background-color: var(--warning-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
 
 @keyframes slideDown {
   from {
@@ -258,13 +278,14 @@
 
 /* ===== TABLE WRAPPER ===== */
 .tableWrapper {
-  overflow-x: auto;
+  overflow-x: visible; /* No horizontal scroll */
 }
 
 .dataTable {
   width: 100%;
   border-collapse: collapse;
   background-color: var(--surface);
+  table-layout: fixed; /* Fixed layout for consistent column widths */
 }
 
 .dataTable thead {
@@ -272,15 +293,18 @@
 }
 
 .dataTable thead th {
-  padding: 1rem;
+  padding: 0.75rem 0.5rem;
   text-align: left;
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.025em;
   color: var(--text-secondary);
   border-bottom: 2px solid var(--border-color);
   border-right: 1px solid var(--border-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .dataTable thead th:last-child {
@@ -290,6 +314,17 @@
 .dataTable thead th.center {
   text-align: center;
 }
+
+/* Specific column widths */
+.dataTable thead th:nth-child(1) { width: 10%; } /* Entitas */
+.dataTable thead th:nth-child(2) { width: 8%; }  /* Periode */
+.dataTable thead th:nth-child(3) { width: 18%; } /* Nama Budget Group */
+.dataTable thead th:nth-child(4) { width: 13%; } /* Total Budget */
+.dataTable thead th:nth-child(5) { width: 13%; } /* Total Realisasi */
+.dataTable thead th:nth-child(6) { width: 12%; } /* Variance */
+.dataTable thead th:nth-child(7) { width: 8%; }  /* Variance % */
+.dataTable thead th:nth-child(8) { width: 10%; } /* Status */
+.dataTable thead th:nth-child(9) { width: 8%; }  /* Aksi */
 
 .dataTable tbody tr {
   border-bottom: 1px solid var(--border-color);
@@ -305,10 +340,13 @@
 }
 
 .dataTable tbody td {
-  padding: 1rem;
-  font-size: 0.938rem;
+  padding: 0.75rem 0.5rem;
+  font-size: 0.813rem;
   color: var(--text-primary);
   border-right: 1px solid var(--border-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .dataTable tbody td:last-child {
@@ -321,34 +359,39 @@
 
 /* ===== TABLE CELL ELEMENTS ===== */
 .periodBadge {
-  padding: 0.35rem 0.75rem;
+  padding: 0.25rem 0.5rem;
   background-color: #e3f2fd;
   border-radius: calc(var(--radius) - 6px);
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: #1565c0;
   display: inline-block;
+  font-family: 'Monaco', 'Courier New', monospace;
 }
 
 .budgetGroupName {
   font-weight: 600;
   color: var(--primary-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .budgetGroupMeta {
-  font-size: 0.813rem;
+  font-size: 0.688rem;
   color: var(--text-secondary);
-  margin-top: 0.25rem;
+  margin-top: 0.125rem;
 }
 
 .statusBadge {
-  padding: 0.5rem 1rem;
+  padding: 0.375rem 0.75rem;
   border-radius: calc(var(--radius) - 2px);
-  font-size: 0.813rem;
+  font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.025em;
   display: inline-block;
+  white-space: nowrap;
 }
 
 .statusBadge.onTrack {
@@ -362,16 +405,17 @@
 }
 
 .detailButton {
-  padding: 0.5rem 1.25rem;
+  padding: 0.375rem 0.875rem;
   background-color: var(--primary-color);
   color: white;
   border: none;
   border-radius: calc(var(--radius) - 6px);
   cursor: pointer;
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   font-weight: 600;
   transition: var(--transition);
   box-shadow: var(--shadow-sm);
+  white-space: nowrap;
 }
 
 .detailButton:hover {
@@ -543,7 +587,7 @@
 
 /* Modal Table */
 .modalTableWrapper {
-  overflow-x: auto;
+  overflow-x: visible; /* No horizontal scroll */
   border: 1px solid var(--border-color);
   border-radius: calc(var(--radius) - 4px);
 }
@@ -552,6 +596,7 @@
   width: 100%;
   border-collapse: collapse;
   background-color: var(--surface);
+  table-layout: fixed; /* Fixed layout for consistent column widths */
 }
 
 .modalTable thead {
@@ -559,15 +604,18 @@
 }
 
 .modalTable thead th {
-  padding: 1rem;
+  padding: 0.75rem 0.5rem;
   text-align: left;
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.025em;
   color: var(--text-secondary);
   border-bottom: 2px solid var(--border-color);
   border-right: 1px solid var(--border-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .modalTable thead th:last-child {
@@ -577,6 +625,16 @@
 .modalTable thead th.center {
   text-align: center;
 }
+
+/* Specific column widths for modal */
+.modalTable thead th:nth-child(1) { width: 10%; } /* Kode Akun */
+.modalTable thead th:nth-child(2) { width: 22%; } /* Nama Akun */
+.modalTable thead th:nth-child(3) { width: 10%; } /* Tipe */
+.modalTable thead th:nth-child(4) { width: 13%; } /* Budget */
+.modalTable thead th:nth-child(5) { width: 13%; } /* Realisasi */
+.modalTable thead th:nth-child(6) { width: 12%; } /* Variance */
+.modalTable thead th:nth-child(7) { width: 10%; } /* Variance % */
+.modalTable thead th:nth-child(8) { width: 10%; } /* Status */
 
 .modalTable tbody tr {
   border-bottom: 1px solid var(--border-color);
@@ -592,10 +650,13 @@
 }
 
 .modalTable tbody td {
-  padding: 1rem;
-  font-size: 0.938rem;
+  padding: 0.75rem 0.5rem;
+  font-size: 0.813rem;
   color: var(--text-primary);
   border-right: 1px solid var(--border-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .modalTable tbody td:last-child {
@@ -710,17 +771,4 @@
   .modalContainer {
     max-width: 100%;
   }
-}
-
-.noEntityWarningButton {
-  margin: 20px;
-  padding: 0.625rem 1.25rem;
-  background-color: var(--warning-color);
-  color: #212529;
-  border: none;
-  border-radius: calc(var(--radius) - 4px);
-  cursor: pointer;
-  font-size: 0.875rem;
-  font-weight: 600;
-  transition: var(--transition);
 }

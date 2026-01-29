@@ -203,39 +203,8 @@ export const EntitasPage: React.FC = () => {
             onClick={() => setShowForm(true)}
             disabled={loading}
           >
-            + Tambah Entitas Baru
+            Tambah Entitas Baru
           </button>
-        )}
-
-        {/* FORM TAMBAH */}
-        {showForm && (
-          <div className={styles.formContainer}>
-            <EntitasForm
-              mode="create"
-              onSuccess={() => {
-                setShowForm(false);
-                fetchEntities();
-              }}
-              onCancel={() => setShowForm(false)}
-            />
-          </div>
-        )}
-
-        {/* FORM EDIT */}
-        {showEdit && selectedEntity && (
-          <EntitasForm
-            mode="edit"
-            initialData={selectedEntity}
-            onCancel={() => {
-              setShowEdit(false);
-              setSelectedEntity(null);
-            }}
-            onSuccess={() => {
-              setShowEdit(false);
-              setSelectedEntity(null);
-              fetchEntities();
-            }}
-          />
         )}
 
         {/* TABLE - PAKAI GLOBAL STYLES */}
@@ -268,7 +237,7 @@ export const EntitasPage: React.FC = () => {
                 entities.map((e) => {
                   const status = entityStatus[e.id];
                   const isConnected = status?.isValid;
-                  const statusText = isConnected ? '✓ Terhubung' : '✗ Tidak Terhubung';
+                  const statusText = isConnected ? 'Terhubung' : 'Tidak Terhubung';
 
                   return (
                     <tr key={e.id}>
@@ -329,7 +298,7 @@ export const EntitasPage: React.FC = () => {
                             className={styles.privacyCheckbox}
                           />
                           <span className={styles.privacyLabel}>
-                            {e.is_public ? '🌐 Public' : '🔒 Private'}
+                            {e.is_public ? 'Public' : 'Private'}
                           </span>
                         </label>
                       </td>
@@ -369,23 +338,87 @@ export const EntitasPage: React.FC = () => {
           <span className={styles.legendTitle}>Keterangan:</span>
           <div className={styles.legendList}>
             <div className={styles.legendItem}>
-              <span className={styles.legendConnected}>✓ Terhubung</span> - Entitas terhubung dengan Accurate
+              <span className={styles.legendConnected}>Terhubung</span> - Entitas terhubung dengan Accurate
             </div>
             <div className={styles.legendItem}>
-              <span className={styles.legendDisconnected}>✗ Tidak Terhubung</span> - Token tidak valid
+              <span className={styles.legendDisconnected}>Tidak Terhubung</span> - Token tidak valid
             </div>
             <div className={styles.legendItem}>
-              <span className={styles.legendImportant}>🌐 Public:</span> Data realisasi dapat dilihat user lain di halaman Community
+              <span className={styles.legendImportant}>Public:</span> Data realisasi dapat dilihat user lain di halaman Community
             </div>
             <div className={styles.legendItem}>
-              <span className={styles.legendImportant}>🔒 Private:</span> Data hanya dapat dilihat oleh Anda
+              <span className={styles.legendImportant}>Private:</span> Data hanya dapat dilihat oleh Anda
             </div>
             <div className={styles.legendItem}>
-              <span className={styles.legendImportant}>Penting! :</span> Pilih satu entitas sebagai aktif untuk digunakan di seluruh aplikasi
+              <span className={styles.legendImportant}>Penting:</span> Pilih satu entitas sebagai aktif untuk digunakan di seluruh aplikasi
             </div>
           </div>
         </div>
       </div>
+
+      {/* FORM TAMBAH - FULLSCREEN MODAL */}
+      {showForm && (
+        <div className={styles.formModalOverlay}>
+          <div className={styles.formModalContent}>
+            <div className={styles.formModalHeader}>
+              <h3 className={styles.formModalTitle}>Tambah Entitas Baru</h3>
+              <button
+                onClick={() => setShowForm(false)}
+                className={styles.formModalCloseButton}
+                type="button"
+              >
+                ×
+              </button>
+            </div>
+            <div className={styles.formModalBody}>
+              <EntitasForm
+                mode="create"
+                onSuccess={() => {
+                  setShowForm(false);
+                  fetchEntities();
+                }}
+                onCancel={() => setShowForm(false)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* FORM EDIT - FULLSCREEN MODAL */}
+      {showEdit && selectedEntity && (
+        <div className={styles.formModalOverlay}>
+          <div className={styles.formModalContent}>
+            <div className={styles.formModalHeader}>
+              <h3 className={styles.formModalTitle}>Edit Entitas</h3>
+              <button
+                onClick={() => {
+                  setShowEdit(false);
+                  setSelectedEntity(null);
+                }}
+                className={styles.formModalCloseButton}
+                type="button"
+              >
+                ×
+              </button>
+            </div>
+            <div className={styles.formModalBody}>
+              <EntitasForm
+                mode="edit"
+                initialData={selectedEntity}
+                onCancel={() => {
+                  setShowEdit(false);
+                  setSelectedEntity(null);
+                }}
+                onSuccess={() => {
+                  setShowEdit(false);
+                  setSelectedEntity(null);
+                  fetchEntities();
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

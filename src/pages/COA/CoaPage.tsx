@@ -85,22 +85,19 @@ const CoaPage: React.FC = () => {
         </div>
       </div>
 
-      {/* No Active Entity Warning */}
+     {/* No Active Entity Warning */}
       {!activeEntity && (
         <div className={styles.noEntityWarning}>
-          <h3 className={styles.noEntityWarningTitle}>Belum Ada Entitas Aktif</h3>
-          <p className={styles.noEntityWarningText}>
-            Silakan pilih entitas terlebih dahulu di halaman Manajemen Entitas
+          <h3>Belum Ada Entitas Aktif</h3>
+          <p>
+            Silakan pilih entitas terlebih dahulu di halaman <strong>Manajemen Entitas</strong>
           </p>
-          <button
-            onClick={() => window.location.href = '/entitas'}
-            className={styles.noEntityWarningButton}
-          >
+          <a href="/entitas">
             Ke Halaman Entitas →
-          </button>
+          </a>
         </div>
       )}
-
+      
       {/* Error Alert */}
       {error && <div className={styles.errorAlert}>{error}</div>}
 
