@@ -1,12 +1,12 @@
 /* ==========================================
-   COA MODULE CSS - CONSISTENT VERSION
+   COA MODULE CSS - FIXED HOVER VERSION
    ========================================== */
 
 /* ===== CONTAINER ===== */
 .container {
   padding: 2rem;
-  max-width: 1400px;
-  width : 800px;
+  max-width: 100%;
+  width: 100%;
   margin: 0 auto;
 }
 
@@ -72,7 +72,7 @@
 }
 
 .noEntityWarning a:hover {
-  background-color: var(--warning-dark);
+  background-color: #d97706;
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
 }
@@ -124,23 +124,12 @@
   animation: slideDown 0.3s ease;
 }
 
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 /* ===== COA CARD ===== */
 .coaCard {
   background-color: var(--surface);
   border-radius: var(--radius);
   box-shadow: var(--shadow-md);
-  overflow: hidden;
+  overflow: visible;
   transition: var(--transition);
 }
 
@@ -165,6 +154,12 @@
   align-items: center;
 }
 
+/* ===== TABLE WRAPPER - FULL WIDTH ===== */
+.tableWrapper {
+  width: 100%;
+  overflow-x: visible;
+}
+
 /* ===== BUTTONS ===== */
 .refreshButton {
   padding: 0.625rem 1.25rem;
@@ -183,7 +178,7 @@
 }
 
 .refreshButton:hover:not(:disabled) {
-  background-color: var(--secondary-dark);
+  background-color: #059669;
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
 }
@@ -234,7 +229,7 @@
 }
 
 .dropdownButton:hover:not(:disabled) {
-  background-color: var(--primary-dark);
+  background-color: #4f46e5;
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
 }
@@ -310,7 +305,7 @@
 }
 
 .tableHeaderCellCenter {
-  width: 100px;
+  width: 120px;
   text-align: center;
 }
 
@@ -371,7 +366,7 @@
 }
 
 .editButton:hover {
-  background-color: var(--primary-dark);
+  background-color: #4f46e5;
   transform: translateY(-1px);
   box-shadow: var(--shadow-sm);
 }
@@ -389,7 +384,7 @@
 }
 
 .deleteButton:hover {
-  background-color: var(--danger-dark);
+  background-color: #dc2626;
   transform: translateY(-1px);
   box-shadow: var(--shadow-sm);
 }
@@ -424,7 +419,7 @@
 }
 
 .deleteAllButton:hover {
-  background-color: var(--danger-dark);
+  background-color: #dc2626;
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
 }
@@ -604,8 +599,8 @@
 }
 
 .buttonCancelGray:hover {
-  background-color: var(--text-primary);
-  transform: translateY(-1px);
+  background-color: #374151;
+  box-shadow: var(--shadow-md);
 }
 
 .buttonWarningYellow {
@@ -622,8 +617,8 @@
 }
 
 .buttonWarningYellow:hover {
-  background-color: var(--warning-dark);
-  transform: translateY(-1px);
+  background-color: #d97706;
+  box-shadow: var(--shadow-md);
 }
 
 .buttonCancelGreen {
@@ -640,8 +635,8 @@
 }
 
 .buttonCancelGreen:hover:not(:disabled) {
-  background-color: var(--secondary-dark);
-  transform: translateY(-1px);
+  background-color: #059669;
+  box-shadow: var(--shadow-md);
 }
 
 .buttonCancelGreen:disabled {
@@ -663,8 +658,8 @@
 }
 
 .buttonDangerRed:hover:not(:disabled) {
-  background-color: var(--danger-dark);
-  transform: translateY(-1px);
+  background-color: #dc2626;
+  box-shadow: var(--shadow-md);
 }
 
 .buttonDangerRed:disabled {
@@ -840,7 +835,7 @@
   margin-bottom: 0;
 }
 
-/* ===== MODAL BUTTONS ===== */
+/* ===== MODAL BUTTONS - FIXED (NO TRANSLATEY) ===== */
 .modalButtonGroup {
   display: flex;
   gap: 0.75rem;
@@ -863,8 +858,8 @@
 }
 
 .modalButtonPrimary:hover:not(:disabled) {
-  background-color: var(--primary-dark);
-  transform: translateY(-1px);
+  background-color: #4f46e5;
+  box-shadow: var(--shadow-md);
 }
 
 .modalButtonPrimary:disabled {
@@ -886,8 +881,8 @@
 }
 
 .modalButtonSecondary:hover:not(:disabled) {
-  background-color: var(--text-primary);
-  transform: translateY(-1px);
+  background-color: #374151;
+  box-shadow: var(--shadow-md);
 }
 
 .modalButtonSecondary:disabled {
@@ -909,8 +904,8 @@
 }
 
 .modalButtonDanger:hover:not(:disabled) {
-  background-color: var(--danger-dark);
-  transform: translateY(-1px);
+  background-color: #dc2626;
+  box-shadow: var(--shadow-md);
 }
 
 .modalButtonDanger:disabled {
@@ -932,8 +927,8 @@
 }
 
 .modalButtonWarning:hover {
-  background-color: var(--warning-dark);
-  transform: translateY(-1px);
+  background-color: #d97706;
+  box-shadow: var(--shadow-md);
 }
 
 .modalButtonSuccess {
@@ -950,8 +945,8 @@
 }
 
 .modalButtonSuccess:hover:not(:disabled) {
-  background-color: var(--secondary-dark);
-  transform: translateY(-1px);
+  background-color: #059669;
+  box-shadow: var(--shadow-md);
 }
 
 .modalButtonSuccess:disabled {
@@ -973,8 +968,8 @@
 }
 
 .modalButtonDangerLarge:hover:not(:disabled) {
-  background-color: var(--danger-dark);
-  transform: translateY(-1px);
+  background-color: #dc2626;
+  box-shadow: var(--shadow-md);
 }
 
 .modalButtonDangerLarge:disabled {

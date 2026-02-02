@@ -153,7 +153,7 @@ const CoaPage: React.FC = () => {
                     disabled={syncing}
                     className={styles.dropdownMenuItem}
                   >
-                    <span className={styles.dropdownMenuIcon}>🔗</span>
+                    <span className={styles.dropdownMenuIcon}></span>
                     <span>Tarik dari Accurate API</span>
                   </button>
 
@@ -164,7 +164,7 @@ const CoaPage: React.FC = () => {
                     }}
                     className={styles.dropdownMenuItem}
                   >
-                    <span className={styles.dropdownMenuIcon}>📊</span>
+                    <span className={styles.dropdownMenuIcon}></span>
                     <span>Import dari Excel</span>
                   </button>
                 </div>

@@ -123,11 +123,11 @@ export const ExportFile: React.FC<ExportFileProps> = ({ group, entityName, onExp
       const fileName = `Budget_Realization_${group.budget_name.replace(/\s+/g, '_')}_${group.period}_${new Date().getTime()}.xlsx`;
       XLSX.writeFile(wb, fileName);
 
-      alert('✅ Export Excel berhasil!');
+      alert('Export Excel berhasil!');
       console.log('[ExportFile] Excel exported:', fileName);
     } catch (err: any) {
       console.error('[ExportFile] Excel export error:', err);
-      alert('❌ Gagal export Excel: ' + err.message);
+      alert('Gagal export Excel: ' + err.message);
     } finally {
       setExporting(false);
       onExporting?.(false);
@@ -176,11 +176,11 @@ export const ExportFile: React.FC<ExportFileProps> = ({ group, entityName, onExp
       const fileName = `Budget_Realization_${group.budget_name.replace(/\s+/g, '_')}_${group.period}_${new Date().getTime()}.csv`;
       saveAs(blob, fileName);
 
-      alert('✅ Export CSV berhasil!');
+      alert('Export CSV berhasil!');
       console.log('[ExportFile] CSV exported:', fileName);
     } catch (err: any) {
       console.error('[ExportFile] CSV export error:', err);
-      alert('❌ Gagal export CSV: ' + err.message);
+      alert('Gagal export CSV: ' + err.message);
     } finally {
       setExporting(false);
       onExporting?.(false);
@@ -439,7 +439,7 @@ export const ExportFile: React.FC<ExportFileProps> = ({ group, entityName, onExp
         disabled={exporting}
         className={`${styles.exportButton} ${styles.excelButton}`}
       >
-        📊 Export Excel
+        Export Excel
       </button>
 
       <button
@@ -447,7 +447,7 @@ export const ExportFile: React.FC<ExportFileProps> = ({ group, entityName, onExp
         disabled={exporting}
         className={`${styles.exportButton} ${styles.csvButton}`}
       >
-        📄 Export CSV
+        Export CSV
       </button>
 
       <button
@@ -455,7 +455,7 @@ export const ExportFile: React.FC<ExportFileProps> = ({ group, entityName, onExp
         disabled={exporting}
         className={`${styles.exportButton} ${styles.wordButton}`}
       >
-        📝 Export Word
+        Export Word
       </button>
     </div>
   );

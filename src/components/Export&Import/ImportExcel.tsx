@@ -202,7 +202,7 @@ export const ImportExcel: React.FC<ImportExcelProps> = ({
       }
     }
     
-    console.log(`[findColumnValue] ❌ No match found for:`, possibleNames);
+    console.log(`[findColumnValue] No match found for:`, possibleNames);
     return null;
   };
 

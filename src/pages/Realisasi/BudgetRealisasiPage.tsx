@@ -495,7 +495,7 @@ const BudgetRealizationPage: React.FC = () => {
                           onClick={() => handleOpenDetail(group)}
                           className={styles.detailButton}
                         >
-                          📋 Detail
+                          Detail
                         </button>
                       </td>
                     </tr>
