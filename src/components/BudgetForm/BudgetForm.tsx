@@ -295,7 +295,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
       {/* Header */}
       <div className={styles.header}>
         <h2 className={styles.headerTitle}>
-          {mode === 'create' ? '📝 Buat Budget Baru' : 'Edit Budget'}
+          {mode === 'create' ? 'Buat Budget Baru' : 'Edit Budget'}
         </h2>
         <p className={styles.headerSubtitle}>
           {mode === 'create'
@@ -307,12 +307,12 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
       {/* Form Content */}
       <form onSubmit={handleSubmit} className={styles.form}>
         {/* Error Alert */}
-        {error && <div className={styles.errorAlert}>⚠️ {error}</div>}
+        {error && <div className={styles.errorAlert}>{error}</div>}
 
         {/* Warning Alert */}
         {warnings.length > 0 && (
           <div className={styles.warningAlert}>
-            <div className={styles.warningAlertTitle}>⚠️ Peringatan:</div>
+            <div className={styles.warningAlertTitle}>Peringatan:</div>
             {warnings.map((warning, idx) => (
               <div key={idx}>• {warning}</div>
             ))}
@@ -388,7 +388,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
                   type="text"
                   value={accountFilter}
                   onChange={(e) => setAccountFilter(e.target.value)}
-                  placeholder="🔍 Ketik kode atau nama akun untuk mencari..."
+                  placeholder="Ketik kode atau nama akun untuk mencari..."
                   className={styles.searchInput}
                 />
               </div>
@@ -440,28 +440,22 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
               {selectedAccountId && (
                 <>
                   {/* NEW: Show realisasi snapshot */}
-                  <div style={{ 
-                    padding: '12px', 
-                    backgroundColor: '#f0f9ff', 
-                    borderRadius: '8px',
-                    border: '1px solid #bae6fd',
-                    marginBottom: '16px'
-                  }}>
-                    <div style={{ fontSize: '14px', color: '#0369a1', marginBottom: '4px' }}>
-                      📊 Realisasi (Balance COA saat ini):
+                  <div className={styles.showRealisasi}>
+                    <div style={{ fontSize: '14px', color: '#0369a1', marginBottom: '4px'}}>
+                      Realisasi (Balance COA saat ini):
                     </div>
                     <div style={{ fontSize: '18px', fontWeight: '600', color: '#0c4a6e' }}>
                       Rp {formatCurrency(realisasiSnapshot)}
                     </div>
-                    <div style={{ fontSize: '12px', color: '#075985', marginTop: '4px' }}>
-                      Nilai ini akan tersimpan sebagai snapshot dan tidak akan berubah
+                    <div style={{ fontSize: '14px', color: '#075985', marginTop: '4px' }}>
+                      Masukkan budget perkiraan yang akan dialokasikan untuk akun ini.
                     </div>
                   </div>
 
                   <div className={styles.amountGrid}>
                     <div>
                       <label className={styles.label}>
-                        Budget (Target) <span className={styles.required}>*</span>
+                        Budget <span className={styles.required}>*</span>
                       </label>
                       <input
                         type="number"
@@ -620,13 +614,11 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
               
               {totalRealisasi > 0 && (
                 <div className={styles.totalHint} style={{ marginTop: '8px' }}>
-                  <span>📊</span>
                   <span>Total Realisasi: Rp {formatCurrency(totalRealisasi)}</span>
                 </div>
               )}
               
               <div className={styles.totalHint}>
-                <span>💡</span>
                 <span>Dihitung otomatis dari {budgetItems.length} akun yang dialokasikan</span>
               </div>
             </div>

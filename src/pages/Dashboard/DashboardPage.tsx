@@ -245,15 +245,17 @@ const DashboardPage: React.FC = () => {
     <div className={styles.container}>
       {/* Header */}
       <div className={styles.header}>
-        <h2 className={styles.headerTitle}>📊 Dashboard</h2>
-        <p className={styles.headerSubtitle}>
-          Ringkasan Budget vs Realisasi
-        </p>
-        {activeEntity && (
-          <p className={styles.headerEntity}>
-            Entitas: <strong>{activeEntity.entity_name || activeEntity.name}</strong>
+        <div className={styles.headerContent}>
+          <h1 className={styles.headerTitle}>Dashboard</h1>
+          <p className={styles.headerSubtitle}>
+            Ringkasan Budget vs Realisasi
           </p>
-        )}
+          {activeEntity && (
+            <p className={styles.headerEntity}>
+              Entitas: <strong>{activeEntity.entity_name || activeEntity.name}</strong>
+            </p>
+          )}
+        </div>
       </div>
 
       {/* No Entity Warning */}
@@ -284,11 +286,11 @@ const DashboardPage: React.FC = () => {
 
             {loading ? (
               <div className={styles.chartLoading}>
-                ⏳ Memuat data...
+                Memuat data...
               </div>
             ) : chartData.length === 0 ? (
               <div className={styles.chartEmpty}>
-                📋 Belum ada data budget. Silakan buat budget terlebih dahulu.
+                Belum ada data budget. Silakan buat budget terlebih dahulu.
               </div>
             ) : (
               <ResponsiveContainer width="100%" height={400}>
@@ -338,7 +340,7 @@ const DashboardPage: React.FC = () => {
             {/* Over Budget Warnings */}
             <div className={styles.overBudgetCard}>
               <h3 className={styles.overBudgetTitle}>
-                ⚠️ Peringatan Over Budget
+                Peringatan Over Budget
               </h3>
 
               {loading ? (
@@ -394,7 +396,7 @@ const DashboardPage: React.FC = () => {
             {/* Insights & Statistics */}
             <div className={styles.insightsCard}>
               <h3 className={styles.insightsTitle}>
-                📈 Insight & Statistik
+                Insight & Statistik
               </h3>
 
               {loading ? (
@@ -437,25 +439,25 @@ const DashboardPage: React.FC = () => {
                   {/* Unutilized & Over Budget Amounts */}
                   <div className={styles.amountsGrid}>
                     <div className={styles.amountBoxUnutilized}>
-                      <div className={`${styles.amountLabel} ${styles.amountLabelUnutilized}`}>
+                      <div className={styles.amountLabel}>
                         Unutilized Budget
                       </div>
-                      <div className={`${styles.amountValue} ${styles.amountValueUnutilized}`}>
+                      <div className={styles.amountValue}>
                         Rp{formatCurrency(stats.totalUnutilized)}
                       </div>
-                      <div className={`${styles.amountSubtext} ${styles.amountSubtextUnutilized}`}>
+                      <div className={styles.amountSubtext}>
                         belum terpakai
                       </div>
                     </div>
 
                     <div className={styles.amountBoxOver}>
-                      <div className={`${styles.amountLabel} ${styles.amountLabelOver}`}>
+                      <div className={styles.amountLabel}>
                         Total Over Budget
                       </div>
-                      <div className={`${styles.amountValue} ${styles.amountValueOver}`}>
+                      <div className={styles.amountValue}>
                         Rp{formatCurrency(stats.totalOverBudget)}
                       </div>
-                      <div className={`${styles.amountSubtext} ${styles.amountSubtextOver}`}>
+                      <div className={styles.amountSubtext}>
                         melebihi budget
                       </div>
                     </div>
@@ -463,38 +465,38 @@ const DashboardPage: React.FC = () => {
 
                   {/* Distribution Cards */}
                   <div className={styles.statsGrid}>
-                    <div className={styles.statCardTotal}>
-                      <div className={`${styles.statLabel} ${styles.statLabelTotal}`}>
+                    <div className={styles.statCard}>
+                      <div className={styles.statLabel}>
                         Total Akun COA
                       </div>
-                      <div className={`${styles.statValue} ${styles.statValueTotal}`}>
+                      <div className={styles.statValue}>
                         {totalAccounts}
                       </div>
                     </div>
 
-                    <div className={styles.statCardOnTrack}>
-                      <div className={`${styles.statLabel} ${styles.statLabelOnTrack}`}>
+                    <div className={styles.statCard}>
+                      <div className={styles.statLabel}>
                         On Track
                       </div>
-                      <div className={`${styles.statValue} ${styles.statValueOnTrack}`}>
+                      <div className={`${styles.statValue} ${styles.statValueSuccess}`}>
                         {stats.onTrackCount}
                       </div>
                     </div>
 
-                    <div className={styles.statCardOver}>
-                      <div className={`${styles.statLabel} ${styles.statLabelOver}`}>
+                    <div className={styles.statCard}>
+                      <div className={styles.statLabel}>
                         Over Budget
                       </div>
-                      <div className={`${styles.statValue} ${styles.statValueOver}`}>
+                      <div className={`${styles.statValue} ${styles.statValueDanger}`}>
                         {stats.overBudgetCount}
                       </div>
                     </div>
 
-                    <div className={styles.statCardUnder}>
-                      <div className={`${styles.statLabel} ${styles.statLabelUnder}`}>
+                    <div className={styles.statCard}>
+                      <div className={styles.statLabel}>
                         Under-utilized
                       </div>
-                      <div className={`${styles.statValue} ${styles.statValueUnder}`}>
+                      <div className={`${styles.statValue} ${styles.statValueWarning}`}>
                         {stats.underUtilizedCount}
                       </div>
                     </div>

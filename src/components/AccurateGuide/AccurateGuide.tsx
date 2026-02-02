@@ -167,16 +167,15 @@ export const AccurateGuide: React.FC = () => {
                   • Token harus divalidasi terlebih dahulu sebelum dapat disimpan
                 </p>
               </div>
-            </div>
 
-            <div className={styles.modalFooter}>
-              <button
+                <button
                 onClick={() => setShowModal(false)}
                 className={styles.footerButton}
               >
                 Mengerti, Tutup Panduan
               </button>
             </div>
+
           </div>
         </div>
       )}

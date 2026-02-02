@@ -3,19 +3,20 @@
 .triggerButton {
   background: none;
   border: none;
-  color: #2196f3;
+  color: var(--primary-color);
   text-decoration: underline;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   padding: 0;
   margin-top: 0.5rem;
-  transition: color 0.2s ease;
+  transition: var(--transition);
 }
 
 .triggerButton:hover {
-  color: #1976d2;
+  color: #5558cf;
 }
 
+/* ===== MODAL OVERLAY ===== */
 .modalOverlay {
   position: fixed;
   top: 0;
@@ -34,27 +35,28 @@
 }
 
 .modalContent {
-  background-color: #fff;
-  border-radius: 12px;
+  background-color: #ffffff;
+  border-radius: var(--radius);
   max-width: 700px;
   width: 100%;
   max-height: 90vh;
   overflow: hidden;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-lg);
   animation: slideUp 0.3s ease-out;
   display: flex;
   flex-direction: column;
 }
 
+/* ===== MODAL HEADER ===== */
 .modalHeader {
   padding: 1.5rem;
-  border-bottom: 2px solid #e0e0e0;
+  border-bottom: 2px solid var(--border-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-top-left-radius: 12px;
-  border-top-right-radius: 12px;
+  background: linear-gradient(135deg, var(--primary-color) 0%, #5558cf 100%);
+  border-top-left-radius: var(--radius);
+  border-top-right-radius: var(--radius);
   flex-shrink: 0;
 }
 
@@ -73,8 +75,8 @@
   color: #fff;
   line-height: 1;
   padding: 0.25rem;
-  transition: color 0.2s ease, transform 0.2s ease;
-  border-radius: 4px;
+  transition: var(--transition);
+  border-radius: calc(var(--radius) - 6px);
 }
 
 .closeButton:hover {
@@ -82,71 +84,77 @@
   transform: scale(1.1);
 }
 
+/* ===== MODAL BODY ===== */
 .modalBody {
   padding: 2rem;
   overflow-y: auto;
   flex: 1;
+  color: var(--text-primary);
+  scrollbar-width: none; 
+  -ms-overflow-style: none;
 }
 
+/* ===== APP KEY BOX ===== */
 .appKeyBox {
   background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
-  border: 2px solid #ff9800;
-  border-radius: 8px;
+  border: 2px solid var(--warning-color);
+  border-radius: calc(var(--radius) - 4px);
   padding: 1.25rem;
   margin-bottom: 1.5rem;
-  box-shadow: 0 2px 8px rgba(255, 152, 0, 0.2);
+  box-shadow: var(--shadow-sm);
 }
 
 .appKeyLabel {
   color: #e65100;
   font-size: 1rem;
-  font-weight: bold;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 0.75rem;
 }
 
 .appKeyValue {
   background-color: #fff;
   padding: 0.75rem;
-  border-radius: 6px;
-  font-family: monospace;
+  border-radius: calc(var(--radius) - 6px);
+  font-family: 'Monaco', 'Courier New', monospace;
   font-size: 0.95rem;
-  color: #333;
+  color: var(--text-primary);
   word-break: break-all;
   border: 1px solid #ffb74d;
-  margin: 0.75rem 0;
+  margin-bottom: 0.75rem;
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .copyButton {
-  background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+  background: linear-gradient(135deg, var(--warning-color) 0%, #f57c00 100%);
   color: #fff;
   border: none;
   padding: 0.5rem 1rem;
-  border-radius: 6px;
+  border-radius: calc(var(--radius) - 6px);
   cursor: pointer;
   font-size: 0.9rem;
   font-weight: 600;
-  transition: all 0.2s ease;
-  transform: translateZ(0);
-  backface-visibility: hidden;
-  box-shadow: 0 2px 5px rgba(255, 152, 0, 0.3);
+  transition: var(--transition);
+  box-shadow: var(--shadow-sm);
 }
 
 .copyButton:hover {
   background: linear-gradient(135deg, #f57c00 0%, #e65100 100%);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.4);
+  box-shadow: var(--shadow-md);
 }
 
 .copyButton.copied {
-  background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
+  background: linear-gradient(135deg, var(--secondary-color) 0%, #059669 100%);
 }
 
+/* ===== STEPS ===== */
 .stepsTitle {
-  color: #333;
+  color: var(--text-primary);
   margin-bottom: 1.5rem;
   font-size: 1.3rem;
   font-weight: 600;
-  border-bottom: 3px solid #667eea;
+  border-bottom: 3px solid var(--primary-color);
   padding-bottom: 0.5rem;
   display: inline-block;
 }
@@ -165,25 +173,25 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: bold;
+  font-weight: 600;
   font-size: 1.2rem;
   flex-shrink: 0;
   color: #fff;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
-  transition: transform 0.2s ease;
+  box-shadow: var(--shadow-md);
+  transition: var(--transition);
 }
 
 .step:hover .stepNumber {
   transform: scale(1.1);
 }
 
-/* Warna Step Number */
+/* Step Number Colors */
 .stepNumberBlue {
-  background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+  background: linear-gradient(135deg, var(--primary-color) 0%, #5558cf 100%);
 }
 
 .stepNumberOrange {
-  background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+  background: linear-gradient(135deg, var(--warning-color) 0%, #f57c00 100%);
   animation: pulse 2s ease-in-out infinite;
 }
 
@@ -192,58 +200,51 @@
 }
 
 .stepNumberGreen {
-  background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
+  background: linear-gradient(135deg, var(--secondary-color) 0%, #059669 100%);
   animation: pulse 2s ease-in-out infinite;
 }
 
 .stepContent h4 {
   margin: 0 0 0.5rem 0;
-  color: #333;
+  color: var(--text-primary);
   font-size: 1.1rem;
   font-weight: 600;
 }
 
 .stepContent p {
   margin: 0;
-  color: #666;
+  color: var(--text-secondary);
   font-size: 0.95rem;
   line-height: 1.6;
 }
 
-.importantStep {
-  color: #ff9800 !important;
-}
-
-.finalStep {
-  color: #4caf50 !important;
-}
-
-.link {
-  color: #2196f3;
+.stepContent a {
+  color: var(--primary-color);
   text-decoration: none;
   font-weight: 600;
-  transition: color 0.2s ease;
+  transition: var(--transition);
 }
 
-.link:hover {
-  color: #1976d2;
+.stepContent a:hover {
+  color: #5558cf;
   text-decoration: underline;
 }
 
+/* ===== WARNING BOX ===== */
 .warningBox {
   margin-top: 2rem;
   padding: 1.25rem;
   background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
-  border: 2px solid #f44336;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(244, 67, 54, 0.2);
+  border: 2px solid var(--danger-color);
+  border-radius: calc(var(--radius) - 4px);
+  box-shadow: var(--shadow-sm);
 }
 
 .warningTitle {
   color: #c62828;
   display: block;
   margin-bottom: 0.5rem;
-  font-weight: bold;
+  font-weight: 700;
   font-size: 1.1rem;
 }
 
@@ -254,42 +255,36 @@
   line-height: 1.6;
 }
 
-.modalFooter {
-  padding: 1rem 2rem;
-  border-top: 1px solid #e0e0e0;
-  display: flex;
-  justify-content: flex-end;
-  background-color: #f9f9f9;
-  border-bottom-left-radius: 12px;
-  border-bottom-right-radius: 12px;
-  flex-shrink: 0;
-}
-
 .footerButton {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--primary-color) 0%, #5558cf 100%);
   color: #fff;
   border: none;
   padding: 0.75rem 2rem;
-  border-radius: 6px;
+  border-radius: calc(var(--radius) - 6px);
   cursor: pointer;
   font-size: 1rem;
   font-weight: 600;
-  transition: all 0.2s ease;
-  transform: translateZ(0);
-  backface-visibility: hidden;
-  box-shadow: 0 3px 10px rgba(102, 126, 234, 0.4);
+  transition: var(--transition);
+  box-shadow: var(--shadow-md);
+  margin-top: 1.5rem;
+  margin-left: auto;
+  display: block;
 }
 
 .footerButton:hover {
-  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  background: linear-gradient(135deg, #5558cf 0%, var(--primary-color) 100%);
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.5);
+  box-shadow: var(--shadow-lg);
 }
 
-/* Animations */
+/* ===== ANIMATIONS ===== */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from { 
+    opacity: 0; 
+  }
+  to { 
+    opacity: 1; 
+  }
 }
 
 @keyframes slideUp {
@@ -316,28 +311,78 @@
 
 @keyframes pulse {
   0%, 100% {
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow-md);
   }
   50% {
     box-shadow: 0 5px 20px rgba(255, 152, 0, 0.6);
   }
 }
 
-/* Scrollbar */
+/* ===== SCROLLBAR ===== */
 .modalBody::-webkit-scrollbar {
-  width: 8px;
+ display: none; 
 }
 
 .modalBody::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 4px;
+  background: var(--background);
+  border-radius: calc(var(--radius) - 6px);
 }
 
 .modalBody::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 4px;
+  background: linear-gradient(135deg, var(--primary-color) 0%, #5558cf 100%);
+  border-radius: calc(var(--radius) - 6px);
 }
 
 .modalBody::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  background: linear-gradient(135deg, #5558cf 0%, var(--primary-color) 100%);
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 640px) {
+  .modalContent {
+    max-width: 100%;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+
+  .modalHeader {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    padding: 1.25rem;
+  }
+
+  .modalTitle {
+    font-size: 1.25rem;
+  }
+
+  .modalBody {
+    padding: 1.5rem;
+  }
+
+  .appKeyBox {
+    padding: 1rem;
+  }
+
+  .step {
+    gap: 0.75rem;
+  }
+
+  .stepNumber {
+    min-width: 40px;
+    height: 40px;
+    font-size: 1.1rem;
+  }
+
+  .stepContent h4 {
+    font-size: 1rem;
+  }
+
+  .stepContent p {
+    font-size: 0.875rem;
+  }
+
+  .footerButton {
+    width: 100%;
+    margin-left: 0;
+  }
 }

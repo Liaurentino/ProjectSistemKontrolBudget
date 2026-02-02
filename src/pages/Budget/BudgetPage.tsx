@@ -320,11 +320,11 @@ const BudgetPage: React.FC = () => {
             <div className={styles.emptyState}>
               {searchQuery ? (
                 <>
-                  🔍 Tidak ada budget yang cocok dengan pencarian "<strong>{searchQuery}</strong>"
+                  Tidak ada budget yang cocok dengan pencarian "<strong>{searchQuery}</strong>"
                 </>
               ) : (
                 <>
-                  📋 Belum ada budget. Klik tombol "Tambah Budget" untuk membuat budget baru.
+                  Belum ada budget. Klik tombol "Tambah Budget" untuk membuat budget baru.
                 </>
               )}
             </div>
@@ -448,7 +448,7 @@ const BudgetPage: React.FC = () => {
         <div className={styles.summaryGrid}>
           <div className={styles.summaryItem}>
             <div className={styles.summaryLabel}>
-              Total Budget (Target)
+              Total Budget
             </div>
             <div
               className={styles.summaryValue}
@@ -460,7 +460,7 @@ const BudgetPage: React.FC = () => {
 
           <div className={styles.summaryItem}>
             <div className={styles.summaryLabel}>
-              Total Realisasi (Aktual)
+              Total Realisasi
             </div>
             <div
               className={styles.summaryValue}

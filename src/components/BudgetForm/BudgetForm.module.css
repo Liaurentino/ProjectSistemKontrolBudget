@@ -1,99 +1,136 @@
-/* BudgetForm.module.css */
+/* ==========================================
+   BUDGET FORM - SUBTLE BORDER VERSION
+   ========================================== */
 
+/* ===== CARD ===== */
 .card {
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  background-color: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
   overflow: hidden;
+  transition: var(--transition);
 }
 
+/* ===== HEADER ===== */
 .header {
-  padding: 16px 24px;
-  border-bottom: 1px solid #dee2e6;
-  background-color: #f8f9fa;
+  padding: 1.5rem;
+  border-bottom: 2px solid var(--border-color);
+  background-color: var(--background);
 }
 
 .headerTitle {
   margin: 0;
-  font-size: 20px;
-  font-weight: 600;
-  color: #212529;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
 }
 
 .headerSubtitle {
-  margin: 4px 0 0;
-  font-size: 14px;
-  color: #6c757d;
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
 }
 
+/* ===== FORM ===== */
 .form {
-  padding: 24px;
+  padding: 1.5rem;
 }
 
+/* ===== ALERTS ===== */
 .errorAlert {
-  padding: 12px 16px;
-  background-color: #f8d7da;
-  border: 1px solid #f5c6cb;
-  border-radius: 6px;
-  margin-bottom: 20px;
+  padding: 1rem 1.25rem;
+  background-color: #fee;
+  border: 1px solid #fcc;
+  border-left: 4px solid var(--danger-color);
+  border-radius: calc(var(--radius) - 4px);
+  margin-bottom: 1.5rem;
   color: #721c24;
-  font-size: 14px;
+  font-size: 0.875rem;
+  animation: slideDown 0.3s ease;
 }
 
 .warningAlert {
-  padding: 12px 16px;
-  background-color: #fff3cd;
+  padding: 1rem 1.25rem;
+  background-color: #fff8e1;
   border: 1px solid #ffc107;
-  border-radius: 6px;
-  margin-bottom: 20px;
+  border-left: 4px solid var(--warning-color);
+  border-radius: calc(var(--radius) - 4px);
+  margin-bottom: 1.5rem;
   color: #856404;
-  font-size: 13px;
+  font-size: 0.875rem;
+  animation: slideDown 0.3s ease;
 }
 
 .warningAlertTitle {
-  font-weight: 600;
-  margin-bottom: 4px;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
 }
 
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== SECTION TITLE ===== */
 .sectionTitle {
-  margin: 0 0 16px;
-  font-size: 16px;
+  margin: 0 0 1rem;
+  font-size: 1rem;
   font-weight: 600;
-  color: #495057;
+  color: var(--text-primary);
 }
 
+/* ===== FORM GRID ===== */
 .formGrid {
   display: grid;
   grid-template-columns: 1fr 200px;
-  gap: 16px;
-  margin-bottom: 16px;
+  gap: 1rem;
+  margin-bottom: 1rem;
 }
 
 .fullWidth {
   grid-column: 1 / -1;
 }
 
+/* ===== FORM INPUTS ===== */
 .label {
   display: block;
-  margin-bottom: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  color: #212529;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .required {
-  color: #dc3545;
+  color: var(--danger-color);
 }
 
 .input,
 .textarea,
 .monthInput {
   width: 100%;
-  padding: 8px 12px;
-  border: 1px solid #ced4da;
-  border-radius: 4px;
-  font-size: 14px;
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--border-color);
+  border-radius: calc(var(--radius) - 4px);
+  font-size: 0.938rem;
   font-family: inherit;
+  transition: var(--transition);
+  color: var(--text-primary);
+  background-color: var(--surface);
+}
+
+.input:focus,
+.textarea:focus,
+.monthInput:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 
 .textarea {
@@ -102,18 +139,19 @@
 }
 
 .charCount {
-  font-size: 11px;
-  color: #6c757d;
-  margin-top: 4px;
+  font-size: 0.813rem;
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
 }
 
+/* ===== SUMMARY BOX ===== */
 .summaryBox {
-  padding: 20px;
+  padding: 1.25rem;
   background-color: #d1ecf1;
-  border: 1px solid #bee5eb;
-  border-radius: 6px;
-  margin-bottom: 24px;
-  margin-top: 24px;
+  border: 2px solid #0891b2;
+  border-radius: calc(var(--radius) - 4px);
+  margin-bottom: 1.5rem;
+  margin-top: 1.5rem;
 }
 
 .summaryContent {
@@ -123,68 +161,75 @@
 }
 
 .totalLabel {
-  font-size: 13px;
-  font-weight: 600;
-  color: #0c5460;
-  margin-bottom: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #1565c0;
+  margin-bottom: 0.375rem;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.05em;
 }
 
 .totalAmount {
   font-weight: 700;
-  color: #212529;
-  margin-bottom: 4px;
+  font-size: 1.125rem;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
 }
 
 .totalHint {
-  font-size: 12px;
-  color: #0c5460;
+  font-size: 0.813rem;
+  color: #1565c0;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 0.375rem;
 }
 
 .accountCountBadge {
-  padding: 12px 20px;
-  background-color: #28a745;
+  padding: 0.75rem 1.25rem;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
-  border-radius: 6px;
+  border-radius: calc(var(--radius) - 4px);
   text-align: center;
+  box-shadow: var(--shadow-sm);
 }
 
 .accountCountNumber {
-  font-size: 24px;
+  font-size: 1.5rem;
   font-weight: 700;
-  margin-bottom: 2px;
+  margin-bottom: 0.125rem;
 }
 
 .accountCountLabel {
-  font-size: 11px;
+  font-size: 0.688rem;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.05em;
 }
 
+/* ===== ALLOCATION SECTION ===== */
 .allocationHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 1rem;
 }
 
 .addButton {
-  padding: 8px 16px;
-  background-color: #28a745;
+  padding: 0.75rem 1.25rem;
+  background-color: var(--secondary-color);
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: calc(var(--radius) - 4px);
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 0.938rem;
+  font-weight: 600;
+  transition: var(--transition);
+  box-shadow: var(--shadow-sm);
 }
 
 .addButton:hover:not(:disabled) {
-  background-color: #218838;
+  background-color: #059669;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
 .addButtonClose {
@@ -195,47 +240,176 @@
   background-color: #5a6268;
 }
 
+/* ===== ADD ITEM FORM - SUBTLE BORDER BIRU ===== */
 .addItemForm {
-  padding: 16px;
-  background-color: #f8f9fa;
-  border: 1px solid #dee2e6;
-  border-radius: 6px;
-  margin-bottom: 16px;
+  padding: 1.75rem;
+  background: linear-gradient(135deg, #f0f9ff 0%, #fefefe 100%);
+  border: 1.5px solid #93c5fd;
+  border-radius: 10px;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.08);
+  position: relative;
+  transition: var(--transition);
+}
+
+.addItemForm:hover {
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.12);
+}
+
+/* Small badge di pojok kiri atas */
+.addItemForm::before {
+  position: absolute;
+  top: -10px;
+  left: 16px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.688rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.25);
 }
 
 .addItemTitle {
-  margin: 0 0 16px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #495057;
+  margin: 0.25rem 0 1.25rem;
+  font-size: 1.063rem;
+  font-weight: 700;
+  color: #1e40af;
 }
 
 .searchInput {
   width: 100%;
-  padding: 10px 12px;
-  border: 2px solid #ced4da;
-  border-radius: 4px;
-  font-size: 14px;
+  padding: 0.75rem 1rem;
+  border: 1.5px solid #bfdbfe;
+  border-radius: calc(var(--radius) - 4px);
+  font-size: 0.938rem;
+  transition: var(--transition);
+  background-color: white;
 }
 
 .searchInput:focus {
   outline: none;
-  border-color: #007bff;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
 }
 
+/* ===== DIVIDER BETWEEN SECTIONS ===== */
+.sectionDivider {
+  height: 1px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    #cbd5e1 15%,
+    #cbd5e1 85%,
+    transparent 100%
+  );
+  margin: 2rem 0;
+}
+
+/* ===== TABLE WRAPPER - SUBTLE BORDER HIJAU ===== */
+.tableWrapper {
+  overflow-x: auto;
+  border: 1.5px solid #86efac;
+  border-radius: 10px;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(135deg, #f0fdf4 0%, #fefefe 100%);
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.08);
+  position: relative;
+  transition: var(--transition);
+  scrollbar-width: 1px;
+}
+
+.tableWrapper:hover {
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.12);
+}
+
+/* Small badge di pojok kiri atas */
+.tableWrapper::before {
+  position: absolute;
+  top: -10px;
+  left: 16px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.688rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.tableHeader {
+  background: linear-gradient(135deg, #d1fae5 0%, #ecfdf5 100%);
+}
+
+.tableCell,
+.tableHeaderCell {
+  padding: 1rem;
+  text-align: left;
+  font-size: 0.875rem;
+  border-bottom: 1px solid #d1fae5;
+}
+
+.tableHeaderCell {
+  font-weight: 700;
+  color: #047857;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.tableCell {
+  color: var(--text-primary);
+  border-right: 1px solid #f0fdf4;
+}
+
+.tableHeaderCell:last-child,
+.tableCell:last-child {
+  border-right: none;
+}
+
+.table tbody tr {
+  transition: var(--transition);
+}
+
+.table tbody tr:hover {
+  background-color: #f0fdf4;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.tableCellCenter {
+  text-align: center;
+}
+
+/* ===== ACCOUNT LIST ===== */
 .accountListContainer {
   max-height: 240px;
   overflow-y: auto;
-  border: 1px solid #dee2e6;
-  border-radius: 4px;
+  border: 1.5px solid #bfdbfe;
+  border-radius: calc(var(--radius) - 4px);
   background-color: white;
+  margin-top: 0.75rem;
 }
 
 .accountItem {
-  padding: 12px 16px;
-  border-bottom: 1px solid #f0f0f0;
+  padding: 1rem;
+  border-bottom: 1px solid #dbeafe;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: var(--transition);
 }
 
 .accountItem:last-child {
@@ -243,156 +417,166 @@
 }
 
 .accountItem:hover:not(.selected) {
-  background-color: #f8f9fa;
+  background-color: #f0f9ff;
 }
 
 .accountItemSelected {
-  background-color: #e7f3ff;
+  background-color: rgba(59, 130, 246, 0.08);
+  border-left: 4px solid #3b82f6;
 }
 
 .accountRow {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 1rem;
 }
 
 .accountCode {
-  padding: 2px 6px;
-  background-color: #e7f3ff;
-  border-radius: 3px;
-  font-size: 13px;
+  padding: 0.35rem 0.75rem;
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  color: #1e40af;
+  border-radius: calc(var(--radius) - 6px);
+  font-size: 0.875rem;
   font-weight: 600;
-  color: #004085;
+  font-family: 'Monaco', 'Courier New', monospace;
+  display: inline-block;
+  border: 1px solid #93c5fd;
 }
 
 .accountName {
-  font-size: 14px;
+  font-size: 0.938rem;
   font-weight: 500;
-  color: #212529;
+  color: var(--text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  flex: 1;
 }
 
 .accountType {
-  font-size: 12px;
-  color: #6c757d;
+  font-size: 0.813rem;
+  color: var(--text-secondary);
 }
 
 .balanceValue {
-  font-size: 14px;
+  font-size: 0.938rem;
   font-weight: 600;
-  color: #28a745;
+  color: #10b981;
   text-align: right;
 }
 
 .balanceLabel {
-  font-size: 11px;
-  color: #6c757d;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
   text-align: right;
 }
 
 .selectedIndicator {
-  margin-top: 8px;
-  padding: 6px 10px;
-  background-color: #d1ecf1;
-  border-radius: 4px;
-  font-size: 12px;
-  color: #0c5460;
-  font-weight: 500;
+  margin-top: 0.5rem;
+  padding: 0.625rem 1rem;
+  background: linear-gradient(135deg, #dbeafe 0%, #f0f9ff 100%);
+  border-radius: calc(var(--radius) - 4px);
+  font-size: 0.813rem;
+  color: #1e40af;
+  font-weight: 600;
+}
+
+.showRealisasi {
+  padding: 12px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 100%);
+  border-radius: 8px;
+  border: 1.5px solid #bae6fd;
+  margin-bottom: 16px;
+  margin-top: 16px;
 }
 
 .amountGrid {
   display: grid;
   grid-template-columns: 200px 1fr;
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: 1rem;
+  margin-bottom: 1rem;
 }
 
 .addAccountButton {
-  padding: 10px 20px;
-  background-color: #28a745;
+  padding: 0.875rem 1.5rem;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: calc(var(--radius) - 4px);
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 0.938rem;
+  font-weight: 700;
+  transition: var(--transition);
+  box-shadow: 0 3px 10px rgba(16, 185, 129, 0.25);
+}
+
+.addAccountButton:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35);
 }
 
 .addAccountButton:disabled {
   background-color: #adb5bd;
   cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .noItems {
-  padding: 40px 20px;
+  padding: 3rem 2rem;
   text-align: center;
-  background-color: #f8f9fa;
-  border: 1px solid #dee2e6;
-  border-radius: 6px;
-  color: #6c757d;
-  font-size: 14px;
-  margin-bottom: 24px;  
-}
-
-.tableWrapper {
-  overflow-x: auto;
-  border: 1px solid #dee2e6;
-  border-radius: 6px;
-}
-
-.table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.tableHeader {
-  background-color: #f8f9fa;
-}
-
-.tableCell,
-.tableHeaderCell {
-  padding: 12px 16px;
-  text-align: left;
-  font-size: 14px;
-  color: #212529;
-  border-bottom: 1px solid #dee2e6;
-}
-
-.tableHeaderCell {
-  font-weight: 600;
-  color: #495057;
-}
-
-.tableCellCenter {
-  text-align: center;
-}
-
-.codeBadge {
-  padding: 4px 8px;
-  background-color: #e7f3ff;
-  border-radius: 4px;
-  font-size: 13px;
+  background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
+  border: 1.5px dashed #86efac;
+  border-radius: 10px;
+  color: #059669;
+  font-size: 0.938rem;
+  margin-bottom: 1.5rem;
   font-weight: 500;
 }
 
+.codeBadge {
+  padding: 0.35rem 0.75rem;
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  color: #1e40af;
+  border-radius: calc(var(--radius) - 6px);
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-family: 'Monaco', 'Courier New', monospace;
+  display: inline-block;
+  border: 1px solid #93c5fd;
+}
+
 .typeBadge {
-  padding: 4px 8px;
-  background-color: #e7f3ff;
-  color: #004085;
-  border-radius: 4px;
-  font-size: 12px;
+  padding: 0.35rem 0.75rem;
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  color: #1e40af;
+  border-radius: calc(var(--radius) - 6px);
+  font-size: 0.813rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  display: inline-block;
+  border: 1px solid #93c5fd;
 }
 
 .deleteButton {
-  padding: 6px 12px;
-  background-color: #dc3545;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: calc(var(--radius) - 4px);
   cursor: pointer;
-  font-size: 12px;
+  font-size: 0.813rem;
+  font-weight: 600;
+  transition: var(--transition);
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.25);
+}
+
+.deleteButton:hover:not(:disabled) {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(239, 68, 68, 0.35);
 }
 
 .deleteButton:disabled {
@@ -402,40 +586,121 @@
 
 .actions {
   display: flex;
-  gap: 12px;
+  gap: 0.75rem;
   justify-content: flex-end;
-  padding-top: 16px;
-  border-top: 1px solid #dee2e6;
+  padding-top: 1.25rem;
+  border-top: 2px solid var(--border-color);
+  margin-top: 1.5rem;
 }
 
 .cancelButton {
-  padding: 10px 20px;
+  padding: 0.75rem 1.25rem;
   background-color: #6c757d;
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: calc(var(--radius) - 4px);
   cursor: pointer;
-  font-weight: 500;
-  font-size: 14px;
+  font-weight: 600;
+  font-size: 0.938rem;
+  transition: var(--transition);
+  box-shadow: var(--shadow-sm);
+}
+
+.cancelButton:hover:not(:disabled) {
+  background-color: #5a6268;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
 .cancelButton:disabled {
   background-color: #adb5bd;
   cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .submitButton {
-  padding: 10px 24px;
-  background-color: #007bff;
+  padding: 0.75rem 1.5rem;
+  background-color: var(--primary-color);
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: calc(var(--radius) - 4px);
   cursor: pointer;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 0.938rem;
+  transition: var(--transition);
+  box-shadow: var(--shadow-sm);
+}
+
+.submitButton:hover:not(:disabled) {
+  background-color: var(--primary-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
 .submitButton:disabled {
   background-color: #adb5bd;
   cursor: not-allowed;
+  opacity: 0.6;
+}
+
+@media (max-width: 768px) {
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .amountGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .summaryContent {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .accountCountBadge {
+    width: 100%;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  .actions button {
+    width: 100%;
+  }
+
+  .addItemForm {
+    padding: 1.25rem;
+  }
+
+  .tableWrapper {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .header {
+    padding: 1rem;
+  }
+
+  .form {
+    padding: 1rem;
+  }
+
+  .tableCell,
+  .tableHeaderCell {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.813rem;
+  }
+
+  .addItemForm {
+    padding: 1rem;
+  }
+
+  .addItemForm::before,
+  .tableWrapper::before {
+    font-size: 0.625rem;
+    padding: 0.188rem 0.625rem;
+  }
 }

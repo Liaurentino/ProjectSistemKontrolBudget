@@ -1,5 +1,5 @@
 // accurate.ts - Complete with parent-child and edit/delete functions
-// FIXED: Added realisasi_snapshot support and fixed getBudgetRealizationsLive logic
+// FIXED: Corrected budget vs realisasi logic - budget = realisasi_snapshot (COA), realisasi = allocated_amount (manual)
 
 import {
   saveTokens,
@@ -395,8 +395,8 @@ export interface BudgetItem {
   account_code: string;
   account_name: string;
   account_type?: string;
-  allocated_amount: number; // Budget (manual input)
-  realisasi_snapshot?: number; // Realisasi (snapshot of COA balance when created)
+  allocated_amount: number; // Realisasi (manual input)
+  realisasi_snapshot?: number; // Budget (snapshot of COA balance when created)
   description?: string;
   created_at?: string;
   updated_at?: string;
@@ -405,7 +405,7 @@ export interface BudgetItem {
 export interface BudgetWithItems extends Budget {
   items: BudgetItem[];
   total_allocated: number;
-  total_realisasi?: number; // NEW: Total realisasi from snapshots
+  total_realisasi?: number; // Total realisasi from manual input
   remaining_budget: number;
   status: 'OVER_BUDGET' | 'FULLY_ALLOCATED' | 'UNDER_BUDGET';
 }
@@ -425,8 +425,8 @@ export interface CreateBudgetItemData {
   account_code: string;
   account_name: string;
   account_type?: string;
-  allocated_amount: number; // Budget (manual input)
-  realisasi_snapshot?: number; // Realisasi (snapshot from COA)
+  allocated_amount: number; // Realisasi (manual input)
+  realisasi_snapshot?: number; // Budget (snapshot from COA)
   description?: string;
 }
 
@@ -832,7 +832,7 @@ export function subscribeBudgets(entityId: string, onChange: () => void) {
 
 /**
  * Get budget realizations with live data from accurate_accounts
- * This directly joins budget_items with accurate_accounts to get real-time balance
+ * FIXED: realisasi_snapshot = Budget (COA balance), allocated_amount = Realisasi (manual input)
  */
 export async function getBudgetRealizationsLive(
   entityId?: string,
@@ -889,13 +889,13 @@ export async function getBudgetRealizationsLive(
     if (error) throw error;
 
     // Transform data to BudgetRealization format
-    // FIXED: allocated_amount = budget, realisasi_snapshot = realisasi
+    // FIXED: realisasi_snapshot = budget (COA), allocated_amount = realisasi (manual input)
     const realizations: BudgetRealization[] = (data || []).map((item: any) => {
-      const budgetAllocated = item.allocated_amount || 0;  // Budget (manual input)
-      const realisasi = item.realisasi_snapshot || 0;  // Realisasi (snapshot from COA)
-      const variance = budgetAllocated - realisasi;
-      const variancePercentage = budgetAllocated > 0 ? (variance / budgetAllocated) * 100 : 0;
-      const status = realisasi <= budgetAllocated ? 'ON_TRACK' : 'OVER_BUDGET';
+      const budget = item.realisasi_snapshot || 0;  // Budget (COA balance snapshot)
+      const realisasi = item.allocated_amount || 0;  // Realisasi (manual input)
+      const variance = budget - realisasi;
+      const variancePercentage = budget > 0 ? (variance / budget) * 100 : 0;
+      const status = realisasi <= budget ? 'ON_TRACK' : 'OVER_BUDGET';
 
       return {
         id: item.id,
@@ -908,7 +908,7 @@ export async function getBudgetRealizationsLive(
         account_code: item.account_code,
         account_name: item.account_name,
         account_type: item.account_type,
-        budget_allocated: budgetAllocated,
+        budget_allocated: budget,
         realisasi: realisasi,
         variance: variance,
         variance_percentage: variancePercentage,
@@ -1051,7 +1051,7 @@ export async function getAvailableBudgetGroups(entityId?: string, period?: strin
     }
 
     if (period) {
-      query = query.eq('period', period); // ✅ Filter by period
+      query = query.eq('period', period);
     }
 
     const { data, error } = await query;

@@ -21,15 +21,12 @@ export const EntitasForm: React.FC<Props> = ({
   onCancel,
 }) => {
   const [selectedMethod, setSelectedMethod] = useState<EntityMethod>('accurate');
-
-  // Form states
   const [formData, setFormData] = useState({
     entity_name: '',
     description: '',
     api_token: '',
   });
 
-  // Validation states
   const [loading, setLoading] = useState(false);
   const [validating, setValidating] = useState(false);
   const [error, setError] = useState('');
@@ -39,11 +36,9 @@ export const EntitasForm: React.FC<Props> = ({
   const [ownershipValidated, setOwnershipValidated] = useState(false);
   const [formatError, setFormatError] = useState('');
 
-  // Validation result
   const [validationResult, setValidationResult] = useState<AccurateValidationResult | null>(null);
   const [databases, setDatabases] = useState<AccurateDatabase[]>([]);
 
-  // Token checking states
   const [existingTokens, setExistingTokens] = useState<string[]>([]);
   const [tokenDuplicate, setTokenDuplicate] = useState(false);
   const [tokenDuplicateEntity, setTokenDuplicateEntity] = useState('');
@@ -175,7 +170,6 @@ export const EntitasForm: React.FC<Props> = ({
         return;
       }
 
-      console.log('Step 1: Validating token ownership...');
       const ownershipResult = await validateAccurateTokenOwnership(formData.api_token);
 
       if (!ownershipResult.isValid) {
@@ -195,11 +189,8 @@ export const EntitasForm: React.FC<Props> = ({
       }
 
       setOwnershipValidated(true);
-      console.log('Ownership validated:', ownershipResult.accurateUserInfo);
 
-      console.log('Step 2: Validating token and fetching database info...');
       const result = await validateAccurateApiToken(formData.api_token);
-
       setValidationResult(result);
 
       if (result.isValid) {
@@ -346,238 +337,230 @@ export const EntitasForm: React.FC<Props> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="card fade-in">
-      <div className="card-header">
-        <h3 className="card-title">
-          {mode === 'edit' ? 'Edit Entitas' : 'Tambah Entitas Baru'}
-        </h3>
-      </div>
+    <form onSubmit={handleSubmit}>
+      {mode === 'create' && (
+        <div className={styles.methodSelectorContainer}>
+          <label className={`form-label ${styles.methodSelectorLabel}`}>
+            Pilih Metode Penambahan:
+          </label>
+          <div className={styles.methodButtons}>
+            <button
+              type="button"
+              onClick={() => handleMethodChange('accurate')}
+              className={`${styles.methodButton} ${
+                selectedMethod === 'accurate' ? styles.active : styles.inactive
+              }`}
+            >
+              <div className={styles.methodTitle}>Via Accurate</div>
+              <div className={styles.methodDescription}>Validasi & auto-fill data</div>
+            </button>
 
-      <div className="card-body">
-        {mode === 'create' && (
-          <div className={styles.methodSelectorContainer}>
-            <label className={`form-label ${styles.methodSelectorLabel}`}>
-              Pilih Metode Penambahan:
-            </label>
-            <div className={styles.methodButtons}>
+            <button
+              type="button"
+              onClick={() => handleMethodChange('manual')}
+              className={`${styles.methodButton} ${
+                selectedMethod === 'manual' ? styles.active : styles.inactive
+              }`}
+            >
+              <div className={styles.methodTitle}>Input Manual</div>
+              <div className={styles.methodDescription}>Tanpa API, langsung simpan</div>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {mode === 'edit' && (
+        <div className={styles.methodInfo}>
+          <small className={styles.methodInfoText}>
+            <strong>Metode: </strong>
+            {selectedMethod === 'accurate' ? 'Via Accurate' : 'Input Manual'}
+          </small>
+        </div>
+      )}
+
+      {error && (
+        <div className={`${styles.errorAlert} ${error.includes('Email Akun') ? styles.critical : ''}`}>
+          {error.includes('Email Akun') ? (
+            <div>
+              <div className={styles.errorAlertHeader}>
+                <strong className={styles.errorAlertTitle}>Token Tidak Cocok dengan Akun Anda!</strong>
+              </div>
+              <div className={styles.errorAlertMessage}>{error}</div>
+            </div>
+          ) : (
+            error
+          )}
+        </div>
+      )}
+
+      {success && (
+        <div className={styles.successAlert}>
+          {success}
+        </div>
+      )}
+
+      {selectedMethod === 'accurate' && (
+        <>
+          <div className="form-group">
+            <label className="form-label">API Token Accurate</label>
+            <div className={styles.tokenInputWrapper}>
+              <input
+                type={showToken ? 'text' : 'password'}
+                name="api_token"
+                value={formData.api_token}
+                onChange={handleChange}
+                className={`form-control ${styles.tokenInput} ${
+                  tokenDuplicate || formatError ? styles.error : ''
+                }`}
+                placeholder="Masukkan API Token dari Accurate"
+                required
+                disabled={validating || loading}
+              />
               <button
                 type="button"
-                onClick={() => handleMethodChange('accurate')}
-                className={`${styles.methodButton} ${
-                  selectedMethod === 'accurate' ? styles.active : styles.inactive
-                }`}
+                onClick={() => setShowToken(!showToken)}
+                className={styles.showTokenButton}
               >
-                <div className={styles.methodTitle}>Via Accurate</div>
-                <div className={styles.methodDescription}>Validasi & auto-fill data</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleMethodChange('manual')}
-                className={`${styles.methodButton} ${
-                  selectedMethod === 'manual' ? styles.active : styles.inactive
-                }`}
-              >
-                <div className={styles.methodTitle}>Input Manual</div>
-                <div className={styles.methodDescription}>Tanpa API, langsung simpan</div>
+                {showToken ? '👁️' : '👁️‍🗨️'}
               </button>
             </div>
-          </div>
-        )}
 
-        {mode === 'edit' && (
-          <div className={styles.methodInfo}>
-            <small className={styles.methodInfoText}>
-              <strong>Metode: </strong>
-              {selectedMethod === 'accurate' ? 'Via Accurate' : 'Input Manual'}
+            {formatError && !tokenDuplicate && (
+              <div className={styles.formatError}>
+                <span>{formatError}</span>
+              </div>
+            )}
+
+            {tokenDuplicate && formData.api_token !== initialData?.api_token && (
+              <div className={styles.tokenDuplicateWarning}>
+                <span>
+                  <strong>Token Sudah Terdaftar!</strong> Token ini sudah digunakan oleh entitas
+                  "{tokenDuplicateEntity}". Gunakan token yang berbeda.
+                </span>
+              </div>
+            )}
+
+            <button
+              type="button"
+              className={`btn btn-sm ${styles.validateButton} ${
+                tokenValidated && ownershipValidated
+                  ? styles.validated
+                  : !tokenValidated && formData.api_token
+                  ? styles.pending
+                  : ''
+              }`}
+              onClick={handleValidateToken}
+              disabled={validating || loading || !formData.api_token.trim() || tokenDuplicate || !!formatError}
+            >
+              {validating
+                ? 'Validasi Token...'
+                : tokenValidated && ownershipValidated
+                ? 'Token Valid & Milik Anda'
+                : 'Validasi Token'}
+            </button>
+
+            <small className={styles.helperText}>
+              Token untuk autentikasi API Accurate (Lihat Panduan Lengkap Cara Mendapatkan API Token)
             </small>
           </div>
-        )}
 
-        {error && (
-          <div className={`${styles.errorAlert} ${error.includes('Email Akun') ? styles.critical : ''}`}>
-            {error.includes('Email Akun') ? (
+          {mode === 'create' && formData.api_token && !tokenValidated && !tokenDuplicate && !formatError && (
+            <div className={styles.pendingValidationWarning}>
               <div>
-                <div className={styles.errorAlertHeader}>
-                  <strong className={styles.errorAlertTitle}>Token Tidak Cocok dengan Akun Anda!</strong>
-                </div>
-                <div className={styles.errorAlertMessage}>{error}</div>
-              </div>
-            ) : (
-              error
-            )}
-          </div>
-        )}
-
-        {success && (
-          <div className={styles.successAlert}>
-            {success}
-          </div>
-        )}
-
-        {selectedMethod === 'accurate' && (
-          <>
-            <div className="form-group">
-              <label className="form-label">API Token Accurate</label>
-              <div className={styles.tokenInputWrapper}>
-                <input
-                  type={showToken ? 'text' : 'password'}
-                  name="api_token"
-                  value={formData.api_token}
-                  onChange={handleChange}
-                  className={`form-control ${styles.tokenInput} ${
-                    tokenDuplicate || formatError ? styles.error : ''
-                  }`}
-                  placeholder="Masukkan API Token dari Accurate"
-                  required
-                  disabled={validating || loading}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowToken(!showToken)}
-                  className={styles.showTokenButton}
-                >
-                  {showToken ? '👁️' : '👁️‍🗨️'}
-                </button>
-              </div>
-
-              {formatError && !tokenDuplicate && (
-                <div className={styles.formatError}>
-                  <span>{formatError}</span>
-                </div>
-              )}
-
-              {tokenDuplicate && formData.api_token !== initialData?.api_token && (
-                <div className={styles.tokenDuplicateWarning}>
-                  <span>
-                    <strong>Token Sudah Terdaftar!</strong> Token ini sudah digunakan oleh entitas
-                    "{tokenDuplicateEntity}". Gunakan token yang berbeda.
-                  </span>
-                </div>
-              )}
-
-              <button
-                type="button"
-                className={`btn btn-sm ${styles.validateButton} ${
-                  tokenValidated && ownershipValidated
-                    ? styles.validated
-                    : !tokenValidated && formData.api_token
-                    ? styles.pending
-                    : ''
-                }`}
-                onClick={handleValidateToken}
-                disabled={validating || loading || !formData.api_token.trim() || tokenDuplicate || !!formatError}
-              >
-                {validating
-                  ? 'Validasi Token...'
-                  : tokenValidated && ownershipValidated
-                  ? 'Token Valid & Milik Anda'
-                  : 'Validasi Token'}
-              </button>
-
-              <small className={styles.helperText}>
-                Token untuk autentikasi API Accurate (Lihat Panduan Lengkap Cara Mendapatkan API Token)
-              </small>
-            </div>
-
-            {mode === 'create' && formData.api_token && !tokenValidated && !tokenDuplicate && !formatError && (
-              <div className={styles.pendingValidationWarning}>
-                <div>
-                  <strong className={styles.pendingValidationTitle}>
-                    Token Belum Divalidasi
-                  </strong>
-                  <small className={styles.pendingValidationText}>
-                    Silakan klik tombol "Validasi Token" di atas untuk:
-                    <br />• Memverifikasi bahwa token milik akun Anda
-                    <br />• Memastikan koneksi ke Accurate
-                    <br />• Mengecek kepastian data usaha di database
-                  </small>
-                </div>
-              </div>
-            )}
-
-            {formData.entity_name && (
-              <div className="form-group">
-                <label className="form-label">Nama Entitas</label>
-                <input
-                  type="text"
-                  name="entity_name"
-                  value={formData.entity_name}
-                  className={`form-control ${styles.entityNameInput}`}
-                  readOnly
-                />
-                <small className={styles.helperText}>
-                  {mode === 'edit' ? 'Nama entitas yang tersimpan' : 'Nama diambil otomatis dari database Accurate'}
+                <strong className={styles.pendingValidationTitle}>
+                  Token Belum Divalidasi
+                </strong>
+                <small className={styles.pendingValidationText}>
+                  Silakan klik tombol "Validasi Token" di atas untuk:
+                  <br />• Memverifikasi bahwa token milik akun Anda
+                  <br />• Memastikan koneksi ke Accurate
+                  <br />• Mengecek kepastian data usaha di database
                 </small>
               </div>
-            )}
-
-            {tokenValidated && validationResult?.primaryDatabase && (
-              <div className={styles.databaseBox}>
-                <h4 className={styles.databaseBoxTitle}>
-                  Database Terdeteksi
-                </h4>
-
-                <div>
-                  <small className={styles.databaseIdLabel}>
-                    <strong>ID Database:</strong>
-                  </small>
-                  <code className={styles.databaseIdCode}>
-                    {validationResult.primaryDatabase.id || '-'}
-                  </code>
-                </div>
-
-                {databases.length > 1 && (
-                  <div className={styles.databaseListContainer}>
-                    <small className={styles.databaseListTitle}>
-                      <strong>Database Lainnya ({databases.length} total):</strong>
-                    </small>
-                    <div className={styles.databaseList}>
-                      {databases.map((db) => (
-                        <div key={db.id} className={styles.databaseItem}>
-                          <span className={styles.databaseItemName}>{db.name}</span>
-                          <code className={styles.databaseItemCode}>
-                            ID: {db.id}
-                          </code>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            <div className={styles.securityWarning}>
-              <strong>Penting!</strong> API Token Anda Bersifat Rahasia. Jangan bagikan dengan orang lain.
             </div>
-          </>
-        )}
+          )}
 
-        {selectedMethod === 'manual' && (
-          <>
+          {formData.entity_name && (
             <div className="form-group">
               <label className="form-label">Nama Entitas</label>
               <input
                 type="text"
                 name="entity_name"
                 value={formData.entity_name}
-                onChange={handleChange}
-                className="form-control"
-                placeholder="Masukkan nama entitas"
-                required
-                disabled={loading}
+                className={`form-control ${styles.entityNameInput}`}
+                readOnly
               />
               <small className={styles.helperText}>
-                Nama entitas yang akan ditampilkan di sistem
+                {mode === 'edit' ? 'Nama entitas yang tersimpan' : 'Nama diambil otomatis dari database Accurate'}
               </small>
             </div>
+          )}
 
-            <div className={styles.infoBox}>
-              <strong>Info:</strong> Entitas manual tidak terhubung dengan Accurate. Data akan disimpan langsung tanpa validasi API.
+          {tokenValidated && validationResult?.primaryDatabase && (
+            <div className={styles.databaseBox}>
+              <h4 className={styles.databaseBoxTitle}>
+                Database Terdeteksi
+              </h4>
+
+              <div>
+                <small className={styles.databaseIdLabel}>
+                  <strong>ID Database:</strong>
+                </small>
+                <code className={styles.databaseIdCode}>
+                  {validationResult.primaryDatabase.id || '-'}
+                </code>
+              </div>
+
+              {databases.length > 1 && (
+                <div className={styles.databaseListContainer}>
+                  <small className={styles.databaseListTitle}>
+                    <strong>Database Lainnya ({databases.length} total):</strong>
+                  </small>
+                  <div className={styles.databaseList}>
+                    {databases.map((db) => (
+                      <div key={db.id} className={styles.databaseItem}>
+                        <span className={styles.databaseItemName}>{db.name}</span>
+                        <code className={styles.databaseItemCode}>
+                          ID: {db.id}
+                        </code>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-          </>
-        )}
-      </div>
+          )}
+
+          <div className={styles.securityWarning}>
+            <strong>Penting!</strong> API Token Anda Bersifat Rahasia. Jangan bagikan dengan orang lain.
+          </div>
+        </>
+      )}
+
+      {selectedMethod === 'manual' && (
+        <>
+          <div className="form-group">
+            <label className="form-label">Nama Entitas</label>
+            <input
+              type="text"
+              name="entity_name"
+              value={formData.entity_name}
+              onChange={handleChange}
+              className="form-control"
+              placeholder="Masukkan nama entitas"
+              required
+              disabled={loading}
+            />
+            <small className={styles.helperText}>
+              Nama entitas yang akan ditampilkan di sistem
+            </small>
+          </div>
+
+          <div className={styles.infoBox}>
+            <strong>Info:</strong> Entitas manual tidak terhubung dengan Accurate. Data akan disimpan langsung tanpa validasi API.
+          </div>
+        </>
+      )}
 
       <div className={styles.formActions}>
         <button

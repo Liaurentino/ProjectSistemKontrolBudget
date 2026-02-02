@@ -39,7 +39,7 @@ const BudgetRealizationPage: React.FC = () => {
   const { activeEntity } = useEntity();
 
   // State
-  const [realizations, setRealizations] = useState<BudgetRealization[]>([]);
+  const [_realizations, setRealizations] = useState<BudgetRealization[]>([]);
   const [groupedData, setGroupedData] = useState<GroupedBudgetRealization[]>([]);
   const [summary, setSummary] = useState<BudgetRealizationSummary | null>(null);
   const [loading, setLoading] = useState(false);
@@ -261,7 +261,7 @@ const BudgetRealizationPage: React.FC = () => {
             activeEntity && selectedPeriod && !loading ? styles.active : styles.disabled
           }`}
         >
-          {loading ? '⏳ Memuat...' : '🔄 Refresh Data'}
+          {loading ? 'Memuat...' : 'Refresh Data'}
         </button>
       </div>
 
@@ -292,7 +292,7 @@ const BudgetRealizationPage: React.FC = () => {
             <h3>Filter Laporan</h3>
             {!selectedPeriod && (
               <p style={{ color: '#dc3545', fontSize: '14px', marginTop: '8px' }}>
-                ⚠️ Pilih periode untuk melihat data
+                Pilih periode untuk melihat data
               </p>
             )}
           </div>
@@ -411,14 +411,14 @@ const BudgetRealizationPage: React.FC = () => {
             <div className={styles.loadingState}>⏳ Memuat data...</div>
           ) : !hasSelectedPeriod ? (
             <div className={styles.emptyState}>
-              📅 Pilih periode untuk melihat laporan Budget vs Realisasi
+              Pilih periode untuk melihat laporan Budget vs Realisasi
             </div>
           ) : filteredGroupedData.length === 0 ? (
             <div className={styles.emptyState}>
               {searchQuery ? (
-                <>🔍 Tidak ada data yang cocok dengan pencarian "<strong>{searchQuery}</strong>"</>
+                <>Tidak ada data yang cocok dengan pencarian "<strong>{searchQuery}</strong>"</>
               ) : (
-                <>📋 Belum ada data realisasi untuk periode ini. Pastikan sudah ada budget dan akun accurate tersedia.</>
+                <>Belum ada data realisasi untuk periode ini. Pastikan sudah ada budget dan akun accurate tersedia.</>
               )}
             </div>
           ) : (
@@ -511,7 +511,6 @@ const BudgetRealizationPage: React.FC = () => {
       {activeEntity && !selectedPeriod && (
         <div className={styles.dataTableContainer}>
           <div className={styles.emptyState}>
-            <div style={{ fontSize: '48px', marginBottom: '16px' }}>📅</div>
             <h3>Pilih Periode Terlebih Dahulu</h3>
             <p style={{ marginTop: '8px', color: '#6c757d' }}>
               Silakan pilih periode di filter di atas untuk melihat laporan Budget vs Realisasi
