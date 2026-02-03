@@ -461,50 +461,48 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
           </div>
 
           {/* Account Source Selection */}
-          <div style={{ marginTop: '16px' }}>
-            <label className={styles.label}>
-              Sumber Data Akun <span className={styles.required}>*</span>
-            </label>
-            <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                <input
-                  type="radio"
-                  name="accountSource"
-                  value="database"
-                  checked={accountSource === 'database'}
-                  onChange={(e) => setAccountSource(e.target.value as AccountSource)}
-                  disabled={loading}
-                />
-                <span>Database COA (termasuk dari Excel)</span>
-              </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                <input
-                  type="radio"
-                  name="accountSource"
-                  value="api"
-                  checked={accountSource === 'api'}
-                  onChange={(e) => setAccountSource(e.target.value as AccountSource)}
-                  disabled={loading || !activeEntity?.api_token}
-                />
-                <span>API Accurate (berdasarkan periode)</span>
-                {!activeEntity?.api_token && (
-                  <span style={{ fontSize: '12px', color: '#dc2626' }}>
-                    (Token API tidak tersedia)
-                  </span>
-                )}
-              </label>
-            </div>
-            <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
-              {accountSource === 'database' 
-                ? 'Akun diambil dari tabel COA yang sudah tersimpan di database (hasil sync atau import Excel)'
-                : 'Akun diambil dari API Accurate berdasarkan periode yang dipilih (Balance Sheet)'}
-            </div>
-            {loadingAccounts && (
-              <div style={{ fontSize: '12px', color: '#0369a1', marginTop: '4px' }}>
-                Memuat daftar akun...
-              </div>
-            )}
-          </div>
+       {/* Account Source Selection - SWITCH TOGGLE */}
+       {/* Account Source Selection - SWITCH TOGGLE */}
+<div className={styles.sourceContainer}>
+  <div className={styles.sourceLeft}>
+    <label className={styles.sourceLabel}>
+      Sumber Data Akun <span className={styles.required}>*</span>
+    </label>
+    <div className={styles.sourceDescription}>
+      {accountSource === 'database' 
+        ? 'Akun dari List COA Excel Atau Manual Input'
+        : 'Akun dari API Accurate (Note : Jika sudah input akun tapi periodenya diubah maka akun yang terpilih tidak akan berubah)'}
+    </div>
+    {!activeEntity?.api_token && accountSource === 'api' && (
+      <div className={styles.sourceWarning}>
+        Token API tidak tersedia 
+      </div>
+    )}
+    {loadingAccounts && (
+      <div className={styles.sourceLoadingText}>
+        Memuat daftar akun...
+      </div>
+    )}
+  </div>
+
+  <div className={styles.switchContainer}>
+    <span className={`${styles.switchLabel} ${accountSource === 'database' ? styles.switchLabelActive : ''}`}>
+      Manual
+    </span>
+    <label className={styles.switch}>
+      <input
+        type="checkbox"
+        checked={accountSource === 'api'}
+        onChange={(e) => setAccountSource(e.target.checked ? 'api' : 'database')}
+        disabled={loading || !activeEntity?.api_token}
+      />
+      <span className={styles.slider}></span>
+    </label>
+    <span className={`${styles.switchLabel} ${accountSource === 'api' ? styles.switchLabelActive : ''}`}>
+      Accurate
+    </span>
+  </div>
+</div>
         </div>
 
         {/* Section: Alokasi Budget */}
@@ -524,9 +522,11 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
           </div>
 
           {accountSource === 'api' && !period && (
-            <div className={styles.noItems}>
-              Pilih periode terlebih dahulu untuk mengambil akun dari API
-            </div>
+  <div className={styles.periodWarning}>
+    <span className={styles.periodWarningText}>
+      Pilih periode terlebih dahulu untuk mengambil akun dari API Accurate
+    </span>
+  </div>
           )}
 
           {/* Add Item Form */}

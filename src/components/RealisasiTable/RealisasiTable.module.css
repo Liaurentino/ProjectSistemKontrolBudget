@@ -1,5 +1,8 @@
-/* RealisasiTable.module.css */
+/* ==========================================
+   BUDGET FORM - MATCHED WITH REALISASITABLE
+   ========================================== */
 
+/* ===== CARD ===== */
 .card {
   background-color: white;
   border-radius: 8px;
@@ -7,99 +10,697 @@
   overflow: hidden;
 }
 
-.cardHeader {
+/* ===== HEADER ===== */
+.header {
   padding: 16px 24px;
   border-bottom: 1px solid #dee2e6;
   background-color: #f8f9fa;
 }
 
-.cardTitle {
+.headerTitle {
   margin: 0;
   font-size: 20px;
   font-weight: 600;
   color: #212529;
 }
 
-.controls {
+.headerSubtitle {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: #6c757d;
+}
+
+/* ===== FORM ===== */
+.form {
+  padding: 16px 24px;
+}
+
+/* ===== ALERTS ===== */
+.errorAlert {
+  padding: 12px 16px;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-left: 4px solid #dc3545;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  color: #721c24;
+  font-size: 14px;
+  animation: slideDown 0.3s ease;
+}
+
+.warningAlert {
+  padding: 12px 16px;
+  background-color: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-left: 4px solid #ffc107;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  color: #856404;
+  font-size: 14px;
+  animation: slideDown 0.3s ease;
+}
+
+.warningAlertTitle {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+/* Period Warning */
+.periodWarning {
+  padding: 12px 16px;
+  background-color: #fff3cd;
+  border: 2px solid #ffc107;
+  border-left: 4px solid #ffc107;
+  border-radius: 4px;
+  margin-top: 6px;
+  margin-bottom: 6px;
+  color: #856404;
+  font-size: 14px;
   display: flex;
-  gap: 1rem;
   align-items: center;
-  margin-bottom: 1rem;
-  flex-wrap: wrap;
+  gap: 12px;
+  animation: slideDown 0.3s ease;
 }
 
-.formSelect {
-  padding: 8px 12px;
-  border: 1px solid #ced4da;
-  border-radius: 4px;
-  background-color: white;
-  font-size: 14px;
-  min-width: 200px;
+.periodWarningIcon {
+  font-size: 16px;
+  flex-shrink: 0;
 }
 
-.addButton {
-  padding: 8px 16px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
+.periodWarningText {
+  flex: 1;
   font-weight: 500;
 }
 
-.addButton:hover:not(:disabled) {
-  background-color: #0069d9;
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.formCard {
-  background-color: #f8f9fa;
-  border: 1px solid #dee2e6;
-  border-radius: 6px;
-  padding: 16px;
-  margin-bottom: 16px;
-}
-
-.formCardTitle {
-  margin: 0 0 16px;
+/* ===== SECTION TITLE ===== */
+.sectionTitle {
+  margin: 0 0 12px;
   font-size: 16px;
   font-weight: 600;
-  color: #495057;
+  color: #212529;
 }
 
-.statsGrid {
+/* ===== FORM GRID ===== */
+.formGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-  margin-bottom: 16px;
+  grid-template-columns: 1fr 200px;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 
-.formGroup {
-  display: flex;
-  flex-direction: column;
+.fullWidth {
+  grid-column: 1 / -1;
 }
 
-.formLabel {
+/* ===== FORM INPUTS ===== */
+.label {
+  display: block;
   margin-bottom: 6px;
   font-size: 14px;
   font-weight: 500;
   color: #212529;
 }
 
-.formInput,
-.formSelectInput {
+.required {
+  color: #dc3545;
+}
+
+.input,
+.textarea,
+.monthInput {
   width: 100%;
   padding: 8px 12px;
   border: 1px solid #ced4da;
   border-radius: 4px;
   font-size: 14px;
   font-family: inherit;
+  transition: border-color 0.2s;
+  color: #212529;
+  background-color: white;
 }
 
-.modalFooter {
+.input:focus,
+.textarea:focus,
+.monthInput:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.charCount {
+  font-size: 13px;
+  color: #6c757d;
+  margin-top: 4px;
+}
+
+/* ===== SWITCH TOGGLE ===== */
+.sourceContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  padding: 12px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  border: 1px solid #dee2e6;
+}
+
+.sourceLeft {
+  flex: 1;
+}
+
+.sourceLabel {
+  font-size: 14px;
+  font-weight: 500;
+  color: #212529;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.sourceDescription {
+  font-size: 13px;
+  color: #6c757d;
+  margin-top: 4px;
+}
+
+.sourceWarning {
+  font-size: 13px;
+  color: #dc3545;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+.sourceLoadingText {
+  font-size: 13px;
+  color: #007bff;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+.switchContainer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: 12px;
+}
+
+.switchLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: #6c757d;
+  white-space: nowrap;
+}
+
+.switchLabelActive {
+  color: #007bff;
+}
+
+/* iOS Style Toggle Switch */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 52px;
+  height: 28px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ced4da;
+  transition: 0.3s;
+  border-radius: 28px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.switch input:checked + .slider {
+  background-color: #007bff;
+}
+
+.switch input:checked + .slider:before {
+  transform: translateX(24px);
+}
+
+.switch input:disabled + .slider {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===== SUMMARY BOX ===== */
+.summaryBox {
+  padding: 16px;
+  background-color: #e7f3ff;
+  border: 2px solid #007bff;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  margin-top: 16px;
+}
+
+.summaryContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.totalLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: #004085;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.totalAmount {
+  font-weight: 600;
+  font-size: 18px;
+  color: #212529;
+  margin-bottom: 4px;
+}
+
+.totalHint {
+  font-size: 13px;
+  color: #004085;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.accountCountBadge {
+  padding: 12px 16px;
+  background-color: #28a745;
+  color: white;
+  border-radius: 4px;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.accountCountNumber {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.accountCountLabel {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ===== ALLOCATION SECTION ===== */
+.allocationHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.addButton {
+  padding: 8px 16px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.addButton:hover:not(:disabled) {
+  background-color: #218838;
+}
+
+.addButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.addButtonClose {
+  background-color: #6c757d;
+}
+
+.addButtonClose:hover:not(:disabled) {
+  background-color: #5a6268;
+}
+
+/* ===== ADD ITEM FORM ===== */
+.addItemForm {
+  padding: 16px;
+  background-color: #e7f3ff;
+  border: 2px solid #007bff;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  transition: box-shadow 0.2s;
+}
+
+.addItemForm:hover {
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.15);
+}
+
+.addItemTitle {
+  margin: 0 0 16px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #004085;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #007bff;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+  background-color: white;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: #0056b3;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
+}
+
+/* ===== TABLE - HORIZONTAL SCROLLABLE ===== */
+.tableWrapper {
+  width: 100%;
+  overflow-x: auto; /* ENABLE HORIZONTAL SCROLL */
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 16px;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  background-color: white;
+}
+
+/* Custom scrollbar for Webkit */
+.tableWrapper::-webkit-scrollbar {
+  height: 8px;
+}
+
+.tableWrapper::-webkit-scrollbar-track {
+  background: #f1f3f5;
+}
+
+.tableWrapper::-webkit-scrollbar-thumb {
+  background-color: #adb5bd;
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.tableWrapper::-webkit-scrollbar-thumb:hover {
+  background-color: #6c757d;
+}
+
+.table {
+  width: 100%;
+  min-width: 900px; /* Minimum width for scrollable table */
+  border-collapse: collapse;
+  background-color: white;
+}
+
+.tableHeader {
+  background-color: #f8f9fa;
+}
+
+.tableCell,
+.tableHeaderCell {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 14px;
+  border-bottom: 1px solid #dee2e6;
+  white-space: nowrap;
+}
+
+.tableHeaderCell {
+  font-weight: 600;
+  color: #495057;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.tableCell {
+  color: #212529;
+}
+
+.table tbody tr {
+  transition: background-color 0.2s;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.tableCellCenter {
+  text-align: center;
+}
+
+/* Column widths */
+.table thead th:nth-child(1) { width: 120px; min-width: 120px; } /* Kode Akun */
+.table thead th:nth-child(2) { width: 220px; min-width: 220px; } /* Nama Akun */
+.table thead th:nth-child(3) { width: 100px; min-width: 100px; } /* Tipe */
+.table thead th:nth-child(4) { width: 140px; min-width: 140px; } /* Saldo Awal */
+.table thead th:nth-child(5) { width: 140px; min-width: 140px; } /* Realisasi */
+.table thead th:nth-child(6) { width: 100px; min-width: 100px; } /* Aksi */
+
+/* ===== ACCOUNT LIST ===== */
+.accountListContainer {
+  max-height: 280px;
+  overflow-y: auto;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  background-color: white;
+  margin-top: 6px;
+}
+
+.accountItem {
+  padding: 12px 16px;
+  border-bottom: 1px solid #dee2e6;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.accountItem:last-child {
+  border-bottom: none;
+}
+
+.accountItem:hover:not(.accountItemSelected) {
+  background-color: #f8f9fa;
+}
+
+.accountItemSelected {
+  background-color: #e7f3ff;
+  border-left: 4px solid #007bff;
+}
+
+.accountRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.accountCode {
+  padding: 6px 12px;
+  background-color: #e7f3ff;
+  color: #004085;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Monaco', 'Courier New', monospace;
+  display: inline-block;
+  border: 1px solid #007bff;
+}
+
+.accountName {
+  font-size: 14px;
+  font-weight: 500;
+  color: #212529;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  max-width: 180px;
+}
+
+.accountType {
+  font-size: 13px;
+  color: #6c757d;
+}
+
+.balanceValue {
+  font-size: 14px;
+  font-weight: 600;
+  color: #28a745;
+  text-align: right;
+}
+
+.balanceLabel {
+  font-size: 12px;
+  color: #6c757d;
+  text-align: right;
+}
+
+.selectedIndicator {
+  margin-top: 8px;
+  padding: 10px 16px;
+  background-color: #e7f3ff;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #004085;
+  font-weight: 600;
+  text-align: center;
+}
+
+.showRealisasi {
+  padding: 12px 16px;
+  background-color: #e7f3ff;
+  border-radius: 4px;
+  border: 1px solid #007bff;
+  margin-bottom: 12px;
+  margin-top: 12px;
+}
+
+.amountGrid {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.addAccountButton {
+  padding: 10px 16px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.addAccountButton:hover:not(:disabled) {
+  background-color: #218838;
+}
+
+.addAccountButton:disabled {
+  background-color: #adb5bd;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.noItems {
+  padding: 32px 16px;
+  text-align: center;
+  background-color: #f8fdfa;
+  border: 2px dashed #28a745;
+  border-radius: 4px;
+  color: #28a745;
+  font-size: 14px;
+  margin-bottom: 16px;
+  font-weight: 500;
+}
+
+.codeBadge {
+  padding: 6px 12px;
+  background-color: #e7f3ff;
+  color: #004085;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Monaco', 'Courier New', monospace;
+  display: inline-block;
+  border: 1px solid #007bff;
+}
+
+.typeBadge {
+  padding: 6px 12px;
+  background-color: #e7f3ff;
+  color: #004085;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  display: inline-block;
+  border: 1px solid #007bff;
+}
+
+.deleteButton {
+  padding: 6px 12px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.deleteButton:hover:not(:disabled) {
+  background-color: #c82333;
+}
+
+.deleteButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.actions {
   display: flex;
   gap: 12px;
   justify-content: flex-end;
+  padding-top: 16px;
+  border-top: 1px solid #dee2e6;
   margin-top: 16px;
 }
 
@@ -110,129 +711,207 @@
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 14px;
   font-weight: 500;
+  font-size: 14px;
+  transition: background-color 0.2s;
 }
 
 .cancelButton:hover:not(:disabled) {
   background-color: #5a6268;
 }
 
-.saveButton {
+.cancelButton:disabled {
+  background-color: #adb5bd;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.submitButton {
   padding: 8px 16px;
   background-color: #007bff;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 14px;
   font-weight: 500;
+  font-size: 14px;
+  transition: background-color 0.2s;
 }
 
-.saveButton:hover:not(:disabled) {
+.submitButton:hover:not(:disabled) {
   background-color: #0069d9;
 }
 
-.tableContainer {
-  overflow-x: auto;
-}
-
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 16px;
-}
-
-.table th,
-.table td {
-  padding: 12px 16px;
-  text-align: left;
-  font-size: 14px;
-  color: #212529;
-  border-bottom: 1px solid #dee2e6;
-}
-
-.table th {
-  background-color: #f8f9fa;
-  font-weight: 600;
-  color: #495057;
-}
-
-.table th.amount,
-.table td.amount {
-  text-align: right;
-}
-
-.table th.actions,
-.table td.actions {
-  text-align: center;
-}
-
-.textCenter {
-  text-align: center;
-}
-
-.deleteButton {
-  padding: 4px 10px;
-  background-color: #dc3545;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.deleteButton:hover:not(:disabled) {
-  background-color: #c82333;
-}
-
-.loadingOverlay {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  z-index: 10;
-}
-
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #007bff;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.loadingText {
-  margin: 0;
-  font-size: 14px;
-  color: #495057;
-  font-weight: 500;
-}
-
-/* Disabled state styling */
-.formInput:disabled,
-.formSelectInput:disabled,
-.formSelect:disabled {
-  background-color: #e9ecef;
+.submitButton:disabled {
+  background-color: #adb5bd;
   cursor: not-allowed;
   opacity: 0.6;
 }
 
-.addButton:disabled,
-.saveButton:disabled,
-.cancelButton:disabled,
-.deleteButton:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1200px) {
+  .formGrid {
+    grid-template-columns: 1fr 180px;
+  }
+
+  .accountName {
+    max-width: 150px;
+  }
+}
+
+@media (max-width: 992px) {
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .accountName {
+    max-width: 130px;
+  }
+
+  .table {
+    min-width: 800px;
+  }
+}
+
+@media (max-width: 768px) {
+  .header {
+    padding: 12px 16px;
+  }
+
+  .headerTitle {
+    font-size: 18px;
+  }
+
+  .form {
+    padding: 12px 16px;
+  }
+
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .amountGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .summaryContent {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .accountCountBadge {
+    width: 100%;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  .actions button {
+    width: 100%;
+  }
+
+  .sourceContainer {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .switchContainer {
+    margin-left: 0;
+    align-self: flex-start;
+  }
+
+  .tableCell,
+  .tableHeaderCell {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .accountName {
+    max-width: 120px;
+    font-size: 13px;
+  }
+
+  .allocationHeader {
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+  }
+
+  .addButton {
+    width: 100%;
+  }
+
+  .table {
+    min-width: 700px;
+  }
+
+  .table thead th:nth-child(2) { width: 180px; min-width: 180px; } /* Nama Akun */
+  .table thead th:nth-child(4),
+  .table thead th:nth-child(5) { width: 120px; min-width: 120px; } /* Saldo & Realisasi */
+}
+
+@media (max-width: 640px) {
+  .header {
+    padding: 10px 12px;
+  }
+
+  .headerTitle {
+    font-size: 16px;
+  }
+
+  .form {
+    padding: 10px 12px;
+  }
+
+  .tableCell,
+  .tableHeaderCell {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  .table {
+    min-width: 600px;
+  }
+
+  .table thead th:nth-child(1) { width: 100px; min-width: 100px; }
+  .table thead th:nth-child(2) { width: 150px; min-width: 150px; }
+  .table thead th:nth-child(3) { width: 80px; min-width: 80px; }
+  .table thead th:nth-child(4),
+  .table thead th:nth-child(5) { width: 110px; min-width: 110px; }
+  .table thead th:nth-child(6) { width: 80px; min-width: 80px; }
+
+  .accountName {
+    max-width: 100px;
+    font-size: 12px;
+  }
+
+  .accountCode,
+  .codeBadge,
+  .typeBadge {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+
+  .addItemForm {
+    padding: 12px;
+  }
+
+  .addItemTitle {
+    font-size: 14px;
+  }
+
+  .searchInput {
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+
+  .addAccountButton,
+  .deleteButton,
+  .cancelButton,
+  .submitButton {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
 }
