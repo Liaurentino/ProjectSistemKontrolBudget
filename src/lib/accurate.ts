@@ -59,6 +59,25 @@ export interface FetchCoaResult {
   error?: string;
 }
 
+export interface BSAccount {
+  accountNo: string;
+  accountName: string;
+  accountType: string;
+  amount: number;
+  lvl: number;
+  parentNo?: string;
+  isParent: boolean;
+}
+
+export interface FetchBSAccountsResult {
+  success: boolean;
+  accounts?: BSAccount[];
+  total?: number;
+  period?: string;
+  asOfDate?: string;
+  error?: string;
+}
+
 export type { AccurateValidationResult, AccurateDatabase };
 
 // ============================================
@@ -1111,6 +1130,62 @@ export function subscribeBudgetItems(
 
   return channel.subscribe();
 }
+
+export async function fetchBSAccountsByPeriod(
+  apiToken: string,
+  period: string
+): Promise<FetchBSAccountsResult> {
+  try {
+    console.log('[fetchBSAccountsByPeriod] Starting for period:', period);
+
+    if (!apiToken) {
+      return { success: false, error: 'API Token tidak ditemukan' };
+    }
+
+    const secretKey = HMAC_SECRET_KEY;
+    if (!secretKey) {
+      return { success: false, error: 'Secret key tidak dikonfigurasi' };
+    }
+
+    // Validate period format
+    const periodRegex = /^\d{4}-\d{2}$/;
+    if (!periodRegex.test(period)) {
+      return { 
+        success: false, 
+        error: 'Format periode tidak valid. Gunakan format YYYY-MM (contoh: 2026-02)' 
+      };
+    }
+
+    console.log('[fetchBSAccountsByPeriod] Calling Edge Function...');
+
+    const { data, error } = await supabase.functions.invoke('accurate-fetch-bs-accounts', {
+      body: { apiToken, secretKey, period },
+    });
+
+    if (error) {
+      console.error('[fetchBSAccountsByPeriod] Edge error:', error);
+      return { success: false, error: data?.error || error.message };
+    }
+
+    if (!data || !data.success) {
+      return { success: false, error: data?.error || 'Fetch failed' };
+    }
+
+    console.log(`[fetchBSAccountsByPeriod] Fetched ${data.total} accounts for period ${period}`);
+    return {
+      success: true,
+      accounts: data.accounts,
+      total: data.total,
+      period: data.period,
+      asOfDate: data.asOfDate,
+    };
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[fetchBSAccountsByPeriod] Error:', error);
+    return { success: false, error: errorMsg };
+  }
+}
+
 
 
 // ============================================

@@ -5,10 +5,10 @@ import {
   updateBudget,
   addBudgetItem,
   deleteBudgetItem,
-  getAvailableAccountsForBudget,
+  fetchBSAccountsByPeriod,
   type Budget,
   type BudgetItem,
-  type Account,
+  type BSAccount,
 } from '../../lib/accurate';
 import {
   getAdaptiveFontSize,
@@ -42,12 +42,12 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
 
   // Items state
   const [budgetItems, setBudgetItems] = useState<BudgetItem[]>(items);
-  const [availableAccounts, setAvailableAccounts] = useState<Account[]>([]);
+  const [availableAccounts, setAvailableAccounts] = useState<BSAccount[]>([]);
 
   // New item state
-  const [selectedAccountId, setSelectedAccountId] = useState('');
+  const [selectedAccountNo, setSelectedAccountNo] = useState('');
   const [itemAmount, setItemAmount] = useState<number | ''>(''); // Budget (manual input)
-  const [realisasiSnapshot, setRealisasiSnapshot] = useState<number>(0); // Realisasi (auto-fill from COA)
+  const [realisasiSnapshot, setRealisasiSnapshot] = useState<number>(0); // Realisasi (auto-fill from API)
   const [itemDescription, setItemDescription] = useState('');
   const [showAddItem, setShowAddItem] = useState(false);
 
@@ -56,28 +56,49 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
 
   // UI state
   const [loading, setLoading] = useState(false);
+  const [loadingAccounts, setLoadingAccounts] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
 
-  // Load available accounts
+  // Load available accounts when period changes
   useEffect(() => {
-    if (activeEntity?.id) {
-      loadAvailableAccounts();
-    }
-  }, [activeEntity, budget?.id, budgetItems]);
-
-  const loadAvailableAccounts = async () => {
-    if (!activeEntity) return;
-
-    const { data, error } = await getAvailableAccountsForBudget(
-      activeEntity.id,
-      budget?.id
-    );
-
-    if (error) {
-      console.error('Failed to load accounts:', error);
+    if (period && activeEntity?.api_token) {
+      loadBSAccounts();
     } else {
-      setAvailableAccounts(data || []);
+      setAvailableAccounts([]);
+    }
+  }, [period, activeEntity?.api_token]);
+
+  const loadBSAccounts = async () => {
+    if (!activeEntity?.api_token || !period) return;
+
+    setLoadingAccounts(true);
+    setError(null);
+
+    try {
+      const result = await fetchBSAccountsByPeriod(
+        activeEntity.api_token,
+        period
+      );
+
+      if (result.error) {
+        setError(result.error);
+        setAvailableAccounts([]);
+      } else {
+        // Filter out accounts already used in budget
+        const usedAccountNos = new Set(budgetItems.map(item => item.account_code));
+        const available = (result.accounts || []).filter(
+          acc => !usedAccountNos.has(acc.accountNo)
+        );
+        setAvailableAccounts(available);
+        console.log(`Loaded ${available.length} available accounts for period ${period}`);
+      }
+    } catch (err: any) {
+      console.error('Failed to load BS accounts:', err);
+      setError(err.message || 'Gagal memuat daftar akun');
+      setAvailableAccounts([]);
+    } finally {
+      setLoadingAccounts(false);
     }
   };
 
@@ -93,17 +114,17 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
     setWarnings(newWarnings);
   }, [itemAmount]);
 
-  const handleAccountSelect = (accountId: string) => {
-    setSelectedAccountId(accountId);
-    if (!accountId) {
-      setItemAmount(''); // Budget kosong (user input manual)
-      setRealisasiSnapshot(0); // Reset realisasi
+  const handleAccountSelect = (accountNo: string) => {
+    setSelectedAccountNo(accountNo);
+    if (!accountNo) {
+      setItemAmount('');
+      setRealisasiSnapshot(0);
       return;
     }
-    const account = availableAccounts.find(a => a.id === accountId);
+    const account = availableAccounts.find(a => a.accountNo === accountNo);
     if (account) {
       setItemAmount(''); // Budget kosong (user input manual dari 0)
-      setRealisasiSnapshot(account.balance || 0); // Realisasi = snapshot dari COA balance
+      setRealisasiSnapshot(account.amount || 0); // Realisasi = amount dari API
     }
   };
 
@@ -150,13 +171,13 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
         for (const item of budgetItems) {
           await addBudgetItem({
             budget_id: newBudget!.id,
-            account_id: item.account_id,
-            accurate_id: item.accurate_id,
+            account_id: null, // No account_id since we're using API data
+            accurate_id: null,
             account_code: item.account_code,
             account_name: item.account_name,
             account_type: item.account_type,
             allocated_amount: item.allocated_amount,
-            realisasi_snapshot: item.realisasi_snapshot || 0, // Include realisasi snapshot
+            realisasi_snapshot: item.realisasi_snapshot || 0,
             description: item.description,
           });
         }
@@ -178,7 +199,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
   };
 
   const handleAddItem = () => {
-    if (!selectedAccountId) {
+    if (!selectedAccountNo) {
       setError('Pilih akun terlebih dahulu');
       return;
     }
@@ -188,33 +209,37 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
       return;
     }
 
-    const selectedAccount = availableAccounts.find(a => a.id === selectedAccountId);
+    const selectedAccount = availableAccounts.find(a => a.accountNo === selectedAccountNo);
     if (!selectedAccount) return;
 
     const isDuplicate = budgetItems.some(
-      (item) => item.account_code === selectedAccount.account_code
+      (item) => item.account_code === selectedAccount.accountNo
     );
 
     if (isDuplicate) {
-      setError(`Akun ${selectedAccount.account_code} sudah ada di budget ini`);
+      setError(`Akun ${selectedAccount.accountNo} sudah ada di budget ini`);
       return;
     }
 
     const newItem: BudgetItem = {
       id: '',
       budget_id: budget?.id || '',
-      account_id: selectedAccount.id,
-      accurate_id: selectedAccount.accurate_id,
-      account_code: selectedAccount.account_code,
-      account_name: selectedAccount.account_name,
-      account_type: selectedAccount.account_type,
+      account_id: undefined,
+      accurate_id: undefined,
+      account_code: selectedAccount.accountNo,
+      account_name: selectedAccount.accountName,
+      account_type: selectedAccount.accountType,
       allocated_amount: Number(itemAmount), // Budget (manual input)
-      realisasi_snapshot: realisasiSnapshot, // Realisasi (snapshot from COA)
+      realisasi_snapshot: realisasiSnapshot, // Realisasi (from API)
       description: itemDescription.trim(),
     };
 
     setBudgetItems([...budgetItems, newItem]);
-    setSelectedAccountId('');
+    
+    // Remove from available accounts
+    setAvailableAccounts(availableAccounts.filter(a => a.accountNo !== selectedAccountNo));
+    
+    setSelectedAccountNo('');
     setItemAmount('');
     setRealisasiSnapshot(0);
     setItemDescription('');
@@ -224,14 +249,14 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
   };
 
   const handleAddItemToExistingBudget = async () => {
-    if (!budget?.id || !selectedAccountId) return;
+    if (!budget?.id || !selectedAccountNo) return;
 
     if (itemAmount === '' || itemAmount <= 0) {
       setError('Jumlah budget harus diisi dan lebih dari 0');
       return;
     }
 
-    const selectedAccount = availableAccounts.find(a => a.id === selectedAccountId);
+    const selectedAccount = availableAccounts.find(a => a.accountNo === selectedAccountNo);
     if (!selectedAccount) return;
 
     setLoading(true);
@@ -240,20 +265,24 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
     try {
       const { data, error: addError } = await addBudgetItem({
         budget_id: budget.id,
-        account_id: selectedAccount.id,
-        accurate_id: selectedAccount.accurate_id,
-        account_code: selectedAccount.account_code,
-        account_name: selectedAccount.account_name,
-        account_type: selectedAccount.account_type,
-        allocated_amount: Number(itemAmount), // Budget (manual input)
-        realisasi_snapshot: realisasiSnapshot, // Realisasi (snapshot from COA)
+        account_id: null,
+        accurate_id: null,
+        account_code: selectedAccount.accountNo,
+        account_name: selectedAccount.accountName,
+        account_type: selectedAccount.accountType,
+        allocated_amount: Number(itemAmount),
+        realisasi_snapshot: realisasiSnapshot,
         description: itemDescription.trim(),
       });
 
       if (addError) throw addError;
 
       setBudgetItems([...budgetItems, data!]);
-      setSelectedAccountId('');
+      
+      // Remove from available accounts
+      setAvailableAccounts(availableAccounts.filter(a => a.accountNo !== selectedAccountNo));
+      
+      setSelectedAccountNo('');
       setItemAmount('');
       setRealisasiSnapshot(0);
       setItemDescription('');
@@ -273,21 +302,33 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
       setLoading(true);
       try {
         await deleteBudgetItem(itemId);
+        const removedItem = budgetItems.find(item => item.id === itemId);
         setBudgetItems(budgetItems.filter((item) => item.id !== itemId));
+        
+        // If period is still selected, reload accounts to include this one again
+        if (period && activeEntity?.api_token) {
+          await loadBSAccounts();
+        }
       } catch (err: any) {
         setError(err.message || 'Gagal menghapus item');
       } finally {
         setLoading(false);
       }
     } else {
+      const removedItem = budgetItems.find(item => item.account_code === accountCode);
       setBudgetItems(budgetItems.filter((item) => item.account_code !== accountCode));
+      
+      // If period is still selected, reload accounts
+      if (period && activeEntity?.api_token) {
+        loadBSAccounts();
+      }
     }
   };
 
   const filteredAccounts = availableAccounts.filter(
     (acc) =>
-      acc.account_code.toLowerCase().includes(accountFilter.toLowerCase()) ||
-      acc.account_name.toLowerCase().includes(accountFilter.toLowerCase())
+      acc.accountNo.toLowerCase().includes(accountFilter.toLowerCase()) ||
+      acc.accountName.toLowerCase().includes(accountFilter.toLowerCase())
   );
 
   return (
@@ -352,13 +393,23 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
                 value={period}
                 onChange={(e) => setPeriod(e.target.value)}
                 required
-                disabled={loading}
+                disabled={loading || mode === 'edit'} // Lock period in edit mode
                 className={styles.monthInput}
               />
+              {loadingAccounts && (
+                <div style={{ fontSize: '12px', color: '#0369a1', marginTop: '4px' }}>
+                  Memuat daftar akun untuk periode ini...
+                </div>
+              )}
+              {period && !loadingAccounts && availableAccounts.length === 0 && budgetItems.length === 0 && (
+                <div style={{ fontSize: '12px', color: '#dc2626', marginTop: '4px' }}>
+                  Tidak ada akun tersedia untuk periode ini
+                </div>
+              )}
             </div>
           </div>
+        </div>
 
-    
         {/* Section: Alokasi Budget */}
         <div>
           <div className={styles.allocationHeader}>
@@ -368,144 +419,156 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
             <button
               type="button"
               onClick={() => setShowAddItem(!showAddItem)}
-              disabled={loading}
+              disabled={loading || loadingAccounts || !period}
               className={`${styles.addButton} ${showAddItem ? styles.addButtonClose : ''}`}
             >
               {showAddItem ? '✕ Tutup' : '+ Tambah Akun'}
             </button>
           </div>
 
+          {!period && (
+            <div className={styles.noItems}>
+              Pilih periode terlebih dahulu untuk menampilkan daftar akun
+            </div>
+          )}
+
           {/* Add Item Form */}
-          {showAddItem && (
+          {showAddItem && period && (
             <div className={styles.addItemForm}>
               <h4 className={styles.addItemTitle}>Tambah Akun ke Budget</h4>
 
-              <div>
-                <label className={styles.label}>
-                  Cari Akun <span className={styles.required}>*</span>
-                </label>
-                <input
-                  type="text"
-                  value={accountFilter}
-                  onChange={(e) => setAccountFilter(e.target.value)}
-                  placeholder="Ketik kode atau nama akun untuk mencari..."
-                  className={styles.searchInput}
-                />
-              </div>
-
-              <div>
-                <label className={styles.label}>
-                  Pilih dari daftar ({filteredAccounts.length} akun tersedia)
-                </label>
-                {filteredAccounts.length === 0 ? (
-                  <div className={styles.noItems}>
-                    {accountFilter
-                      ? `Tidak ada akun yang cocok dengan "${accountFilter}"`
-                      : 'Semua akun sudah dialokasikan'}
+              {loadingAccounts ? (
+                <div className={styles.noItems}>Memuat daftar akun...</div>
+              ) : (
+                <>
+                  <div>
+                    <label className={styles.label}>
+                      Cari Akun <span className={styles.required}>*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={accountFilter}
+                      onChange={(e) => setAccountFilter(e.target.value)}
+                      placeholder="Ketik kode atau nama akun untuk mencari..."
+                      className={styles.searchInput}
+                    />
                   </div>
-                ) : (
-                  <div className={styles.accountListContainer}>
-                    {filteredAccounts.map((acc) => (
-                      <div
-                        key={acc.id}
-                        onClick={() => handleAccountSelect(acc.id)}
-                        className={`${styles.accountItem} ${
-                          selectedAccountId === acc.id ? styles.accountItemSelected : ''
-                        }`}
-                      >
-                        <div className={styles.accountRow}>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                              <code className={styles.accountCode}>{acc.account_code}</code>
-                              <span className={styles.accountName}>{acc.account_name}</span>
+
+                  <div>
+                    <label className={styles.label}>
+                      Pilih dari daftar ({filteredAccounts.length} akun tersedia)
+                    </label>
+                    {filteredAccounts.length === 0 ? (
+                      <div className={styles.noItems}>
+                        {accountFilter
+                          ? `Tidak ada akun yang cocok dengan "${accountFilter}"`
+                          : 'Semua akun sudah dialokasikan'}
+                      </div>
+                    ) : (
+                      <div className={styles.accountListContainer}>
+                        {filteredAccounts.map((acc) => (
+                          <div
+                            key={acc.accountNo}
+                            onClick={() => handleAccountSelect(acc.accountNo)}
+                            className={`${styles.accountItem} ${
+                              selectedAccountNo === acc.accountNo ? styles.accountItemSelected : ''
+                            }`}
+                          >
+                            <div className={styles.accountRow}>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                  <code className={styles.accountCode}>{acc.accountNo}</code>
+                                  <span className={styles.accountName}>{acc.accountName}</span>
+                                </div>
+                                <div className={styles.accountType}>
+                                  {acc.accountType}
+                                </div>
+                              </div>
+                              <div style={{ textAlign: 'right', marginLeft: '16px', flexShrink: 0 }}>
+                                <div className={styles.balanceValue}>Rp {formatCurrency(acc.amount || 0)}</div>
+                                <div className={styles.balanceLabel}>Saldo (Realisasi)</div>
+                              </div>
                             </div>
-                            <div className={styles.accountType}>
-                              {acc.account_type_name || acc.account_type}
-                            </div>
+                            {selectedAccountNo === acc.accountNo && (
+                              <div className={styles.selectedIndicator}>✓ Akun dipilih</div>
+                            )}
                           </div>
-                          <div style={{ textAlign: 'right', marginLeft: '16px', flexShrink: 0 }}>
-                            <div className={styles.balanceValue}>Rp {formatCurrency(acc.balance || 0)}</div>
-                            <div className={styles.balanceLabel}>Balance (Realisasi)</div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {selectedAccountNo && (
+                    <>
+                      {/* Show realisasi snapshot */}
+                      <div className={styles.showRealisasi}>
+                        <div style={{ fontSize: '14px', color: '#0369a1', marginBottom: '4px'}}>
+                          Realisasi (Saldo akun per periode):
+                        </div>
+                        <div style={{ fontSize: '18px', fontWeight: '600', color: '#0c4a6e' }}>
+                          Rp {formatCurrency(realisasiSnapshot)}
+                        </div>
+                        <div style={{ fontSize: '14px', color: '#075985', marginTop: '4px' }}>
+                          Masukkan budget perkiraan yang akan dialokasikan untuk akun ini.
+                        </div>
+                      </div>
+
+                      <div className={styles.amountGrid}>
+                        <div>
+                          <label className={styles.label}>
+                            Budget <span className={styles.required}>*</span>
+                          </label>
+                          <input
+                            type="number"
+                            value={itemAmount}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              if (value === '' || value.replace(/\D/g, '').length <= 15) {
+                                setItemAmount(value === '' ? '' : Number(value));
+                              }
+                            }}
+                            onKeyPress={(e) => {
+                              const currentValue = (itemAmount || '').toString().replace(/\D/g, '');
+                              if (currentValue.length >= 15 && e.key !== 'Backspace' && e.key !== 'Delete') {
+                                e.preventDefault();
+                              }
+                            }}
+                            min={0}
+                            max={999_999_999_999_999}
+                            step={1}
+                            disabled={loading}
+                            placeholder="Masukkan nominal budget (max 15 digit)"
+                            className={styles.input}
+                          />
+                          <div className={styles.charCount}>
+                            Input manual • Max 15 digit
                           </div>
                         </div>
-                        {selectedAccountId === acc.id && (
-                          <div className={styles.selectedIndicator}>✓ Akun dipilih</div>
-                        )}
+
+                        <div>
+                          <label className={styles.label}>Catatan</label>
+                          <input
+                            type="text"
+                            value={itemDescription}
+                            onChange={(e) => setItemDescription(e.target.value)}
+                            maxLength={200}
+                            disabled={loading}
+                            placeholder="Catatan (opsional)..."
+                            className={styles.input}
+                          />
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </div>
 
-              {selectedAccountId && (
-                <>
-                  {/* NEW: Show realisasi snapshot */}
-                  <div className={styles.showRealisasi}>
-                    <div style={{ fontSize: '14px', color: '#0369a1', marginBottom: '4px'}}>
-                      Realisasi (Balance COA saat ini):
-                    </div>
-                    <div style={{ fontSize: '18px', fontWeight: '600', color: '#0c4a6e' }}>
-                      Rp {formatCurrency(realisasiSnapshot)}
-                    </div>
-                    <div style={{ fontSize: '14px', color: '#075985', marginTop: '4px' }}>
-                      Masukkan budget perkiraan yang akan dialokasikan untuk akun ini.
-                    </div>
-                  </div>
-
-                  <div className={styles.amountGrid}>
-                    <div>
-                      <label className={styles.label}>
-                        Budget <span className={styles.required}>*</span>
-                      </label>
-                      <input
-                        type="number"
-                        value={itemAmount}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          if (value === '' || value.replace(/\D/g, '').length <= 15) {
-                            setItemAmount(value === '' ? '' : Number(value));
-                          }
-                        }}
-                        onKeyPress={(e) => {
-                          const currentValue = (itemAmount || '').toString().replace(/\D/g, '');
-                          if (currentValue.length >= 15 && e.key !== 'Backspace' && e.key !== 'Delete') {
-                            e.preventDefault();
-                          }
-                        }}
-                        min={0}
-                        max={999_999_999_999_999}
-                        step={1}
-                        disabled={loading}
-                        placeholder="Masukkan nominal budget (max 15 digit)"
-                        className={styles.input}
-                      />
-                      <div className={styles.charCount}>
-                        Input manual • Max 15 digit
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className={styles.label}>Catatan</label>
-                      <input
-                        type="text"
-                        value={itemDescription}
-                        onChange={(e) => setItemDescription(e.target.value)}
-                        maxLength={200}
-                        disabled={loading}
-                        placeholder="Catatan (opsional)..."
-                        className={styles.input}
-                      />
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={mode === 'edit' && budget?.id ? handleAddItemToExistingBudget : handleAddItem}
-                    disabled={!selectedAccountId || itemAmount === '' || itemAmount <= 0 || loading}
-                    className={styles.addAccountButton}
-                  >
-                    ✓ Tambahkan ke Budget
-                  </button>
+                      <button
+                        type="button"
+                        onClick={mode === 'edit' && budget?.id ? handleAddItemToExistingBudget : handleAddItem}
+                        disabled={!selectedAccountNo || itemAmount === '' || itemAmount <= 0 || loading}
+                        className={styles.addAccountButton}
+                      >
+                        ✓ Tambahkan ke Budget
+                      </button>
+                    </>
+                  )}
                 </>
               )}
             </div>
@@ -514,7 +577,9 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
           {/* Items Table */}
           {budgetItems.length === 0 ? (
             <div className={styles.noItems}>
-              Belum ada alokasi akun. Klik "Tambah Akun" untuk mulai.
+              {period 
+                ? 'Belum ada alokasi akun. Klik "Tambah Akun" untuk mulai.'
+                : 'Pilih periode untuk menampilkan daftar akun'}
             </div>
           ) : (
             <div className={styles.tableWrapper}>
@@ -632,20 +697,19 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
           </div>
         </div>
 
-         {/* Deskripsi */}
+        {/* Deskripsi */}
         <div className={styles.fullWidth}>
-            <label className={styles.label}>Deskripsi</label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={3}
-              maxLength={500}
-              disabled={loading}
-              placeholder="Deskripsi budget (opsional)..."
-              className={styles.textarea}
-            />
-            <div className={styles.charCount}>{description.length}/500 karakter</div>
-          </div>
+          <label className={styles.label}>Deskripsi</label>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={3}
+            maxLength={500}
+            disabled={loading}
+            placeholder="Deskripsi budget (opsional)..."
+            className={styles.textarea}
+          />
+          <div className={styles.charCount}>{description.length}/500 karakter</div>
         </div>
 
         {/* Action Buttons */}
