@@ -5,9 +5,11 @@ import {
   updateBudget,
   addBudgetItem,
   deleteBudgetItem,
+  getAvailableAccountsForBudget,
   fetchBSAccountsByPeriod,
   type Budget,
   type BudgetItem,
+  type Account,
   type BSAccount,
 } from '../../lib/accurate';
 import {
@@ -26,6 +28,20 @@ interface BudgetFormProps {
   onCancel: () => void;
 }
 
+type AccountSource = 'database' | 'api';
+
+// Union type for both account types
+type UnifiedAccount = {
+  accountNo: string;
+  accountName: string;
+  accountType: string;
+  amount: number;
+  id?: string; // Only for database accounts
+  entity_id?: string; // Only for database accounts
+  accurate_id?: string; // Only for database accounts
+  account_type_name?: string; // Only for database accounts
+};
+
 export const BudgetForm: React.FC<BudgetFormProps> = ({
   mode,
   budget,
@@ -39,15 +55,16 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
   const [name, setName] = useState(budget?.name || '');
   const [period, setPeriod] = useState(budget?.period || '');
   const [description, setDescription] = useState(budget?.description || '');
+  const [accountSource, setAccountSource] = useState<AccountSource>('database');
 
   // Items state
   const [budgetItems, setBudgetItems] = useState<BudgetItem[]>(items);
-  const [availableAccounts, setAvailableAccounts] = useState<BSAccount[]>([]);
+  const [availableAccounts, setAvailableAccounts] = useState<UnifiedAccount[]>([]);
 
   // New item state
   const [selectedAccountNo, setSelectedAccountNo] = useState('');
   const [itemAmount, setItemAmount] = useState<number | ''>(''); // Budget (manual input)
-  const [realisasiSnapshot, setRealisasiSnapshot] = useState<number>(0); // Realisasi (auto-fill from API)
+  const [realisasiSnapshot, setRealisasiSnapshot] = useState<number>(0); // Realisasi (auto-fill)
   const [itemDescription, setItemDescription] = useState('');
   const [showAddItem, setShowAddItem] = useState(false);
 
@@ -60,42 +77,106 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
 
-  // Load available accounts when period changes
+  // Load available accounts based on source
   useEffect(() => {
-    if (period && activeEntity?.api_token) {
-      loadBSAccounts();
-    } else {
-      setAvailableAccounts([]);
+    if (activeEntity?.id) {
+      if (accountSource === 'database') {
+        loadDatabaseAccounts();
+      } else if (accountSource === 'api') {
+        if (period) {
+          loadAPIAccounts();
+        } else {
+          setAvailableAccounts([]);
+        }
+      }
     }
-  }, [period, activeEntity?.api_token]);
+  }, [activeEntity?.id, accountSource, period, budget?.id, budgetItems]);
 
-  const loadBSAccounts = async () => {
+  const loadDatabaseAccounts = async () => {
+    if (!activeEntity) return;
+
+    setLoadingAccounts(true);
+    setError(null);
+
+    try {
+      const { data, error: accountsError } = await getAvailableAccountsForBudget(
+        activeEntity.id,
+        budget?.id
+      );
+
+      if (accountsError) {
+        console.error('Failed to load database accounts:', accountsError);
+        setError('Gagal memuat akun dari database');
+        setAvailableAccounts([]);
+      } else {
+        // Convert to unified format
+        const unified: UnifiedAccount[] = (data || []).map(acc => ({
+          accountNo: acc.account_code,
+          accountName: acc.account_name,
+          accountType: acc.account_type,
+          amount: acc.balance || 0,
+          id: acc.id,
+          entity_id: acc.entity_id,
+          accurate_id: acc.accurate_id,
+          account_type_name: acc.account_type_name,
+        }));
+        setAvailableAccounts(unified);
+        console.log(`Loaded ${unified.length} accounts from database`);
+      }
+    } catch (err: any) {
+      console.error('Error loading database accounts:', err);
+      setError(err.message || 'Gagal memuat akun dari database');
+      setAvailableAccounts([]);
+    } finally {
+      setLoadingAccounts(false);
+    }
+  };
+
+  const loadAPIAccounts = async () => {
     if (!activeEntity?.api_token || !period) return;
 
     setLoadingAccounts(true);
     setError(null);
 
     try {
+      console.log('[DEBUG] Fetching BS accounts from API...');
+      console.log('[DEBUG] Token:', activeEntity.api_token ? 'EXISTS' : 'MISSING');
+      console.log('[DEBUG] Period:', period);
+      
       const result = await fetchBSAccountsByPeriod(
         activeEntity.api_token,
         period
       );
 
+      console.log('[DEBUG] Result:', result);
+
       if (result.error) {
+        console.error('[DEBUG] Error:', result.error);
         setError(result.error);
         setAvailableAccounts([]);
       } else {
-        // Filter out accounts already used in budget
+        // Filter out already used accounts
         const usedAccountNos = new Set(budgetItems.map(item => item.account_code));
         const available = (result.accounts || []).filter(
           acc => !usedAccountNos.has(acc.accountNo)
         );
-        setAvailableAccounts(available);
-        console.log(`Loaded ${available.length} available accounts for period ${period}`);
+        
+        // Convert to unified format
+        const unified: UnifiedAccount[] = available.map(acc => ({
+          accountNo: acc.accountNo,
+          accountName: acc.accountName,
+          accountType: acc.accountType,
+          amount: acc.amount,
+        }));
+        
+        console.log('[DEBUG] Total accounts from API:', result.accounts?.length || 0);
+        console.log('[DEBUG] Used accounts:', usedAccountNos.size);
+        console.log('[DEBUG] Available accounts:', unified.length);
+        setAvailableAccounts(unified);
       }
     } catch (err: any) {
-      console.error('Failed to load BS accounts:', err);
-      setError(err.message || 'Gagal memuat daftar akun');
+      console.error('[DEBUG] Catch error:', err);
+      setError(err.message || 'Gagal memuat daftar akun dari API');
       setAvailableAccounts([]);
     } finally {
       setLoadingAccounts(false);
@@ -124,7 +205,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
     const account = availableAccounts.find(a => a.accountNo === accountNo);
     if (account) {
       setItemAmount(''); // Budget kosong (user input manual dari 0)
-      setRealisasiSnapshot(account.amount || 0); // Realisasi = amount dari API
+      setRealisasiSnapshot(account.amount || 0); // Realisasi = amount dari source
     }
   };
 
@@ -171,8 +252,8 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
         for (const item of budgetItems) {
           await addBudgetItem({
             budget_id: newBudget!.id,
-            account_id: null, // No account_id since we're using API data
-            accurate_id: null,
+            account_id: item.account_id || null,
+            accurate_id: item.accurate_id || null,
             account_code: item.account_code,
             account_name: item.account_name,
             account_type: item.account_type,
@@ -224,21 +305,17 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
     const newItem: BudgetItem = {
       id: '',
       budget_id: budget?.id || '',
-      account_id: undefined,
-      accurate_id: undefined,
+      account_id: selectedAccount.id || undefined,
+      accurate_id: selectedAccount.accurate_id || undefined,
       account_code: selectedAccount.accountNo,
       account_name: selectedAccount.accountName,
       account_type: selectedAccount.accountType,
       allocated_amount: Number(itemAmount), // Budget (manual input)
-      realisasi_snapshot: realisasiSnapshot, // Realisasi (from API)
+      realisasi_snapshot: realisasiSnapshot, // Realisasi (from source)
       description: itemDescription.trim(),
     };
 
     setBudgetItems([...budgetItems, newItem]);
-    
-    // Remove from available accounts
-    setAvailableAccounts(availableAccounts.filter(a => a.accountNo !== selectedAccountNo));
-    
     setSelectedAccountNo('');
     setItemAmount('');
     setRealisasiSnapshot(0);
@@ -265,8 +342,8 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
     try {
       const { data, error: addError } = await addBudgetItem({
         budget_id: budget.id,
-        account_id: null,
-        accurate_id: null,
+        account_id: selectedAccount.id || null,
+        accurate_id: selectedAccount.accurate_id || null,
         account_code: selectedAccount.accountNo,
         account_name: selectedAccount.accountName,
         account_type: selectedAccount.accountType,
@@ -278,10 +355,6 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
       if (addError) throw addError;
 
       setBudgetItems([...budgetItems, data!]);
-      
-      // Remove from available accounts
-      setAvailableAccounts(availableAccounts.filter(a => a.accountNo !== selectedAccountNo));
-      
       setSelectedAccountNo('');
       setItemAmount('');
       setRealisasiSnapshot(0);
@@ -302,26 +375,14 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
       setLoading(true);
       try {
         await deleteBudgetItem(itemId);
-        const removedItem = budgetItems.find(item => item.id === itemId);
         setBudgetItems(budgetItems.filter((item) => item.id !== itemId));
-        
-        // If period is still selected, reload accounts to include this one again
-        if (period && activeEntity?.api_token) {
-          await loadBSAccounts();
-        }
       } catch (err: any) {
         setError(err.message || 'Gagal menghapus item');
       } finally {
         setLoading(false);
       }
     } else {
-      const removedItem = budgetItems.find(item => item.account_code === accountCode);
       setBudgetItems(budgetItems.filter((item) => item.account_code !== accountCode));
-      
-      // If period is still selected, reload accounts
-      if (period && activeEntity?.api_token) {
-        loadBSAccounts();
-      }
     }
   };
 
@@ -393,20 +454,56 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
                 value={period}
                 onChange={(e) => setPeriod(e.target.value)}
                 required
-                disabled={loading || mode === 'edit'} // Lock period in edit mode
+                disabled={loading}
                 className={styles.monthInput}
               />
-              {loadingAccounts && (
-                <div style={{ fontSize: '12px', color: '#0369a1', marginTop: '4px' }}>
-                  Memuat daftar akun untuk periode ini...
-                </div>
-              )}
-              {period && !loadingAccounts && availableAccounts.length === 0 && budgetItems.length === 0 && (
-                <div style={{ fontSize: '12px', color: '#dc2626', marginTop: '4px' }}>
-                  Tidak ada akun tersedia untuk periode ini
-                </div>
-              )}
             </div>
+          </div>
+
+          {/* Account Source Selection */}
+          <div style={{ marginTop: '16px' }}>
+            <label className={styles.label}>
+              Sumber Data Akun <span className={styles.required}>*</span>
+            </label>
+            <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                <input
+                  type="radio"
+                  name="accountSource"
+                  value="database"
+                  checked={accountSource === 'database'}
+                  onChange={(e) => setAccountSource(e.target.value as AccountSource)}
+                  disabled={loading}
+                />
+                <span>Database COA (termasuk dari Excel)</span>
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                <input
+                  type="radio"
+                  name="accountSource"
+                  value="api"
+                  checked={accountSource === 'api'}
+                  onChange={(e) => setAccountSource(e.target.value as AccountSource)}
+                  disabled={loading || !activeEntity?.api_token}
+                />
+                <span>API Accurate (berdasarkan periode)</span>
+                {!activeEntity?.api_token && (
+                  <span style={{ fontSize: '12px', color: '#dc2626' }}>
+                    (Token API tidak tersedia)
+                  </span>
+                )}
+              </label>
+            </div>
+            <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+              {accountSource === 'database' 
+                ? 'Akun diambil dari tabel COA yang sudah tersimpan di database (hasil sync atau import Excel)'
+                : 'Akun diambil dari API Accurate berdasarkan periode yang dipilih (Balance Sheet)'}
+            </div>
+            {loadingAccounts && (
+              <div style={{ fontSize: '12px', color: '#0369a1', marginTop: '4px' }}>
+                Memuat daftar akun...
+              </div>
+            )}
           </div>
         </div>
 
@@ -419,21 +516,21 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
             <button
               type="button"
               onClick={() => setShowAddItem(!showAddItem)}
-              disabled={loading || loadingAccounts || !period}
+              disabled={loading || loadingAccounts || (accountSource === 'api' && !period)}
               className={`${styles.addButton} ${showAddItem ? styles.addButtonClose : ''}`}
             >
               {showAddItem ? '✕ Tutup' : '+ Tambah Akun'}
             </button>
           </div>
 
-          {!period && (
+          {accountSource === 'api' && !period && (
             <div className={styles.noItems}>
-              Pilih periode terlebih dahulu untuk menampilkan daftar akun
+              Pilih periode terlebih dahulu untuk mengambil akun dari API
             </div>
           )}
 
           {/* Add Item Form */}
-          {showAddItem && period && (
+          {showAddItem && (accountSource === 'database' || period) && (
             <div className={styles.addItemForm}>
               <h4 className={styles.addItemTitle}>Tambah Akun ke Budget</h4>
 
@@ -466,9 +563,9 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
                       </div>
                     ) : (
                       <div className={styles.accountListContainer}>
-                        {filteredAccounts.map((acc) => (
+                        {filteredAccounts.map((acc, idx) => (
                           <div
-                            key={acc.accountNo}
+                            key={acc.id || acc.accountNo || idx}
                             onClick={() => handleAccountSelect(acc.accountNo)}
                             className={`${styles.accountItem} ${
                               selectedAccountNo === acc.accountNo ? styles.accountItemSelected : ''
@@ -481,12 +578,14 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
                                   <span className={styles.accountName}>{acc.accountName}</span>
                                 </div>
                                 <div className={styles.accountType}>
-                                  {acc.accountType}
+                                  {acc.account_type_name || acc.accountType}
                                 </div>
                               </div>
                               <div style={{ textAlign: 'right', marginLeft: '16px', flexShrink: 0 }}>
                                 <div className={styles.balanceValue}>Rp {formatCurrency(acc.amount || 0)}</div>
-                                <div className={styles.balanceLabel}>Saldo (Realisasi)</div>
+                                <div className={styles.balanceLabel}>
+                                  {accountSource === 'database' ? 'Balance' : 'Saldo'} (Realisasi)
+                                </div>
                               </div>
                             </div>
                             {selectedAccountNo === acc.accountNo && (
@@ -503,7 +602,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
                       {/* Show realisasi snapshot */}
                       <div className={styles.showRealisasi}>
                         <div style={{ fontSize: '14px', color: '#0369a1', marginBottom: '4px'}}>
-                          Realisasi (Saldo akun per periode):
+                          Realisasi ({accountSource === 'database' ? 'Balance COA saat ini' : 'Saldo akun per periode'}):
                         </div>
                         <div style={{ fontSize: '18px', fontWeight: '600', color: '#0c4a6e' }}>
                           Rp {formatCurrency(realisasiSnapshot)}
@@ -577,9 +676,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
           {/* Items Table */}
           {budgetItems.length === 0 ? (
             <div className={styles.noItems}>
-              {period 
-                ? 'Belum ada alokasi akun. Klik "Tambah Akun" untuk mulai.'
-                : 'Pilih periode untuk menampilkan daftar akun'}
+              Belum ada alokasi akun. Klik "Tambah Akun" untuk mulai.
             </div>
           ) : (
             <div className={styles.tableWrapper}>
