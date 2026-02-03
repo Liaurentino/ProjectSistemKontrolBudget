@@ -10,6 +10,7 @@ import PublicProfilesPage from "./pages/PublicUsers/PublicUsersPage";
 import { useAuth } from "./contexts/AuthContext";
 import AuthPage from "./pages/Auth/AuthPage";
 import ResetPasswordPage from "./pages/Auth/ResetPasswordPage";
+import AccurateOAuthCallback from "./pages/Auth/AccurateOauthCallback";
 
 export default function App() {
   const { user, loading, signOut } = useAuth();
@@ -201,6 +202,7 @@ export default function App() {
 
             <Route path="/" element={<Navigate to="/dashboard" />} />
             <Route path="*" element={<Navigate to="/dashboard" />} />
+            <Route path="/oauth/accurate/callback" element={<AccurateOAuthCallback />} />
           </Routes>
         </main>
       </div>

@@ -5,6 +5,13 @@ import styles from './AuthPage.module.css';
 
 type ViewMode = 'login' | 'register' | 'forgot-password';
 
+// Helper function untuk generate random state (CSRF protection)
+const generateRandomState = () => {
+  const array = new Uint8Array(32);
+  crypto.getRandomValues(array);
+  return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+};
+
 export default function AuthPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('login');
   const [email, setEmail] = useState('');
@@ -82,6 +89,65 @@ export default function AuthPage() {
   };
 
   // ========================================
+  // ACCURATE OAUTH - SIMPLIFIED
+  // ========================================
+
+//   const handleAccurateLogin = async () => {
+//   setError('');
+//   setLoading(true);
+  
+//   try {
+//     // Generate & save CSRF state
+//     const state = generateRandomState();
+//     localStorage.setItem('accurate_oauth_state', state);
+//     localStorage.setItem('accurate_oauth_timestamp', Date.now().toString());
+
+//     const accurateClientId = import.meta.env.VITE_ACCURATE_CLIENT_ID;
+    
+//     if (!accurateClientId) {
+//       throw new Error('Accurate Client ID tidak ditemukan di environment variables');
+//     }
+
+//     // ✅ PERBAIKAN 1: Pastikan redirect URI benar
+//     const redirectUri = `${window.location.origin}/oauth/accurate/callback`;
+
+//     // ✅ PERBAIKAN 2: TAMBAHKAN SCOPE! (INI YANG PALING PENTING)
+//     const oauthParams = new URLSearchParams({
+//       client_id: accurateClientId,
+//       response_type: 'code',
+//       redirect_uri: redirectUri,
+//       scope:  'company_data item_view sales_invoice_view glaccount_view customer_view dashboard_view',      // Akses data perusahaan
+//       state: state
+//     });
+
+//     // ✅ PERBAIKAN 3: Hapus spasi di URL
+//     const oauthUrl = `https://account.accurate.id/oauth/authorize?${oauthParams.toString()}`;
+    
+//     console.log('[AccurateOAuth] Redirecting to Accurate OAuth...');
+//     console.log('[AccurateOAuth] Client ID:', accurateClientId.substring(0, 8) + '...');
+//     console.log('[AccurateOAuth] Redirect URI:', redirectUri);
+//     console.log('[AccurateOAuth] Scopes:',
+//       'company_data',      // Akses data perusahaan
+//       'item_view',         // Lihat item/produk
+//       'sales_invoice_view',// Lihat invoice
+//       'glaccount_view',    // Chart of accounts
+//       'customer_view',     // Lihat customer
+//       'dashboard_view'     // D
+//      );
+//     console.log('[AccurateOAuth] State:', state.substring(0, 8) + '...');
+
+//     // Redirect ke halaman login Accurate
+//     window.location.href = oauthUrl;
+    
+//   } catch (err: any) {
+//     console.error('[AccurateOAuth] Error:', err);
+//     setError(err.message || 'Gagal menghubungkan dengan Accurate');
+//     setLoading(false);
+//   }
+// };
+
+
+  // ========================================
   // FORGOT PASSWORD
   // ========================================
 
@@ -144,9 +210,7 @@ export default function AuthPage() {
 
     try {
       if (viewMode === 'login') {
-        // ========================================
         // LOGIN
-        // ========================================
         const { error } = await supabase.auth.signInWithPassword({ 
           email, 
           password 
@@ -160,12 +224,9 @@ export default function AuthPage() {
         }, 800);
         
       } else {
-        // ========================================
         // REGISTER
-        // ========================================
         console.log('[Register] Starting registration for:', email);
 
-        // Di bagian REGISTER
         const baseUrl = import.meta.env.VITE_REDIRECT_URL || window.location.origin;
         
         const { data, error } = await supabase.auth.signUp({
@@ -425,6 +486,21 @@ export default function AuthPage() {
             {isLogin ? 'Login' : 'Daftar'} dengan Google
           </button>
         )}
+
+        {/* Accurate OAuth Button
+        {!isForgotPassword && (
+          <button
+            onClick={handleAccurateLogin}
+            disabled={loading}
+            className={styles.accurateButton}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#0066CC"/>
+              <path d="M2 17L12 22L22 17V12L12 17L2 12V17Z" fill="#0099FF"/>
+            </svg>
+            {isLogin ? 'Login' : 'Daftar'} dengan Accurate
+          </button>
+        )} */}
 
         {/* Switch (hide on forgot password) */}
         {!isForgotPassword && (

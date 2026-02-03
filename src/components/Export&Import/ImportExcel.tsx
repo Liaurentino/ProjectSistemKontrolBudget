@@ -684,40 +684,148 @@ export const ImportExcel: React.FC<ImportExcelProps> = ({
 
         {/* Format Info */}
         <div className={styles.formatInfo}>
-          <h4 className={styles.formatInfoTitle}>📋 Format Excel yang Didukung:</h4>
+          <h4 className={styles.formatInfoTitle}>Format Excel yang Didukung:</h4>
           <ul className={styles.formatInfoList}>
-            <li><strong>Kolom Wajib:</strong> Kode Akun & Nama Akun (dengan nama apapun)</li>
+            <li><strong>Aturan Kolom:</strong> Setiap Kolom Berisi Satu Variable.</li>
+            <li>Jika Satu Variable Memakai Beberapa Kolom Maka Harus Digabungkan(Merge).</li>
+            <li><strong>Kolom Wajib:</strong> Kode Akun atau Nama Account</li>
             <li><strong>Kolom Opsional:</strong> Tipe/Jenis, Saldo/Balance, Currency, Level</li>
-            <li><strong>Nama Kolom Fleksibel:</strong> Sistem akan mendeteksi otomatis meski nama beda</li>
-            <li>Contoh: "Kode", "Account Code", "Nomor Akun" → semua akan terbaca sebagai Kode Akun</li>
             <li><strong>Duplicate:</strong> Jika account code sama, sistem akan update saldo saja</li>
             <li>File harus dalam format Excel (.xlsx, .xls, .xlsm, .xlsb)</li>
           </ul>
         </div>
 
-        {/* Download Template */}
-        <div style={{ marginBottom: '24px', textAlign: 'center' }}>
-          <button
-            onClick={() => {
-              const sampleData = [
-                ['account_code', 'account_name', 'account_type', 'balance', 'currency', 'suspended', 'lvl'],
-                ['1-0000', 'ASET', 'ASSET', 0, 'IDR', false, 1],
-                ['1-1000', 'Aset Lancar', 'ASSET', 0, 'IDR', false, 2],
-                ['1-1100', 'Kas & Bank', 'ASSET', 5000000, 'IDR', false, 3],
-                ['2-0000', 'LIABILITAS', 'LIABILITY', 0, 'IDR', false, 1],
-                ['3-0000', 'EKUITAS', 'EQUITY', 0, 'IDR', false, 1],
-              ];
-              
-              const ws = XLSX.utils.aoa_to_sheet(sampleData);
-              const wb = XLSX.utils.book_new();
-              XLSX.utils.book_append_sheet(wb, ws, 'COA Template');
-              XLSX.writeFile(wb, 'COA_Template_Standard.xlsx');
-            }}
-            className={styles.templateButton}
-          >
-            📥 Download Template Standard
-          </button>
-        </div>
+{/* Download Template */}
+<div style={{ marginBottom: '24px', textAlign: 'center' }}>
+  <button
+    onClick={() => {
+      // Data untuk template
+      const headerRow = ['account_code', 'account_name', 'account_type', 'balance', 'currency', 'suspended', 'lvl'];
+      const sampleData = [
+        ['1-0000', 'ASET', 'ASSET', 0, 'IDR', false, 1],
+        ['1-1000', 'Aset Lancar', 'ASSET', 0, 'IDR', false, 2],
+        ['1-1100', 'Kas & Bank', 'ASSET', 5000000, 'IDR', false, 3],
+        ['2-0000', 'LIABILITAS', 'LIABILITY', 0, 'IDR', false, 1],
+        ['3-0000', 'EKUITAS', 'EQUITY', 0, 'IDR', false, 1],
+      ];
+      
+      // Gabungkan title + header + data
+      const fullData = [
+        ['Template Excel COA Standar'], // Title di baris 1
+        headerRow,                       // Header di baris 2
+        ...sampleData                    // Data mulai baris 3
+      ];
+      
+      // Buat worksheet
+      const ws = XLSX.utils.aoa_to_sheet(fullData);
+      
+      // Merge cells untuk title (A1:G1)
+      ws['!merges'] = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 6 } } // merge dari kolom A sampai G di baris 1
+      ];
+      
+      // Set column widths
+      ws['!cols'] = [
+        { wch: 15 }, // account_code
+        { wch: 25 }, // account_name
+        { wch: 15 }, // account_type
+        { wch: 15 }, // balance
+        { wch: 10 }, // currency
+        { wch: 12 }, // suspended
+        { wch: 8 }   // lvl
+      ];
+      
+      // Styling untuk title (baris 1)
+      const titleCell = 'A1';
+      if (!ws[titleCell]) ws[titleCell] = {};
+      ws[titleCell].s = {
+        font: {
+          name: 'Calibri',
+          sz: 14,
+          bold: true,
+          color: { rgb: "FFFFFF" }
+        },
+        fill: {
+          fgColor: { rgb: "4F46E5" } // Primary color (Indigo)
+        },
+        alignment: {
+          horizontal: 'center',
+          vertical: 'center'
+        },
+        border: {
+          top: { style: 'thin', color: { rgb: "000000" } },
+          bottom: { style: 'thin', color: { rgb: "000000" } },
+          left: { style: 'thin', color: { rgb: "000000" } },
+          right: { style: 'thin', color: { rgb: "000000" } }
+        }
+      };
+      
+      // Styling untuk header (baris 2)
+      headerRow.forEach((_, colIndex) => {
+        const cellAddress = XLSX.utils.encode_cell({ r: 1, c: colIndex });
+        if (!ws[cellAddress]) ws[cellAddress] = {};
+        ws[cellAddress].s = {
+          font: {
+            name: 'Calibri',
+            sz: 11,
+            bold: true,
+            color: { rgb: "FFFFFF" }
+          },
+          fill: {
+            fgColor: { rgb: "6366F1" }
+          },
+          alignment: {
+            horizontal: 'center',
+            vertical: 'center'
+          },
+          border: {
+            top: { style: 'thin', color: { rgb: "000000" } },
+            bottom: { style: 'thin', color: { rgb: "000000" } },
+            left: { style: 'thin', color: { rgb: "000000" } },
+            right: { style: 'thin', color: { rgb: "000000" } }
+          }
+        };
+      });
+      
+      // Styling untuk data rows (baris 3 dst)
+      sampleData.forEach((row, rowIndex) => {
+        row.forEach((_, colIndex) => {
+          const cellAddress = XLSX.utils.encode_cell({ r: rowIndex + 2, c: colIndex });
+          if (!ws[cellAddress]) ws[cellAddress] = {};
+          ws[cellAddress].s = {
+            font: {
+              name: 'Calibri',
+              sz: 11
+            },
+            fill: {
+              fgColor: { rgb: rowIndex % 2 === 0 ? "FFFFFF" : "F9FAFB" } // Alternating rows
+            },
+            alignment: {
+              horizontal: colIndex === 1 ? 'left' : 'center', // account_name left, others center
+              vertical: 'center'
+            },
+            border: {
+              top: { style: 'thin', color: { rgb: "D1D5DB" } },
+              bottom: { style: 'thin', color: { rgb: "D1D5DB" } },
+              left: { style: 'thin', color: { rgb: "D1D5DB" } },
+              right: { style: 'thin', color: { rgb: "D1D5DB" } }
+            }
+          };
+        });
+      });
+      
+      // Buat workbook dan tambahkan worksheet
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'COA Template');
+      
+      // Download file
+      XLSX.writeFile(wb, 'COA_Template_Standard.xlsx');
+    }}
+    className={styles.templateButton}
+  >
+    Download Template Standard
+  </button>
+</div>
 
         {/* Action Buttons */}
         <div className={styles.actionButtons}>
@@ -732,7 +840,7 @@ export const ImportExcel: React.FC<ImportExcelProps> = ({
                 {' '}Importing...
               </>
             ) : (
-              '📥 Import Sekarang'
+              'Import Sekarang'
             )}
           </button>
           

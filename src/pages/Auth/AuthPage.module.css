@@ -340,3 +340,32 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+.accurateButton {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background-color: #0066CC;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.938rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 0.75rem;
+}
+
+.accurateButton:hover:not(:disabled) {
+  background-color: #0052A3;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 102, 204, 0.2);
+}
+
+.accurateButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

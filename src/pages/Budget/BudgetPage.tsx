@@ -522,7 +522,7 @@ const BudgetPage: React.FC = () => {
             loading ? styles.disabled : styles.active
           }`}
         >
-          ✏️ Edit
+          Edit
         </button>
 
         <button
@@ -532,7 +532,7 @@ const BudgetPage: React.FC = () => {
             loading ? styles.disabled : styles.active
           }`}
         >
-          🗑️ Hapus
+          Hapus
         </button>
       </div>
     </div>

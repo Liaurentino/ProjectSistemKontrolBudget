@@ -16,6 +16,7 @@ import {
   getLocalAccounts,
   type BudgetRealization,
 } from '../../lib/accurate';
+import { getEntities } from '../../lib/supabase';
 import styles from './DashboardPage.module.css';
 
 const formatCurrency = (amount: number): string => {
@@ -39,8 +40,17 @@ interface OverBudgetItem {
   variance_percentage: number;
 }
 
+type ViewMode = 'single' | 'all';
+
 const DashboardPage: React.FC = () => {
-  const { activeEntity } = useEntity();
+  const { activeEntity, entities: contextEntities } = useEntity();
+
+  // View mode state
+  const [viewMode, setViewMode] = useState<ViewMode>('all');
+  const [selectedEntityId, setSelectedEntityId] = useState<string>('');
+  const [selectedPeriod, setSelectedPeriod] = useState<string>('');
+  const [availablePeriods, setAvailablePeriods] = useState<string[]>([]);
+  const [userEntities, setUserEntities] = useState<any[]>([]);
 
   const [realizations, setRealizations] = useState<BudgetRealization[]>([]);
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
@@ -60,43 +70,50 @@ const DashboardPage: React.FC = () => {
     underUtilizedCount: 0,
   });
 
+  // Load user entities on mount
   useEffect(() => {
-    if (activeEntity?.id) {
-      loadDashboardData();
-    } else {
-      setRealizations([]);
-      setChartData([]);
-      setOverBudgetItems([]);
-      setTotalAccounts(0);
-      setStats({
-        totalBudget: 0,
-        totalRealisasi: 0,
-        averageUtilization: 0,
-        totalUnutilized: 0,
-        totalOverBudget: 0,
-        overBudgetCount: 0,
-        onTrackCount: 0,
-        underUtilizedCount: 0,
-      });
+    loadUserEntities();
+  }, []);
+
+  // Load data when mode or selection changes
+  useEffect(() => {
+    if (viewMode === 'single' && selectedEntityId) {
+      loadSingleEntityData(selectedEntityId);
+    } else if (viewMode === 'all' && selectedPeriod) {
+      loadAllEntitiesDataByPeriod(selectedPeriod);
     }
-  }, [activeEntity?.id]);
+  }, [viewMode, selectedEntityId, selectedPeriod]);
 
-  const loadDashboardData = async () => {
-    if (!activeEntity) return;
+  const loadUserEntities = async () => {
+    try {
+      const { data, error } = await getEntities();
+      if (error) throw error;
+      
+      setUserEntities(data || []);
+      
+      // Set default: first entity for single mode
+      if (data && data.length > 0) {
+        setSelectedEntityId(data[0].id);
+      }
+    } catch (err: any) {
+      console.error('Failed to load entities:', err);
+    }
+  };
 
+  const loadSingleEntityData = async (entityId: string) => {
     setLoading(true);
     setError(null);
 
     try {
       const { data: realizationsData, error: realizationsError } = 
-        await getBudgetRealizationsLive(activeEntity.id);
+        await getBudgetRealizationsLive(entityId);
 
       if (realizationsError) throw realizationsError;
 
       setRealizations(realizationsData || []);
 
       const { data: accountsData, error: accountsError } = 
-        await getLocalAccounts(activeEntity.id);
+        await getLocalAccounts(entityId);
 
       if (accountsError) throw accountsError;
       setTotalAccounts(accountsData?.length || 0);
@@ -106,27 +123,108 @@ const DashboardPage: React.FC = () => {
         processOverBudgetItems(realizationsData);
         calculateBetterStatistics(realizationsData);
       } else {
-        setChartData([]);
-        setOverBudgetItems([]);
-        setStats({
-          totalBudget: 0,
-          totalRealisasi: 0,
-          averageUtilization: 0,
-          totalUnutilized: 0,
-          totalOverBudget: 0,
-          overBudgetCount: 0,
-          onTrackCount: 0,
-          underUtilizedCount: 0,
-        });
+        resetData();
       }
-
-      console.log('[DashboardPage] Loaded data successfully');
     } catch (err: any) {
       console.error('[DashboardPage] Error:', err);
-      setError('Gagal memuat data dashboard: ' + err.message);
+      setError('Gagal memuat data: ' + err.message);
+      resetData();
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadAllEntitiesDataByPeriod = async (period: string) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Load data from all user entities
+      const allRealizationsPromises = userEntities.map(entity => 
+        getBudgetRealizationsLive(entity.id)
+      );
+
+      const allResults = await Promise.all(allRealizationsPromises);
+      
+      // Combine all realizations and filter by selected period
+      const combinedRealizations: BudgetRealization[] = [];
+      
+      allResults.forEach((result, index) => {
+        if (result.data) {
+          const filteredData = result.data.filter(item => item.period === period);
+          combinedRealizations.push(...filteredData);
+        }
+      });
+
+      setRealizations(combinedRealizations);
+
+      // Count total accounts from all entities
+      let totalAccs = 0;
+      for (const entity of userEntities) {
+        const { data: accountsData } = await getLocalAccounts(entity.id);
+        totalAccs += accountsData?.length || 0;
+      }
+      setTotalAccounts(totalAccs);
+
+      if (combinedRealizations.length > 0) {
+        processChartDataForAllEntities(combinedRealizations);
+        processOverBudgetItems(combinedRealizations);
+        calculateBetterStatistics(combinedRealizations);
+      } else {
+        resetData();
+      }
+    } catch (err: any) {
+      console.error('[DashboardPage] Error:', err);
+      setError('Gagal memuat data: ' + err.message);
+      resetData();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load available periods when switching to "all" mode
+  useEffect(() => {
+    if (viewMode === 'all' && userEntities.length > 0) {
+      loadAvailablePeriods();
+    }
+  }, [viewMode, userEntities]);
+
+  const loadAvailablePeriods = async () => {
+    try {
+      const periodsSet = new Set<string>();
+      
+      for (const entity of userEntities) {
+        const { data } = await getBudgetRealizationsLive(entity.id);
+        if (data) {
+          data.forEach(item => periodsSet.add(item.period));
+        }
+      }
+      
+      const periods = Array.from(periodsSet).sort();
+      setAvailablePeriods(periods);
+      
+      // Set default period (latest)
+      if (periods.length > 0 && !selectedPeriod) {
+        setSelectedPeriod(periods[periods.length - 1]);
+      }
+    } catch (err) {
+      console.error('Failed to load periods:', err);
+    }
+  };
+
+  const resetData = () => {
+    setChartData([]);
+    setOverBudgetItems([]);
+    setStats({
+      totalBudget: 0,
+      totalRealisasi: 0,
+      averageUtilization: 0,
+      totalUnutilized: 0,
+      totalOverBudget: 0,
+      overBudgetCount: 0,
+      onTrackCount: 0,
+      underUtilizedCount: 0,
+    });
   };
 
   const processChartData = (data: BudgetRealization[]) => {
@@ -143,6 +241,32 @@ const DashboardPage: React.FC = () => {
     const chartPoints: ChartDataPoint[] = Array.from(periodMap.entries())
       .map(([period, values]) => ({
         period,
+        budget: values.budget,
+        realisasi: values.realisasi,
+      }))
+      .sort((a, b) => a.period.localeCompare(b.period));
+
+    setChartData(chartPoints);
+  };
+
+  const processChartDataForAllEntities = (data: BudgetRealization[]) => {
+    // Group by entity
+    const entityMap = new Map<string, { budget: number; realisasi: number }>();
+
+    data.forEach(item => {
+      const entity = userEntities.find(e => e.id === item.entity_id);
+      const entityName = entity?.entity_name || 'Unknown';
+      
+      const existing = entityMap.get(entityName) || { budget: 0, realisasi: 0 };
+      entityMap.set(entityName, {
+        budget: existing.budget + item.budget_allocated,
+        realisasi: existing.realisasi + item.realisasi,
+      });
+    });
+
+    const chartPoints: ChartDataPoint[] = Array.from(entityMap.entries())
+      .map(([entityName, values]) => ({
+        period: entityName, // Using "period" field for entity name in chart
         budget: values.budget,
         realisasi: values.realisasi,
       }))
@@ -241,6 +365,18 @@ const DashboardPage: React.FC = () => {
     return value.toString();
   };
 
+  const getChartTitle = () => {
+    if (viewMode === 'single') {
+      const entity = userEntities.find(e => e.id === selectedEntityId);
+      return `Budget vs Realisasi - ${entity?.entity_name || 'Unknown'}`;
+    }
+    return `Budget vs Realisasi - Semua Entitas (${selectedPeriod})`;
+  };
+
+  const getChartXAxisLabel = () => {
+    return viewMode === 'single' ? 'Periode' : 'Entitas';
+  };
+
   return (
     <div className={styles.container}>
       {/* Header */}
@@ -250,20 +386,15 @@ const DashboardPage: React.FC = () => {
           <p className={styles.headerSubtitle}>
             Ringkasan Budget vs Realisasi
           </p>
-          {activeEntity && (
-            <p className={styles.headerEntity}>
-              Entitas: <strong>{activeEntity.entity_name || activeEntity.name}</strong>
-            </p>
-          )}
         </div>
       </div>
 
-      {/* No Entity Warning */}
-      {!activeEntity && (
+      {/* No Entities Warning */}
+      {userEntities.length === 0 && (
         <div className={styles.noEntityWarning}>
-          <h3 className={styles.noEntityWarningTitle}>Belum Ada Entitas Aktif</h3>
+          <h3 className={styles.noEntityWarningTitle}>Belum Ada Entitas</h3>
           <p className={styles.noEntityWarningText}>
-            Silakan pilih entitas terlebih dahulu di halaman Manajemen Entitas
+            Silakan buat entitas terlebih dahulu di halaman Manajemen Entitas
           </p>
         </div>
       )}
@@ -276,12 +407,74 @@ const DashboardPage: React.FC = () => {
       )}
 
       {/* Main Content */}
-      {activeEntity && (
+      {userEntities.length > 0 && (
         <>
+          {/* Mode Tabs */}
+          <div className={styles.modeTabs}>
+            <button
+              onClick={() => setViewMode('single')}
+              className={`${styles.modeTab} ${viewMode === 'single' ? styles.modeTabActive : ''}`}
+            >
+              Single Entity
+            </button>
+            <button
+              onClick={() => setViewMode('all')}
+              className={`${styles.modeTab} ${viewMode === 'all' ? styles.modeTabActive : ''}`}
+            >
+              All Entities by Period
+            </button>
+          </div>
+
+          {/* Filters */}
+          <div className={styles.filtersCard}>
+            {viewMode === 'single' ? (
+              <div className={styles.filterGroup}>
+                <label className={styles.filterLabel}>Pilih Entitas:</label>
+                <select
+                  value={selectedEntityId}
+                  onChange={(e) => setSelectedEntityId(e.target.value)}
+                  className={styles.filterSelect}
+                >
+                  {userEntities.map(entity => (
+                    <option key={entity.id} value={entity.id}>
+                      {entity.entity_name}
+                    </option>
+                  ))}
+                </select>
+                <span className={styles.filterHint}>
+                  Menampilkan semua periode dari entitas yang dipilih
+                </span>
+              </div>
+            ) : (
+              <div className={styles.filterGroup}>
+                <label className={styles.filterLabel}>Pilih Periode:</label>
+                <select
+                  value={selectedPeriod}
+                  onChange={(e) => setSelectedPeriod(e.target.value)}
+                  className={styles.filterSelect}
+                  disabled={availablePeriods.length === 0}
+                >
+                  {availablePeriods.length === 0 ? (
+                    <option>Loading...</option>
+                  ) : (
+                    availablePeriods.map(period => (
+                      <option key={period} value={period}>
+                        {period}
+                      </option>
+                    ))
+                  )}
+                </select>
+                <span className={styles.filterHint}>
+                  Menampilkan semua entitas pada periode yang dipilih
+                </span>
+              </div>
+            )}
+          </div>
+
           {/* RECHARTS Section */}
           <div className={styles.chartCard}>
             <h3 className={styles.chartTitle}>
-              Budget vs Realisasi
+              {getChartTitle()}
             </h3>
 
             {loading ? (
@@ -290,7 +483,7 @@ const DashboardPage: React.FC = () => {
               </div>
             ) : chartData.length === 0 ? (
               <div className={styles.chartEmpty}>
-                Belum ada data budget. Silakan buat budget terlebih dahulu.
+                Belum ada data budget untuk {viewMode === 'single' ? 'entitas' : 'periode'} yang dipilih
               </div>
             ) : (
               <ResponsiveContainer width="100%" height={400}>
@@ -303,6 +496,7 @@ const DashboardPage: React.FC = () => {
                     dataKey="period" 
                     tick={{ fontSize: 12, fontWeight: 500 }}
                     stroke="#495057"
+                    label={{ value: getChartXAxisLabel(), position: 'insideBottom', offset: -10 }}
                   />
                   <YAxis 
                     tickFormatter={formatYAxis}
@@ -432,7 +626,7 @@ const DashboardPage: React.FC = () => {
                       />
                     </div>
                     <div className={styles.utilizationHint}>
-                      💡 Rata-rata dari {realizations.length} budget items
+                      {realizations.length} budget items dari {viewMode === 'single' ? '1 entitas' : `${userEntities.length} entitas`}
                     </div>
                   </div>
 
