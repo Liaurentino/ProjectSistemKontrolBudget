@@ -441,10 +441,9 @@ export default function AuthPage() {
               setMessage('');
               setErrors({});
             }}
-            className={styles.backToLoginButton}
+            className={styles.backtoLoginButton}
             disabled={loading}
           >
-            <ArrowLeft size={16} />
             Kembali ke Login
           </button>
         )}
