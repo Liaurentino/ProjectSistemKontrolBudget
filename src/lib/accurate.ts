@@ -889,10 +889,10 @@ export async function getBudgetRealizationsLive(
     if (error) throw error;
 
     // Transform data to BudgetRealization format
-    // FIXED: realisasi_snapshot = budget (COA), allocated_amount = realisasi (manual input)
+    // FIXED: allocated_amount = budget (manual input), realisasi_snapshot = realisasi (COA balance)
     const realizations: BudgetRealization[] = (data || []).map((item: any) => {
-      const budget = item.realisasi_snapshot || 0;  // Budget (COA balance snapshot)
-      const realisasi = item.allocated_amount || 0;  // Realisasi (manual input)
+      const budget = item.allocated_amount || 0;  // Budget (yang Anda input manual)
+      const realisasi = item.realisasi_snapshot || 0;  // Realisasi (dari COA balance)
       const variance = budget - realisasi;
       const variancePercentage = budget > 0 ? (variance / budget) * 100 : 0;
       const status = realisasi <= budget ? 'ON_TRACK' : 'OVER_BUDGET';
