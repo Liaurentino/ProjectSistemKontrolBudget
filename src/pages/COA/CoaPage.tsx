@@ -1,4 +1,4 @@
-// COAPage.tsx - Updated with Global Table Styles
+// COAPage.tsx - Updated with Date Column and Edit Form
 import React, { useState, useRef, useEffect } from 'react';
 import { useCoaForm } from '../../components/CoaForm';
 import { ImportExcel } from '../../components/Export&Import/ImportExcel';
@@ -66,11 +66,26 @@ const CoaPage: React.FC = () => {
     console.error('Import error:', message);
   };
 
-  // Handle refresh with success message
   const handleRefresh = async () => {
     await loadCoaFromDatabase();
     setSuccessMessage('Data COA berhasil di-refresh!');
     setTimeout(() => setSuccessMessage(''), 3000);
+  };
+
+  // Helper: Format date YYYY-MM-DD to DD/MM/YYYY
+  const formatDate = (dateString: string | null | undefined): string => {
+    if (!dateString) return '-';
+    
+    try {
+      // Input: "2026-03-02" (YYYY-MM-DD)
+      const parts = dateString.split('-');
+      if (parts.length !== 3) return dateString;
+      
+      const [year, month, day] = parts;
+      return `${day}/${month}/${year}`; // Output: "02/03/2026"
+    } catch {
+      return dateString;
+    }
   };
 
   return (
@@ -85,16 +100,14 @@ const CoaPage: React.FC = () => {
         </div>
       </div>
 
-     {/* No Active Entity Warning */}
+      {/* No Active Entity Warning */}
       {!activeEntity && (
         <div className={styles.noEntityWarning}>
           <h3>Belum Ada Entitas Aktif</h3>
           <p>
             Silakan pilih entitas terlebih dahulu di halaman <strong>Manajemen Entitas</strong>
           </p>
-          <a href="/entitas">
-            Ke Halaman Entitas →
-          </a>
+          <a href="/entitas">Ke Halaman Entitas →</a>
         </div>
       )}
       
@@ -153,7 +166,7 @@ const CoaPage: React.FC = () => {
                     disabled={syncing}
                     className={styles.dropdownMenuItem}
                   >
-                    <span className={styles.dropdownMenuIcon}></span>
+                    <span className={styles.dropdownMenuIcon}>🔄</span>
                     <span>Tarik dari Accurate API</span>
                   </button>
 
@@ -164,7 +177,7 @@ const CoaPage: React.FC = () => {
                     }}
                     className={styles.dropdownMenuItem}
                   >
-                    <span className={styles.dropdownMenuIcon}></span>
+                    <span className={styles.dropdownMenuIcon}>📊</span>
                     <span>Import dari Excel</span>
                   </button>
                 </div>
@@ -173,7 +186,7 @@ const CoaPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Table - PAKAI GLOBAL STYLES */}
+        {/* Table */}
         <div className="table-container">
           <table className="shared-table">
             <thead>
@@ -181,6 +194,7 @@ const CoaPage: React.FC = () => {
                 <th>Kode Akun</th>
                 <th>Nama Akun</th>
                 <th>Tipe</th>
+                <th>Per-Tanggal</th>
                 <th className={styles.tableHeaderCellRight}>Saldo</th>
                 <th>Status</th>
                 <th className={styles.tableHeaderCellCenter}>Actions</th>
@@ -189,13 +203,13 @@ const CoaPage: React.FC = () => {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="table-loading">
+                  <td colSpan={7} className="table-loading">
                     Memuat data COA...
                   </td>
                 </tr>
               ) : accounts.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="table-empty">
+                  <td colSpan={7} className="table-empty">
                     Belum ada data COA.{' '}
                     {activeEntity
                       ? 'Gunakan tombol "Import Data" untuk mengambil data dari Accurate atau Excel.'
@@ -225,6 +239,13 @@ const CoaPage: React.FC = () => {
                     <td>
                       <span className={styles.accountTypeBadge}>
                         {acc.account_type_name}
+                      </span>
+                    </td>
+
+                    {/* PER-TANGGAL */}
+                    <td className="table-cell-center">
+                      <span className="table-cell-monospace">
+                        {formatDate(acc.coadate)}
                       </span>
                     </td>
 
@@ -297,66 +318,67 @@ const CoaPage: React.FC = () => {
         />
       )}
 
-      {/* Edit Modal */}
-      {editModalOpen && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modalContent}>
-            <h3 className={styles.modalTitle}>Edit Account</h3>
-            
-            <div className={styles.formGroup}>
-              <label className={styles.formLabel}>Kode Akun</label>
-              <input
-                type="text"
-                value={editForm.account_code || ''}
-                onChange={(e) => setEditForm({ ...editForm, account_code: e.target.value })}
-                className={styles.formInput}
-              />
-            </div>
+      {/* ============================================ */}
+      {/* ✅ EDIT MODAL - UPDATED */}
+      {/* ============================================ */}
+   {editModalOpen && (
+  <div className={styles.modalOverlay}>
+    <div className={styles.modalContent}>
+      <h3 className={styles.modalTitle}>Edit Account</h3>
+      
+      <div className={styles.formGroup}>
+        <label className={styles.formLabel}>Kode Akun</label>
+        <input
+          type="text"
+          value={editForm.account_code || ''}
+          onChange={(e) => setEditForm({ ...editForm, account_code: e.target.value })}
+          className={styles.formInput}
+        />
+      </div>
 
-            <div className={styles.formGroup}>
-              <label className={styles.formLabel}>Nama Akun</label>
-              <input
-                type="text"
-                value={editForm.account_name || ''}
-                onChange={(e) => setEditForm({ ...editForm, account_name: e.target.value })}
-                className={styles.formInput}
-              />
-            </div>
+      <div className={styles.formGroup}>
+        <label className={styles.formLabel}>Nama Akun</label>
+        <input
+          type="text"
+          value={editForm.account_name || ''}
+          onChange={(e) => setEditForm({ ...editForm, account_name: e.target.value })}
+          className={styles.formInput}
+        />
+      </div>
 
-            <div className={styles.formGroup}>
-              <label className={styles.formLabel}>Tipe Akun</label>
-              <select
-                value={editForm.account_type || ''}
-                onChange={(e) => setEditForm({ ...editForm, account_type: e.target.value })}
-                className={styles.formSelect}
-              >
-                <option value="ASSET">ASSET</option>
-                <option value="LIABILITY">LIABILITY</option>
-                <option value="EQUITY">EQUITY</option>
-                <option value="REVENUE">REVENUE</option>
-                <option value="EXPENSE">EXPENSE</option>
-              </select>
-            </div>
+      <div className={styles.formGroup}>
+        <label className={styles.formLabel}>Tanggal COA (DD/MM/YYYY)</label>
+        <input
+          type="text"
+          placeholder="02/03/2026"
+          value={editForm.coadate || ''}
+          onChange={(e) => setEditForm({ ...editForm, coadate: e.target.value })}
+          className={styles.formInput}
+        />
+        <small style={{ color: 'var(--text-secondary)', fontSize: '0.813rem', marginTop: '0.25rem' }}>
+          Format: DD/MM/YYYY (contoh: 02/03/2026)
+        </small>
+      </div>
 
-            <div className={styles.modalButtonGroup}>
-              <button
-                onClick={handleEditSubmit}
-                disabled={editLoading}
-                className={styles.modalButtonPrimary}
-              >
-                {editLoading ? 'Menyimpan...' : 'Simpan'}
-              </button>
-              <button
-                onClick={() => setEditModalOpen(false)}
-                disabled={editLoading}
-                className={styles.modalButtonSecondary}
-              >
-                Batal
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <div className={styles.modalButtonGroup}>
+        <button
+          onClick={handleEditSubmit}
+          disabled={editLoading}
+          className={styles.modalButtonPrimary}
+        >
+          {editLoading ? 'Menyimpan...' : 'Simpan'}
+        </button>
+        <button
+          onClick={() => setEditModalOpen(false)}
+          disabled={editLoading}
+          className={styles.modalButtonSecondary}
+        >
+          Batal
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
       {/* Delete Modal */}
       {deleteModalOpen && (
@@ -395,7 +417,7 @@ const CoaPage: React.FC = () => {
         </div>
       )}
 
-      {/* MODAL 1: First Warning - Delete All */}
+      {/* Delete All Modals */}
       {showDeleteAllModal && (
         <div className={styles.modalOverlayDeleteAll}>
           <div className={styles.modalContentLarge}>
@@ -435,7 +457,6 @@ const CoaPage: React.FC = () => {
         </div>
       )}
 
-      {/* MODAL 2: Final Confirmation - Delete All */}
       {showFinalConfirmModal && (
         <div className={styles.modalOverlayFinalConfirm}>
           <div className={`${styles.modalContentLarge} ${styles.modalContentDanger}`}>
@@ -464,7 +485,7 @@ const CoaPage: React.FC = () => {
                 disabled={deletingAll}
                 className={styles.modalButtonDangerLarge}
               >
-                {deletingAll ? '⟳ Menghapus...' : ' HAPUS SEMUA'}
+                {deletingAll ? '⟳ Menghapus...' : '🗑 HAPUS SEMUA'}
               </button>
             </div>
           </div>

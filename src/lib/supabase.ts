@@ -63,8 +63,10 @@ export const getEntityById = async (entityId: string) => {
 
 export const insertEntity = async (entityData: {
   entity_name: string;
-  api_token: string;
-  accurate_database_id?: number | null;
+  method?: string;
+  description?: string | null;
+  api_token?: string | null;
+  accurate_database_id?: number | null;  // ← TAMBAHKAN INI
 }) => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
@@ -90,11 +92,16 @@ export const insertEntity = async (entityData: {
   }
 };
 
-export const updateEntity = async (id: string, entityData: {
-  entity_name?: string;
-  api_token?: string;
-  accurate_database_id?: number | null;
-}) => {
+export const updateEntity = async (
+  entityId: string, 
+  entityData: {
+    entity_name?: string;
+    method?: string;
+    description?: string | null;
+    api_token?: string | null;
+    accurate_database_id?: number | null;  // ← TAMBAHKAN INI
+  }
+) => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     
@@ -105,15 +112,15 @@ export const updateEntity = async (id: string, entityData: {
     const { data, error } = await supabase
       .from('entity')
       .update(entityData)
-      .eq('id', id)
-      .eq('user_id', user.id) // Ensure ownership
+      .eq('id', entityId)
+      .eq('user_id', user.id) // Ensure user can only update their own entities
       .select();
     
     if (error) throw error;
     
     return { data, error: null };
   } catch (err) {
-    const error = err instanceof Error ? err.message : 'Gagal mengubah entitas';
+    const error = err instanceof Error ? err.message : 'Gagal update entitas';
     return { data: null, error };
   }
 };

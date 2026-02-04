@@ -1,5 +1,6 @@
 /* ==========================================
    COA MODULE CSS - FIXED HOVER VERSION
+   NO GRADIENT - SOLID COLORS ONLY
    ========================================== */
 
 /* ===== CONTAINER ===== */
@@ -315,12 +316,13 @@
   padding-left: 0;
 }
 
-/* ===== BADGES (COA SPECIFIC) ===== */
+/* ===== BADGES (COA SPECIFIC) - NO GRADIENT ===== */
 .accountTypeBadge {
   display: inline-block;
   padding: 0.35rem 0.75rem;
-  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  background-color: #bbdefb; /* SOLID COLOR - was gradient */
   color: #1565c0;
+  border: 1px solid #90caf9;
   border-radius: calc(var(--radius) - 6px);
   font-size: 0.75rem;
   font-weight: 600;
@@ -331,8 +333,9 @@
 .statusBadgeActive {
   display: inline-block;
   padding: 0.35rem 0.75rem;
-  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+  background-color: #c3e6cb; /* SOLID COLOR - was gradient */
   color: #155724;
+  border: 1px solid #a3cfbb;
   border-radius: calc(var(--radius) - 6px);
   font-size: 0.75rem;
   font-weight: 600;
@@ -343,8 +346,9 @@
 .statusBadgeSuspended {
   display: inline-block;
   padding: 0.35rem 0.75rem;
-  background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+  background-color: #f5c6cb; /* SOLID COLOR - was gradient */
   color: #721c24;
+  border: 1px solid #e6a7ae;
   border-radius: calc(var(--radius) - 6px);
   font-size: 0.75rem;
   font-weight: 600;

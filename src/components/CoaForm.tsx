@@ -16,9 +16,8 @@ interface ExpandedState {
   [accountId: number]: boolean;
 }
 
-// TAMBAH db_id untuk menyimpan UUID asli dari database
 interface CoaAccountExtended extends CoaAccount {
-  db_id: string; // UUID asli dari database
+  db_id: string;
 }
 
 export const useCoaForm = () => {
@@ -29,21 +28,17 @@ export const useCoaForm = () => {
   const [syncStatus, setSyncStatus] = useState<string | null>(null);
   const [lastSync, setLastSync] = useState<string | null>(null);
   
-  // Expand/collapse state
   const [expanded, setExpanded] = useState<ExpandedState>({});
   
-  // Edit modal state
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<CoaAccountExtended | null>(null);
   const [editForm, setEditForm] = useState<EditAccountData>({});
   const [editLoading, setEditLoading] = useState(false);
   
-  // Delete modal state
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState<CoaAccountExtended | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  // Delete All modal state
   const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
   const [showFinalConfirmModal, setShowFinalConfirmModal] = useState(false);
   const [deletingAll, setDeletingAll] = useState(false);
@@ -77,7 +72,7 @@ export const useCoaForm = () => {
       }
 
       const mappedAccounts: CoaAccountExtended[] = data.map((acc: any) => ({
-        db_id: acc.id, // ← SIMPAN UUID ASLI INI PENTING!
+        db_id: acc.id,
         id: parseInt(acc.accurate_id) || 0,
         account_code: acc.account_code || '',
         account_name: acc.account_name || '',
@@ -89,6 +84,7 @@ export const useCoaForm = () => {
         suspended: acc.suspended === true || acc.suspended === 'true',
         parent_id: acc.parent_id ? parseInt(acc.parent_id) : null,
         lvl: parseInt(acc.lvl) || 1,
+        coadate: acc.coadate || null,
       }));
 
       console.log(`[CoaForm] Loaded ${mappedAccounts.length} accounts`);
@@ -158,12 +154,11 @@ export const useCoaForm = () => {
   // CHECK IF ACCOUNT VISIBLE
   // ============================================
   const isVisible = (account: CoaAccountExtended): boolean => {
-    if (!account.parent_id) return true; // Root level always visible
+    if (!account.parent_id) return true;
     
     const parent = accounts.find(a => a.id === account.parent_id);
     if (!parent) return true;
     
-    // Parent must be expanded AND visible
     return expanded[account.parent_id] === true && isVisible(parent);
   };
 
@@ -184,16 +179,29 @@ export const useCoaForm = () => {
     console.log('[handleEdit] Editing account:', account);
     setEditingAccount(account);
     
-    // Format date as DD/MM/YYYY
-    const today = new Date();
-    const formattedDate = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
+    // Format coadate dari database (YYYY-MM-DD) ke DD/MM/YYYY
+    let formattedCoaDate = '';
+    if (account.coadate) {
+      const parts = account.coadate.split('-');
+      if (parts.length === 3) {
+        const [year, month, day] = parts;
+        formattedCoaDate = `${day}/${month}/${year}`;
+      } else {
+        formattedCoaDate = account.coadate;
+      }
+    } else {
+      const today = new Date();
+      formattedCoaDate = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
+    }
+    
+    console.log('[handleEdit] Formatted coadate:', formattedCoaDate);
     
     setEditForm({
       account_code: account.account_code,
       account_name: account.account_name,
       account_type: account.account_type,
       currencyCode: account.currency || 'IDR',
-      asOf: formattedDate,
+      coadate: formattedCoaDate,
     });
     
     setEditModalOpen(true);
@@ -210,26 +218,36 @@ export const useCoaForm = () => {
       setError(null);
 
       console.log('[handleEditSubmit] Submitting edit...');
+      console.log('[handleEditSubmit] Edit form:', editForm);
+
+      const completeUpdates: EditAccountData = {
+        account_code: editForm.account_code,
+        account_name: editForm.account_name,
+        account_type: editForm.account_type,
+        currencyCode: editForm.currencyCode || 'IDR',
+        coadate: editForm.coadate,
+      };
+      
+      console.log('[handleEditSubmit] Complete updates:', completeUpdates);
 
       const result = await editAccount(
         activeEntity.id,
         editingAccount.id,
-        editForm
+        completeUpdates
       );
 
       if (!result.success) {
         throw new Error(result.error || 'Gagal mengedit account');
       }
 
-      setSyncStatus('Account berhasil diupdate');
+      setSyncStatus('✅ Account berhasil diupdate');
       setEditModalOpen(false);
       
-      // Reload data
       setTimeout(() => loadCoaFromDatabase(), 500);
       setTimeout(() => setSyncStatus(null), 3000);
     } catch (err: any) {
       console.error('[handleEditSubmit] Error:', err);
-      setError('Gagal mengedit: ' + err.message);
+      setError('❌ Gagal mengedit: ' + err.message);
     } finally {
       setEditLoading(false);
     }
@@ -244,7 +262,7 @@ export const useCoaForm = () => {
   };
 
   // ============================================
-  // SUBMIT DELETE - FIXED: Pakai db_id bukan id
+  // SUBMIT DELETE
   // ============================================
   const handleDeleteConfirm = async () => {
     if (!deletingAccount) return;
@@ -253,14 +271,12 @@ export const useCoaForm = () => {
     try {
       console.log('[handleDeleteConfirm] Deleting account db_id:', deletingAccount.db_id);
       
-      // PAKAI db_id (UUID asli), BUKAN id (accurate_id yang di-parse)
       const { error } = await deleteCoaAccount(deletingAccount.db_id);
       
       if (error) {
         throw new Error(error);
       }
       
-      // Success - reload data
       await loadCoaFromDatabase();
       setDeleteModalOpen(false);
       setSyncStatus('✅ Account berhasil dihapus!');
@@ -284,10 +300,8 @@ export const useCoaForm = () => {
     try {
       console.log('[handleDeleteAll] Deleting all accounts for entity:', activeEntity.id);
 
-      // Import supabase at the top
       const { supabase } = await import('../lib/supabase');
       
-      // Delete all accounts for this entity
       const { error } = await supabase
         .from('accurate_accounts')
         .delete()
@@ -297,13 +311,11 @@ export const useCoaForm = () => {
         throw new Error(error.message);
       }
 
-      // Success
       const deletedCount = accounts.length;
       setShowFinalConfirmModal(false);
       setShowDeleteAllModal(false);
       setSyncStatus(`✅ Berhasil menghapus ${deletedCount} akun COA!`);
       
-      // Reload data
       await loadCoaFromDatabase();
       
       setTimeout(() => setSyncStatus(null), 5000);
@@ -345,7 +357,6 @@ export const useCoaForm = () => {
   // RETURN ALL STATE AND HANDLERS
   // ============================================
   return {
-    // State
     accounts,
     loading,
     syncing,
@@ -355,7 +366,6 @@ export const useCoaForm = () => {
     expanded,
     activeEntity,
     
-    // Edit Modal State
     editModalOpen,
     editingAccount,
     editForm,
@@ -363,20 +373,17 @@ export const useCoaForm = () => {
     setEditForm,
     setEditModalOpen,
     
-    // Delete Modal State
     deleteModalOpen,
     deletingAccount,
     deleteLoading,
     setDeleteModalOpen,
     
-    // Delete All Modal State 
     showDeleteAllModal,
     showFinalConfirmModal,
     deletingAll,
     setShowDeleteAllModal,
     setShowFinalConfirmModal,
     
-    // Handlers
     loadCoaFromDatabase,
     handleManualSync,
     toggleExpand,
@@ -386,6 +393,6 @@ export const useCoaForm = () => {
     handleEditSubmit,
     handleDelete,
     handleDeleteConfirm,
-    handleDeleteAll, // 
+    handleDeleteAll,
   };
 };

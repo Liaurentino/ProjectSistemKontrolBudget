@@ -67,7 +67,7 @@ export const AccurateGuide: React.FC = () => {
                   onClick={copyAppKey}
                   className={`${styles.copyButton} ${copiedAppKey ? styles.copied : ''}`}
                 >
-                  {copiedAppKey ? '✓ Tersalin!' : '📋 Salin App Key'}
+                  {copiedAppKey ? 'Tersalin!' : 'Salin App Key'}
                 </button>
               </div>
 

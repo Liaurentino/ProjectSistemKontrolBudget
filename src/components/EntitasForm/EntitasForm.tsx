@@ -38,6 +38,10 @@ export const EntitasForm: React.FC<Props> = ({
 
   const [validationResult, setValidationResult] = useState<AccurateValidationResult | null>(null);
   const [databases, setDatabases] = useState<AccurateDatabase[]>([]);
+  
+  // ========== TAMBAHAN: State untuk database ID ==========
+  const [selectedDatabaseId, setSelectedDatabaseId] = useState<number | null>(null);
+  // ========================================================
 
   const [existingTokens, setExistingTokens] = useState<string[]>([]);
   const [tokenDuplicate, setTokenDuplicate] = useState(false);
@@ -57,6 +61,12 @@ export const EntitasForm: React.FC<Props> = ({
         description: initialData.description || '',
         api_token: initialData.api_token || '',
       });
+      
+      // ========== TAMBAHAN: Set database ID jika ada ==========
+      if (initialData.accurate_database_id) {
+        setSelectedDatabaseId(initialData.accurate_database_id);
+      }
+      // =========================================================
       
       if (initialData.api_token && method === 'accurate') {
         setTokenValidated(true);
@@ -89,6 +99,7 @@ export const EntitasForm: React.FC<Props> = ({
     setDatabases([]);
     setFormatError('');
     setTokenDuplicate(false);
+    setSelectedDatabaseId(null); // ← RESET database ID
     
     setFormData({
       entity_name: '',
@@ -115,6 +126,7 @@ export const EntitasForm: React.FC<Props> = ({
       setDatabases([]);
       setTokenDuplicate(false);
       setTokenDuplicateEntity('');
+      setSelectedDatabaseId(null); // ← RESET database ID saat token berubah
       
       if (value.trim()) {
         const formatErr = quickValidateTokenFormat(value);
@@ -180,6 +192,7 @@ export const EntitasForm: React.FC<Props> = ({
         setOwnershipValidated(false);
         setTokenValidated(false);
         setDatabases([]);
+        setSelectedDatabaseId(null); // ← RESET database ID
         setFormData(prev => ({
           ...prev,
           entity_name: '',
@@ -200,6 +213,13 @@ export const EntitasForm: React.FC<Props> = ({
         );
         setTokenValidated(true);
 
+        // ========== SIMPAN DATABASE ID ==========
+        if (result.primaryDatabase?.id) {
+          setSelectedDatabaseId(result.primaryDatabase.id);
+          console.log('✅ Database ID saved:', result.primaryDatabase.id);
+        }
+        // =========================================
+
         if (result.primaryDatabase?.name) {
           setFormData(prev => ({
             ...prev,
@@ -215,6 +235,7 @@ export const EntitasForm: React.FC<Props> = ({
         setTokenValidated(false);
         setOwnershipValidated(false);
         setDatabases([]);
+        setSelectedDatabaseId(null); // ← RESET database ID
         setFormData(prev => ({
           ...prev,
           entity_name: '',
@@ -225,6 +246,7 @@ export const EntitasForm: React.FC<Props> = ({
       setError(message);
       setTokenValidated(false);
       setOwnershipValidated(false);
+      setSelectedDatabaseId(null); // ← RESET database ID
       setFormData(prev => ({
         ...prev,
         entity_name: '',
@@ -272,6 +294,16 @@ export const EntitasForm: React.FC<Props> = ({
           return;
         }
 
+        // ========== VALIDASI DATABASE ID ==========
+        if (mode === 'create' && !selectedDatabaseId) {
+          setError(
+            'Database ID tidak ditemukan. Silakan validasi token terlebih dahulu untuk mendapatkan informasi database.'
+          );
+          setLoading(false);
+          return;
+        }
+        // ==========================================
+
         if (mode === 'create' && !tokenValidated) {
           setError(
             'PERINGATAN: Anda belum memvalidasi API Token!\n\n' +
@@ -303,9 +335,14 @@ export const EntitasForm: React.FC<Props> = ({
 
       if (selectedMethod === 'accurate') {
         dataToSave.api_token = formData.api_token.trim();
+        // ========== KIRIM DATABASE ID ==========
+        dataToSave.accurate_database_id = selectedDatabaseId;
+        console.log('💾 Saving entity with database ID:', selectedDatabaseId);
+        // ========================================
       } else {
         dataToSave.description = formData.description.trim() || null;
         dataToSave.api_token = null;
+        dataToSave.accurate_database_id = null; // ← Manual entry tidak punya database ID
       }
 
       if (mode === 'create') {
@@ -313,11 +350,13 @@ export const EntitasForm: React.FC<Props> = ({
         if (result.error) {
           throw new Error(result.error);
         }
+        console.log('✅ Entity created:', result.data);
       } else {
         const result = await updateEntity(initialData.id, dataToSave);
         if (result.error) {
           throw new Error(result.error);
         }
+        console.log('✅ Entity updated:', result.data);
       }
 
       setSuccess(

@@ -183,13 +183,13 @@
 }
 
 .colPrivacy {
-  width: 150px;
+  width: 60px;
   text-align: center;
 }
 
 .colActions {
-  width: 120px;
-  text-align: center;
+  width: 60px;
+  text-align: left;
 }
 
 /* ===== TABLE CELLS ===== */

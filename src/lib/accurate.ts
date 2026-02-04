@@ -1,6 +1,3 @@
-// accurate.ts - Complete with parent-child and edit/delete functions
-// FIXED: Corrected budget vs realisasi logic - budget = realisasi_snapshot (COA), realisasi = allocated_amount (manual)
-
 import {
   saveTokens,
   validateAccurateApiToken,
@@ -49,6 +46,7 @@ export interface CoaAccount {
   suspended: boolean;
   parent_id: number | null;
   lvl: number;
+  coadate: string;
 }
 
 export interface FetchCoaResult {
@@ -260,15 +258,68 @@ export function buildAccountTree(accounts: CoaAccount[]): CoaAccount[] {
 }
 
 // ============================================
-// EDIT ACCOUNT
+// EDIT ACCOUNT - DIPERBAIKI
 // ============================================
 
 export interface EditAccountData {
   account_code?: string;
   account_name?: string;
   account_type?: string;
-  asOf?: string;         // Format: DD/MM/YYYY (required by Accurate)
-  currencyCode?: string; // e.g., 'IDR'
+  coadate?: string;      
+  asOf?: string;         
+  currencyCode?: string; 
+}
+
+// ============================================
+// ✅ HELPER: Validasi dan Normalisasi Format Tanggal
+// ============================================
+
+/**
+ * Validasi format DD/MM/YYYY
+ */
+function isValidDDMMYYYY(dateStr: string): boolean {
+  return /^\d{2}\/\d{2}\/\d{4}$/.test(dateStr) && 
+         !isNaN(new Date(dateStr.split('/').reverse().join('-')).getTime());
+}
+
+/**
+ * Normalisasi tanggal ke format DD/MM/YYYY yang valid
+ * Input bisa: DD/MM/YYYY, YYYY-MM-DD, atau Date object
+ */
+function normalizeDateForAccurate(input?: string): string {
+  if (!input?.trim()) {
+    // Default ke tanggal hari ini dalam format DD/MM/YYYY
+    const today = new Date();
+    return `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
+  }
+
+  // Case 1: Sudah dalam format DD/MM/YYYY yang valid
+  if (isValidDDMMYYYY(input)) {
+    console.log('[normalizeDateForAccurate] Format sudah benar DD/MM/YYYY:', input);
+    return input;
+  }
+
+  // Case 2: Format YYYY-MM-DD → convert ke DD/MM/YYYY
+  if (/^\d{4}-\d{2}-\d{2}/.test(input)) {
+    const datePart = input.split('T')[0]; // Remove time if exists
+    const [year, month, day] = datePart.split('-');
+    const result = `${day}/${month}/${year}`;
+    console.log('[normalizeDateForAccurate] Converted YYYY-MM-DD to DD/MM/YYYY:', input, '→', result);
+    return result;
+  }
+
+  // Case 3: Format DD-MM-YYYY → convert ke DD/MM/YYYY
+  if (/^\d{2}-\d{2}-\d{4}$/.test(input)) {
+    const [day, month, year] = input.split('-');
+    const result = `${day}/${month}/${year}`;
+    console.log('[normalizeDateForAccurate] Converted DD-MM-YYYY to DD/MM/YYYY:', input, '→', result);
+    return result;
+  }
+
+  // Case 4: Format tidak dikenali → fallback ke today dengan warning
+  console.warn('[normalizeDateForAccurate] ⚠️ Format tanggal tidak dikenali:', input);
+  const today = new Date();
+  return `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
 }
 
 export async function editAccount(
@@ -282,16 +333,49 @@ export async function editAccount(
     console.log('[editAccount] Account ID:', accountId);
     console.log('[editAccount] Updates:', updates);
     
+    // ============================================
+    // ✅ NORMALISASI TANGGAL SEBELUM DIKIRIM
+    // ============================================
+    let normalizedCoadate: string;
+    
+    // Prioritas: coadate > asOf
+    const dateInput = updates.coadate || updates.asOf;
+    
+    if (dateInput) {
+      normalizedCoadate = normalizeDateForAccurate(dateInput);
+      console.log('[editAccount] ✅ Tanggal dinormalisasi:', {
+        input: dateInput,
+        normalized: normalizedCoadate,
+        isValid: isValidDDMMYYYY(normalizedCoadate)
+      });
+    } else {
+      // Fallback ke tanggal hari ini
+      normalizedCoadate = normalizeDateForAccurate('');
+      console.log('[editAccount] ⚠️ Tidak ada tanggal input, menggunakan today:', normalizedCoadate);
+    }
+    
+    // ============================================
+    // ✅ VALIDASI SEBELUM KIRIM KE EDGE FUNCTION
+    // ============================================
+    if (!isValidDDMMYYYY(normalizedCoadate)) {
+      const errorMsg = 'Format tanggal tidak valid setelah normalisasi. Harus DD/MM/YYYY';
+      console.error('[editAccount] ❌ Validasi gagal:', errorMsg);
+      return {
+        success: false,
+        error: errorMsg,
+      };
+    }
+    
     // Ensure required fields are present
-    const completeUpdates = {
+    const completeUpdates: EditAccountData = {
       ...updates,
-      // Default asOf to today if not provided
-      asOf: updates.asOf || new Date().toLocaleDateString('en-GB'), // DD/MM/YYYY
+      // ✅ Gunakan tanggal yang sudah dinormalisasi
+      coadate: normalizedCoadate,
       // Default currencyCode to IDR if not provided
       currencyCode: updates.currencyCode || 'IDR',
     };
     
-    console.log('[editAccount] Complete updates:', completeUpdates);
+    console.log('[editAccount] Complete updates (normalized):', completeUpdates);
     
     const { data, error } = await supabase.functions.invoke('accurate-edit-account', {
       body: {
@@ -313,7 +397,7 @@ export async function editAccount(
       throw new Error(data?.error || 'Failed to edit account');
     }
 
-    console.log('[editAccount] Account updated successfully');
+    console.log('[editAccount] ✅ Account updated successfully');
     return { success: true, data: data.data };
   } catch (error) {
     console.error('[editAccount] Error:', error);
@@ -851,7 +935,6 @@ export function subscribeBudgets(entityId: string, onChange: () => void) {
 
 /**
  * Get budget realizations with live data from accurate_accounts
- * FIXED: realisasi_snapshot = Budget (COA balance), allocated_amount = Realisasi (manual input)
  */
 export async function getBudgetRealizationsLive(
   entityId?: string,
@@ -908,10 +991,9 @@ export async function getBudgetRealizationsLive(
     if (error) throw error;
 
     // Transform data to BudgetRealization format
-    // FIXED: allocated_amount = budget (manual input), realisasi_snapshot = realisasi (COA balance)
     const realizations: BudgetRealization[] = (data || []).map((item: any) => {
-      const budget = item.allocated_amount || 0;  // Budget (yang Anda input manual)
-      const realisasi = item.realisasi_snapshot || 0;  // Realisasi (dari COA balance)
+      const budget = item.allocated_amount || 0;  
+      const realisasi = item.realisasi_snapshot || 0;  
       const variance = budget - realisasi;
       const variancePercentage = budget > 0 ? (variance / budget) * 100 : 0;
       const status = realisasi <= budget ? 'ON_TRACK' : 'OVER_BUDGET';

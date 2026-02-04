@@ -216,8 +216,8 @@ export const EntitasPage: React.FC = () => {
                 <th>Nama Entitas</th>
                 <th>Koneksi Accurate</th>
                 <th>Data Usaha Accurate</th>
-                <th className={styles.colPrivacy}>Privacy</th>
-                <th className={styles.colActions}>Aksi</th>
+                <th className={styles.colPrivacy}>Tampilan</th>
+                <th className={styles.colActions}>Opsi Edit & Hapus</th>
               </tr>
             </thead>
             <tbody>
@@ -338,20 +338,21 @@ export const EntitasPage: React.FC = () => {
           <span className={styles.legendTitle}>Keterangan:</span>
           <div className={styles.legendList}>
             <div className={styles.legendItem}>
-              <span className={styles.legendConnected}>Terhubung</span> - Entitas terhubung dengan Accurate
+              <span className={styles.legendImportant}>Aktif</span> - Pilih satu entitas sebagai aktif untuk digunakan di seluruh aplikasi
             </div>
             <div className={styles.legendItem}>
-              <span className={styles.legendDisconnected}>Tidak Terhubung</span> - Token tidak valid
+              <span className={styles.legendConnected}>Terhubung</span> - Entitas terhubung dengan Accurate.
             </div>
             <div className={styles.legendItem}>
-              <span className={styles.legendImportant}>Public:</span> Data realisasi dapat dilihat user lain di halaman Community
+              <span className={styles.legendDisconnected}>Tidak Terhubung</span> - Entitas tidak terkait dengan data Accurate.
             </div>
             <div className={styles.legendItem}>
-              <span className={styles.legendImportant}>Private:</span> Data hanya dapat dilihat oleh Anda
+              <span className={styles.legendImportant}>Public</span> - Data realisasi dapat dilihat user lain di halaman "Lihat".
             </div>
             <div className={styles.legendItem}>
-              <span className={styles.legendImportant}>Penting:</span> Pilih satu entitas sebagai aktif untuk digunakan di seluruh aplikasi
+              <span className={styles.legendImportant}>Private</span> - Data realisasi tidak dibagikan ke user lain.
             </div>
+            
           </div>
         </div>
       </div>
