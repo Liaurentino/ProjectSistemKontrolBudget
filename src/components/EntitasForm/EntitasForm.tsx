@@ -40,7 +40,7 @@ export const EntitasForm: React.FC<Props> = ({
   const [databases, setDatabases] = useState<AccurateDatabase[]>([]);
   
   // ========== TAMBAHAN: State untuk database ID ==========
-  const [selectedDatabaseId, setSelectedDatabaseId] = useState<number | null>(null);
+  const [selectedDatabaseId, setSelectedDatabaseId] = useState<string | null>(null);
   // ========================================================
 
   const [existingTokens, setExistingTokens] = useState<string[]>([]);
