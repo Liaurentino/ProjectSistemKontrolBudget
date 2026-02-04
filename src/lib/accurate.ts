@@ -393,7 +393,7 @@ export interface Budget {
 export interface BudgetItem {
   id: string;
   budget_id: string;
-  account_id?: string;
+  account_id: string;
   accurate_id?: string;
   account_code: string;
   account_name: string;

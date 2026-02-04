@@ -10,7 +10,6 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import { useEntity } from '../../contexts/EntityContext';
 import {
   getBudgetRealizationsLive,
   getLocalAccounts,
@@ -43,8 +42,7 @@ interface OverBudgetItem {
 type ViewMode = 'single' | 'all';
 
 const DashboardPage: React.FC = () => {
-  const { activeEntity, entities: contextEntities } = useEntity();
-
+  
   // View mode state
   const [viewMode, setViewMode] = useState<ViewMode>('all');
   const [selectedEntityId, setSelectedEntityId] = useState<string>('');
@@ -149,7 +147,7 @@ const DashboardPage: React.FC = () => {
       // Combine all realizations and filter by selected period
       const combinedRealizations: BudgetRealization[] = [];
       
-      allResults.forEach((result, index) => {
+      allResults.forEach((result) => {
         if (result.data) {
           const filteredData = result.data.filter(item => item.period === period);
           combinedRealizations.push(...filteredData);

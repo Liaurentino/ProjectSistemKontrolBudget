@@ -9,8 +9,6 @@ import {
   fetchBSAccountsByPeriod,
   type Budget,
   type BudgetItem,
-  type Account,
-  type BSAccount,
 } from '../../lib/accurate';
 import {
   getAdaptiveFontSize,
@@ -252,8 +250,8 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
         for (const item of budgetItems) {
           await addBudgetItem({
             budget_id: newBudget!.id,
-            account_id: item.account_id || null,
-            accurate_id: item.accurate_id || null,
+            account_id: item.account_id,
+            accurate_id: item.accurate_id,
             account_code: item.account_code,
             account_name: item.account_name,
             account_type: item.account_type,

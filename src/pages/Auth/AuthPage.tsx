@@ -1,16 +1,10 @@
 import { useState } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Eye, EyeOff, Loader2, ArrowLeft } from 'lucide-react';
+import { Eye, EyeOff, Loader2} from 'lucide-react';
 import styles from './AuthPage.module.css';
 
 type ViewMode = 'login' | 'register' | 'forgot-password';
 
-// Helper function untuk generate random state (CSRF protection)
-const generateRandomState = () => {
-  const array = new Uint8Array(32);
-  crypto.getRandomValues(array);
-  return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
-};
 
 export default function AuthPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('login');
