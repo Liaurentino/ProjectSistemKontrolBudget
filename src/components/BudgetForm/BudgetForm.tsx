@@ -303,7 +303,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
     const newItem: BudgetItem = {
       id: '',
       budget_id: budget?.id || '',
-      account_id: selectedAccount.id || undefined,
+      account_id: selectedAccount.id || '',
       accurate_id: selectedAccount.accurate_id || undefined,
       account_code: selectedAccount.accountNo,
       account_name: selectedAccount.accountName,
@@ -340,8 +340,8 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
     try {
       const { data, error: addError } = await addBudgetItem({
         budget_id: budget.id,
-        account_id: selectedAccount.id || null,
-        accurate_id: selectedAccount.accurate_id || null,
+        account_id: selectedAccount.id,
+        accurate_id: selectedAccount.accurate_id,
         account_code: selectedAccount.accountNo,
         account_name: selectedAccount.accountName,
         account_type: selectedAccount.accountType,
