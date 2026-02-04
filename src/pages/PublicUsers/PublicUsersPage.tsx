@@ -8,7 +8,6 @@ interface PublicUser {
   user_id: string;
   user_email: string;
   user_name: string;
-  user_avatar?: string;
   entities: Array<{
     id: string;
     entity_name: string;
@@ -65,7 +64,7 @@ export const PublicProfilesPage: React.FC = () => {
 
           // Only include entities that are connected AND have realization data
           const validEntities = entitiesWithCheck.filter(
-            (e) => e.is_connected && e.has_realization
+            (e) => e.has_realization
           );
 
           return {
@@ -196,7 +195,6 @@ export const PublicProfilesPage: React.FC = () => {
           <table className={styles.usersTable}>
             <thead>
               <tr>
-                <th>Avatar</th>
                 <th>Nama User</th>
                 <th>Email</th>
                 <th>Jumlah Entitas Publik</th>
@@ -206,19 +204,6 @@ export const PublicProfilesPage: React.FC = () => {
             <tbody>
               {filteredUsers.map((user) => (
                 <tr key={user.user_id} className={styles.userRow}>
-                  <td className={styles.avatarCell}>
-                    {user.user_avatar ? (
-                      <img
-                        src={user.user_avatar}
-                        alt={user.user_name}
-                        className={styles.avatar}
-                      />
-                    ) : (
-                      <div className={styles.avatarPlaceholder}>
-                        {user.user_name.charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                  </td>
                   <td>
                     <div className={styles.userName}>{user.user_name}</div>
                   </td>
@@ -259,17 +244,6 @@ export const PublicProfilesPage: React.FC = () => {
             {/* Modal Header */}
             <div className={styles.modalHeader}>
               <div className={styles.modalHeaderLeft}>
-                {modalUser.user_avatar ? (
-                  <img
-                    src={modalUser.user_avatar}
-                    alt={modalUser.user_name}
-                    className={styles.modalAvatar}
-                  />
-                ) : (
-                  <div className={styles.modalAvatarPlaceholder}>
-                    {modalUser.user_name.charAt(0).toUpperCase()}
-                  </div>
-                )}
                 <div>
                   <h3 className={styles.modalTitle}>
                     Entitas dari {modalUser.user_name}
@@ -303,7 +277,7 @@ export const PublicProfilesPage: React.FC = () => {
                             : styles.disconnected
                         }`}
                       >
-                        {entity.is_connected ? 'Terhubung' : 'Belum Terhubung'}
+                        {entity.is_connected ? 'Terhubung Accurate' : 'Tidak Terhubung Accurate'}
                       </span>
                     </div>
 

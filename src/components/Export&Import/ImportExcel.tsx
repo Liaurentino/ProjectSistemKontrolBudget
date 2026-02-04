@@ -24,9 +24,6 @@ export const ImportExcel: React.FC<ImportExcelProps> = ({
   const [inputKey, setInputKey] = useState(Date.now()); // ✅ Key untuk force re-mount input
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // ========================================
-  // 🔧 Helper: Parse number dengan handling comma/dot separator
-  // ========================================
   const parseNumber = (value: any): number => {
     if (value === null || value === undefined || value === '') return 0;
     
@@ -35,14 +32,10 @@ export const ImportExcel: React.FC<ImportExcelProps> = ({
     
     // Convert ke string
     const str = String(value).trim();
-    
-    // Remove semua karakter non-numeric kecuali . dan , dan -
-    // Handle format: 5,600,000.00 atau 5.600.000,00
     const cleaned = str.replace(/[^\d.,-]/g, '');
     
     if (!cleaned) return 0;
     
-    // Detect format berdasarkan posisi koma dan titik terakhir
     const lastComma = cleaned.lastIndexOf(',');
     const lastDot = cleaned.lastIndexOf('.');
     

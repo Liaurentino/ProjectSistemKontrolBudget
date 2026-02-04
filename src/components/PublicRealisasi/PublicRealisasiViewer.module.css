@@ -9,7 +9,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(30, 41, 59, 0.9) 100%);
+  background: rgba(30, 41, 59, 0.9);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -56,7 +56,7 @@
 .modalHeader {
   padding: 2rem 2.5rem;
   border-bottom: 1px solid var(--border-color);
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+  background: var(--primary-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -146,7 +146,7 @@
   padding: 2rem 2.5rem;
   overflow-y: auto;
   flex: 1;
-  background: linear-gradient(180deg, var(--background) 0%, #f8fafc 100%);
+  background: var(--background);
 }
 
 /* Scrollbar */
@@ -161,13 +161,13 @@
 }
 
 .modalBody::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, var(--primary-color), var(--primary-dark));
+  background: var(--primary-color);
   border-radius: 5px;
   border: 2px solid var(--background);
 }
 
 .modalBody::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, var(--primary-dark), var(--primary-color));
+  background: var(--primary-dark);
 }
 
 .loading {
@@ -180,7 +180,7 @@
 
 .error {
   padding: 1.25rem 1.5rem;
-  background: linear-gradient(135deg, #fee 0%, #ffebee 100%);
+  background: #fff5f5;
   border: 1.5px solid #f5c6cb;
   border-left: 4px solid var(--danger-color);
   border-radius: 12px;
@@ -227,7 +227,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%);
+  background: rgba(255, 255, 255, 0.1);
   opacity: 0;
   transition: opacity 0.3s ease;
 }
@@ -242,19 +242,19 @@
 }
 
 .summaryCard.blue {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  background: #3b82f6;
 }
 
 .summaryCard.green {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: #10b981;
 }
 
 .summaryCard.red {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  background: #ef4444;
 }
 
 .summaryCard.cyan {
-  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+  background: #06b6d4;
 }
 
 .summaryCardLabel {
@@ -302,7 +302,7 @@
 }
 
 .dataTable thead {
-  background: linear-gradient(135deg, var(--background) 0%, #f8fafc 100%);
+  background: var(--background);
 }
 
 .dataTable thead th {
@@ -362,7 +362,7 @@
 
 .periodBadge {
   padding: 0.375rem 0.75rem;
-  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  background: #e3f2fd;
   border-radius: 8px;
   font-size: 0.75rem;
   font-weight: 700;
@@ -407,20 +407,20 @@
 }
 
 .statusBadge.onTrack {
-  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+  background: #d4edda;
   color: #155724;
   border: 1px solid #b1dfbb;
 }
 
 .statusBadge.overBudget {
-  background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+  background: #f8d7da;
   color: #721c24;
   border: 1px solid #f1b0b7;
 }
 
 .detailButton {
   padding: 0.5rem 1.125rem;
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+  background: var(--primary-color);
   color: white;
   border: none;
   border-radius: 10px;
@@ -433,7 +433,7 @@
 }
 
 .detailButton:hover {
-  background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-color) 100%);
+  background: var(--primary-dark);
   transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
 }
@@ -449,7 +449,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(30, 41, 59, 0.9) 100%);
+  background: rgba(30, 41, 59, 0.9);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -479,7 +479,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: linear-gradient(135deg, var(--background) 0%, #f8fafc 100%);
+  background: var(--background);
 }
 
 .detailModalHeaderContent h3 {
@@ -524,7 +524,7 @@
   padding: 2rem 2.5rem;
   overflow-y: auto;
   flex: 1;
-  background: linear-gradient(180deg, var(--background) 0%, #f8fafc 100%);
+  background: var(--background);
 }
 
 .detailModalBody::-webkit-scrollbar {
@@ -538,13 +538,13 @@
 }
 
 .detailModalBody::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, var(--primary-color), var(--primary-dark));
+  background: var(--primary-color);
   border-radius: 5px;
   border: 2px solid var(--background);
 }
 
 .detailModalBody::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, var(--primary-dark), var(--primary-color));
+  background: var(--primary-dark);
 }
 
 /* Detail Modal Summary Cards */
@@ -576,7 +576,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%);
+  background: rgba(255, 255, 255, 0.1);
   opacity: 0;
   transition: opacity 0.3s ease;
 }
@@ -591,19 +591,19 @@
 }
 
 .detailModalSummaryCard.blue {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  background: #3b82f6;
 }
 
 .detailModalSummaryCard.green {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: #10b981;
 }
 
 .detailModalSummaryCard.red {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  background: #ef4444;
 }
 
 .detailModalSummaryCard.cyan {
-  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+  background: #06b6d4;
 }
 
 .detailModalSummaryCardLabel {
@@ -651,7 +651,7 @@
 }
 
 .detailModalTable thead {
-  background: linear-gradient(135deg, var(--background) 0%, #f8fafc 100%);
+  background: var(--background);
 }
 
 .detailModalTable thead th {
@@ -749,13 +749,13 @@
 }
 
 .detailOnTrack {
-  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+  background: #d4edda;
   color: #155724;
   border: 1px solid #b1dfbb;
 }
 
 .detailOverBudget {
-  background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+  background: #f8d7da;
   color: #721c24;
   border: 1px solid #f1b0b7;
 }
@@ -766,12 +766,12 @@
   border-top: 1px solid var(--border-color);
   display: flex;
   justify-content: flex-end;
-  background: linear-gradient(135deg, var(--background) 0%, #f8fafc 100%);
+  background: var(--background);
 }
 
 .detailModalFooterButton {
   padding: 0.875rem 2rem;
-  background: linear-gradient(135deg, var(--text-secondary) 0%, var(--text-primary) 100%);
+  background: var(--text-secondary);
   color: white;
   border: none;
   border-radius: 10px;
@@ -783,7 +783,7 @@
 }
 
 .detailModalFooterButton:hover {
-  background: linear-gradient(135deg, var(--text-primary) 0%, #0f172a 100%);
+  background: var(--text-primary);
   transform: translateY(-2px);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
 }

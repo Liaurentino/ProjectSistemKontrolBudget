@@ -843,73 +843,73 @@ export async function getBudgetRealizationsLive(
   budgetName?: string
 ) {
   try {
-    // Build query to get budget items with their accounts
-    let query = supabase
+    // STEP 1: Query budgets
+    let budgetQuery = supabase
+      .from('budgets')
+      .select('id, name, period, entity_id');
+
+    if (entityId) {
+      budgetQuery = budgetQuery.eq('entity_id', entityId);
+    }
+    if (period) {
+      budgetQuery = budgetQuery.eq('period', period);
+    }
+    if (budgetName) {
+      budgetQuery = budgetQuery.eq('name', budgetName);
+    }
+
+    const { data: budgets, error: budgetError } = await budgetQuery;
+
+    if (budgetError) throw budgetError;
+    
+    // PENTING: Return empty array kalau tidak ada budgets
+    if (!budgets || budgets.length === 0) {
+      return { data: [], error: null };
+    }
+
+    // STEP 2: Query budget_items
+    const budgetIds = budgets.map(b => b.id);
+
+    let itemQuery = supabase
       .from('budget_items')
-      .select(`
-        id,
-        budget_id,
-        account_id,
-        accurate_id,
-        account_code,
-        account_name,
-        account_type,
-        allocated_amount,
-        realisasi_snapshot,
-        budgets!inner(
-          id,
-          name,
-          period,
-          entity_id
-        ),
-        accurate_accounts(
-          id,
-          balance
-        )
-      `)
+      .select('*')
+      .in('budget_id', budgetIds)
       .order('account_code', { ascending: true });
 
-    // Apply filters
-    if (entityId) {
-      query = query.eq('budgets.entity_id', entityId);
-    }
-
-    if (period) {
-      query = query.eq('budgets.period', period);
-    }
-
     if (accountType) {
-      query = query.eq('account_type', accountType);
+      itemQuery = itemQuery.eq('account_type', accountType);
     }
 
-    if (budgetName) {
-      query = query.eq('budgets.name', budgetName);
+    const { data: items, error: itemError } = await itemQuery;
+
+    if (itemError) throw itemError;
+
+    // PENTING: Return empty array kalau tidak ada items
+    if (!items || items.length === 0) {
+      return { data: [], error: null };
     }
 
-    const { data, error } = await query;
-
-    if (error) throw error;
-
-    // Transform data to BudgetRealization format
-    const realizations: BudgetRealization[] = (data || []).map((item: any) => {
-      const budget = item.allocated_amount || 0;  
+    // STEP 3: Transform
+    const realizations: BudgetRealization[] = items.map((item: any) => {
+      const budget = budgets.find(b => b.id === item.budget_id);
+      const budgetAllocated = item.allocated_amount || 0;  
       const realisasi = item.realisasi_snapshot || 0;  
-      const variance = budget - realisasi;
-      const variancePercentage = budget > 0 ? (variance / budget) * 100 : 0;
-      const status = realisasi <= budget ? 'ON_TRACK' : 'OVER_BUDGET';
+      const variance = budgetAllocated - realisasi;
+      const variancePercentage = budgetAllocated > 0 ? (variance / budgetAllocated) * 100 : 0;
+      const status = realisasi <= budgetAllocated ? 'ON_TRACK' : 'OVER_BUDGET';
 
       return {
         id: item.id,
         budget_id: item.budget_id,
         budget_item_id: item.id,
-        entity_id: item.budgets.entity_id,
-        period: item.budgets.period,
+        entity_id: budget?.entity_id || '',
+        period: budget?.period || '',
         account_id: item.account_id,
         accurate_id: item.accurate_id,
         account_code: item.account_code,
         account_name: item.account_name,
         account_type: item.account_type,
-        budget_allocated: budget,
+        budget_allocated: budgetAllocated,
         realisasi: realisasi,
         variance: variance,
         variance_percentage: variancePercentage,
@@ -917,19 +917,20 @@ export async function getBudgetRealizationsLive(
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         budgets: {
-          name: item.budgets.name,
+          name: budget?.name || '',
         },
       };
     });
 
-    console.log('[getBudgetRealizationsLive] Loaded', realizations.length, 'realizations');
+    console.log('[getBudgetRealizationsLive] ✅ Success:', realizations.length, 'items');
     return { data: realizations, error: null };
+    
   } catch (error) {
-    console.error('[getBudgetRealizationsLive] Error:', error);
-    return { data: null, error };
+    console.error('[getBudgetRealizationsLive] ❌ Error:', error);
+    // CRITICAL: Return empty array, NOT null!
+    return { data: [], error };
   }
 }
-
 /**
  * Get realization summary (calculated from live data, no view needed)
  */

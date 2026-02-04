@@ -652,7 +652,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
                             onChange={(e) => setItemDescription(e.target.value)}
                             maxLength={200}
                             disabled={loading}
-                            placeholder="Catatan (opsional)..."
+                            placeholder="Catatan (opsional, maks. 200 karakter)..."
                             className={styles.input}
                           />
                         </div>
