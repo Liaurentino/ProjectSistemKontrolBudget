@@ -565,9 +565,7 @@ export const ImportExcel: React.FC<ImportExcelProps> = ({
             onChange={handleFileChange}
             className={styles.fileInput}
           />
-          
-          <div className={styles.icon}>📊</div>
-          
+    
           {file ? (
             <>
               <p className={styles.fileSelectedTitle}>✓ File dipilih</p>
