@@ -1,4 +1,3 @@
-// CoaForm.tsx - Custom Hook for COA Logic (COMPLETE VERSION)
 import { useEffect, useState } from 'react';
 import { useEntity } from '../contexts/EntityContext';
 import {
@@ -173,42 +172,22 @@ export const useCoaForm = () => {
   };
 
   // ============================================
-  // HANDLE EDIT
+  // ✅ HANDLE EDIT - HANYA NAMA & KODE
   // ============================================
   const handleEdit = (account: CoaAccountExtended) => {
     console.log('[handleEdit] Editing account:', account);
+    
     setEditingAccount(account);
-    
-    // Format coadate dari database (YYYY-MM-DD) ke DD/MM/YYYY
-    let formattedCoaDate = '';
-    if (account.coadate) {
-      const parts = account.coadate.split('-');
-      if (parts.length === 3) {
-        const [year, month, day] = parts;
-        formattedCoaDate = `${day}/${month}/${year}`;
-      } else {
-        formattedCoaDate = account.coadate;
-      }
-    } else {
-      const today = new Date();
-      formattedCoaDate = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
-    }
-    
-    console.log('[handleEdit] Formatted coadate:', formattedCoaDate);
-    
     setEditForm({
       account_code: account.account_code,
       account_name: account.account_name,
-      account_type: account.account_type,
-      currencyCode: account.currency || 'IDR',
-      coadate: formattedCoaDate,
     });
     
     setEditModalOpen(true);
   };
 
   // ============================================
-  // SUBMIT EDIT
+  // ✅ SUBMIT EDIT - HANYA UPDATE NAMA & KODE
   // ============================================
   const handleEditSubmit = async () => {
     if (!activeEntity || !editingAccount) return;
@@ -217,36 +196,59 @@ export const useCoaForm = () => {
       setEditLoading(true);
       setError(null);
 
-      console.log('[handleEditSubmit] Submitting edit...');
+      console.log('[handleEditSubmit] Starting edit...');
       console.log('[handleEditSubmit] Edit form:', editForm);
 
-      const completeUpdates: EditAccountData = {
-        account_code: editForm.account_code,
-        account_name: editForm.account_name,
-        account_type: editForm.account_type,
-        currencyCode: editForm.currencyCode || 'IDR',
-        coadate: editForm.coadate,
-      };
-      
-      console.log('[handleEditSubmit] Complete updates:', completeUpdates);
-
+      // Call Edge Function (update Accurate API)
       const result = await editAccount(
         activeEntity.id,
         editingAccount.id,
-        completeUpdates
+        editForm
       );
 
       if (!result.success) {
         throw new Error(result.error || 'Gagal mengedit account');
       }
 
+      console.log('[handleEditSubmit] ✅ Edge Function success');
+
+      // Update database
+      const { supabase } = await import('../lib/supabase');
+
+      const dbUpdateData: any = {
+        updated_at: new Date().toISOString(),
+      };
+
+      if (editForm.account_code) {
+        dbUpdateData.account_code = editForm.account_code;
+      }
+      if (editForm.account_name) {
+        dbUpdateData.account_name = editForm.account_name;
+      }
+
+      console.log('[handleEditSubmit] 💾 Updating database:', dbUpdateData);
+
+      const { error: dbError } = await supabase
+        .from('accurate_accounts')
+        .update(dbUpdateData)
+        .eq('entity_id', activeEntity.id)
+        .eq('accurate_id', String(editingAccount.id));
+
+      if (dbError) {
+        console.error('[handleEditSubmit] ❌ Database update error:', dbError);
+        throw new Error(`Gagal update database: ${dbError.message}`);
+      }
+
+      console.log('[handleEditSubmit] ✅ Database updated successfully');
+
       setSyncStatus('✅ Account berhasil diupdate');
       setEditModalOpen(false);
       
       setTimeout(() => loadCoaFromDatabase(), 500);
       setTimeout(() => setSyncStatus(null), 3000);
+
     } catch (err: any) {
-      console.error('[handleEditSubmit] Error:', err);
+      console.error('[handleEditSubmit] ❌ Error:', err);
       setError('❌ Gagal mengedit: ' + err.message);
     } finally {
       setEditLoading(false);

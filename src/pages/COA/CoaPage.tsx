@@ -1,4 +1,3 @@
-// COAPage.tsx - Updated with Date Column and Edit Form
 import React, { useState, useRef, useEffect } from 'react';
 import { useCoaForm } from '../../components/CoaForm';
 import { ImportExcel } from '../../components/Export&Import/ImportExcel';
@@ -77,12 +76,11 @@ const CoaPage: React.FC = () => {
     if (!dateString) return '-';
     
     try {
-      // Input: "2026-03-02" (YYYY-MM-DD)
       const parts = dateString.split('-');
       if (parts.length !== 3) return dateString;
       
       const [year, month, day] = parts;
-      return `${day}/${month}/${year}`; // Output: "02/03/2026"
+      return `${day}/${month}/${year}`;
     } catch {
       return dateString;
     }
@@ -219,7 +217,6 @@ const CoaPage: React.FC = () => {
               ) : (
                 accounts.filter(isVisible).map((acc) => (
                   <tr key={acc.db_id}>
-                    {/* KODE AKUN */}
                     <td className="table-cell-monospace">
                       <div className={styles.tableCellIndent}>
                         <span style={{ marginLeft: `${(acc.lvl - 1) * 24}px` }} />
@@ -227,7 +224,6 @@ const CoaPage: React.FC = () => {
                       </div>
                     </td>
                     
-                    {/* NAMA AKUN */}
                     <td>
                       <div className={styles.tableCellIndent}>
                         <span style={{ marginLeft: `${(acc.lvl - 1) * 24}px` }} />
@@ -235,35 +231,30 @@ const CoaPage: React.FC = () => {
                       </div>
                     </td>
                     
-                    {/* TIPE */}
                     <td>
                       <span className={styles.accountTypeBadge}>
                         {acc.account_type_name}
                       </span>
                     </td>
 
-                    {/* PER-TANGGAL */}
                     <td className="table-cell-center">
                       <span className="table-cell-monospace">
-                        {formatDate(acc.coadate)}
+                        {formatDate((acc as any).coadate)}
                       </span>
                     </td>
 
-                    {/* SALDO */}
                     <td className="table-cell-right">
                       <span className="table-cell-monospace">
                         {acc.currency} {getDisplayBalance(acc).toLocaleString('id-ID')}
                       </span>
                     </td>
 
-                    {/* STATUS */}
                     <td>
                       <span className={!acc.suspended ? styles.statusBadgeActive : styles.statusBadgeSuspended}>
                         {!acc.suspended ? '✓ Aktif' : '✗ Suspended'}
                       </span>
                     </td>
 
-                    {/* ACTIONS */}
                     <td className="table-cell-center">
                       <div className="table-actions">
                         <button
@@ -318,67 +309,53 @@ const CoaPage: React.FC = () => {
         />
       )}
 
-      {/* ============================================ */}
-      {/* ✅ EDIT MODAL - UPDATED */}
-      {/* ============================================ */}
-   {editModalOpen && (
-  <div className={styles.modalOverlay}>
-    <div className={styles.modalContent}>
-      <h3 className={styles.modalTitle}>Edit Account</h3>
-      
-      <div className={styles.formGroup}>
-        <label className={styles.formLabel}>Kode Akun</label>
-        <input
-          type="text"
-          value={editForm.account_code || ''}
-          onChange={(e) => setEditForm({ ...editForm, account_code: e.target.value })}
-          className={styles.formInput}
-        />
-      </div>
+      {/* ✅ Edit Modal - HANYA NAMA & KODE */}
+      {editModalOpen && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <h3 className={styles.modalTitle}>Edit Account</h3>
+            
+            {/* ACCOUNT CODE */}
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>Kode Akun</label>
+              <input
+                type="text"
+                value={editForm.account_code || ''}
+                onChange={(e) => setEditForm({ ...editForm, account_code: e.target.value })}
+                className={styles.formInput}
+              />
+            </div>
 
-      <div className={styles.formGroup}>
-        <label className={styles.formLabel}>Nama Akun</label>
-        <input
-          type="text"
-          value={editForm.account_name || ''}
-          onChange={(e) => setEditForm({ ...editForm, account_name: e.target.value })}
-          className={styles.formInput}
-        />
-      </div>
+            {/* ACCOUNT NAME */}
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>Nama Akun</label>
+              <input
+                type="text"
+                value={editForm.account_name || ''}
+                onChange={(e) => setEditForm({ ...editForm, account_name: e.target.value })}
+                className={styles.formInput}
+              />
+            </div>
 
-      <div className={styles.formGroup}>
-        <label className={styles.formLabel}>Tanggal COA (DD/MM/YYYY)</label>
-        <input
-          type="text"
-          placeholder="02/03/2026"
-          value={editForm.coadate || ''}
-          onChange={(e) => setEditForm({ ...editForm, coadate: e.target.value })}
-          className={styles.formInput}
-        />
-        <small style={{ color: 'var(--text-secondary)', fontSize: '0.813rem', marginTop: '0.25rem' }}>
-          Format: DD/MM/YYYY (contoh: 02/03/2026)
-        </small>
-      </div>
-
-      <div className={styles.modalButtonGroup}>
-        <button
-          onClick={handleEditSubmit}
-          disabled={editLoading}
-          className={styles.modalButtonPrimary}
-        >
-          {editLoading ? 'Menyimpan...' : 'Simpan'}
-        </button>
-        <button
-          onClick={() => setEditModalOpen(false)}
-          disabled={editLoading}
-          className={styles.modalButtonSecondary}
-        >
-          Batal
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+            <div className={styles.modalButtonGroup}>
+              <button
+                onClick={handleEditSubmit}
+                disabled={editLoading}
+                className={styles.modalButtonPrimary}
+              >
+                {editLoading ? 'Menyimpan...' : 'Simpan'}
+              </button>
+              <button
+                onClick={() => setEditModalOpen(false)}
+                disabled={editLoading}
+                className={styles.modalButtonSecondary}
+              >
+                Batal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Delete Modal */}
       {deleteModalOpen && (
