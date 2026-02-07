@@ -393,17 +393,18 @@ export interface Budget {
 export interface BudgetItem {
   id: string;
   budget_id: string;
-  account_id: string;
-  accurate_id?: string;
+  account_id: string | null; // ✅ NULLABLE
+  accurate_id?: string | null;
   account_code: string;
   account_name: string;
-  account_type?: string;
-  allocated_amount: number; // Realisasi (manual input)
-  realisasi_snapshot?: number; // Budget (snapshot of COA balance when created)
-  description?: string;
+  account_type?: string | null;
+  allocated_amount: number;
+  realisasi_snapshot?: number;
+  description?: string | null;
   created_at?: string;
   updated_at?: string;
 }
+
 
 export interface BudgetWithItems extends Budget {
   items: BudgetItem[];
@@ -423,14 +424,14 @@ export interface CreateBudgetData {
 
 export interface CreateBudgetItemData {
   budget_id: string;
-  account_id?: string;
-  accurate_id?: string;
+  account_id?: string | null; // ✅ OPTIONAL & NULLABLE
+  accurate_id?: string | null;
   account_code: string;
   account_name: string;
-  account_type?: string;
-  allocated_amount: number; // Realisasi (manual input)
-  realisasi_snapshot?: number; // Budget (snapshot from COA)
-  description?: string;
+  account_type?: string | null;
+  allocated_amount: number;
+  realisasi_snapshot?: number;
+  description?: string | null;
 }
 
 // ============================================
@@ -625,37 +626,54 @@ export async function getBudgetItems(budgetId: string) {
 }
 
 /**
- * Add budget item
+ * ✅ FIXED: Add budget item with proper validation
  */
 export async function addBudgetItem(itemData: CreateBudgetItemData) {
   try {
-    // Check duplicate account in same budget
-    const { data: existing } = await supabase
+    // ✅ Check duplicate dengan maybeSingle()
+    const { data: existing, error: checkError } = await supabase
       .from('budget_items')
       .select('id')
       .eq('budget_id', itemData.budget_id)
       .eq('account_code', itemData.account_code)
-      .single();
+      .maybeSingle();
+
+    if (checkError) {
+      console.error('[addBudgetItem] Error checking duplicate:', checkError);
+      throw checkError;
+    }
 
     if (existing) {
       throw new Error(`Akun ${itemData.account_code} sudah ada di budget ini`);
     }
 
+    // ✅ Clean data (convert empty string to null)
+    const insertData = {
+      budget_id: itemData.budget_id,
+      account_id: itemData.account_id || null,
+      accurate_id: itemData.accurate_id || null,
+      account_code: itemData.account_code,
+      account_name: itemData.account_name,
+      account_type: itemData.account_type || null,
+      allocated_amount: itemData.allocated_amount,
+      realisasi_snapshot: itemData.realisasi_snapshot || 0,
+      description: itemData.description || null,
+    };
+
+    console.log('[addBudgetItem] Inserting:', insertData);
+
     const { data, error } = await supabase
       .from('budget_items')
-      .insert({
-        ...itemData,
-        realisasi_snapshot: itemData.realisasi_snapshot || 0,
-      })
+      .insert(insertData)
       .select()
       .single();
 
     if (error) throw error;
 
-    console.log('[addBudgetItem] Added:', data);
+    console.log('[addBudgetItem] ✅ Added:', data);
     return { data, error: null };
   } catch (error) {
-    console.error('[addBudgetItem] Error:', error);
+    console.error('[addBudgetItem] ❌ Error:', error);
     return { data: null, error };
   }
 }
