@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
-  ComposedChart,
+  BarChart,
   Bar,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -89,7 +88,6 @@ const DashboardPage: React.FC = () => {
       
       setUserEntities(data || []);
       
-      // Set default: first entity for single mode
       if (data && data.length > 0) {
         setSelectedEntityId(data[0].id);
       }
@@ -137,14 +135,12 @@ const DashboardPage: React.FC = () => {
     setError(null);
 
     try {
-      // Load data from all user entities
       const allRealizationsPromises = userEntities.map(entity => 
         getBudgetRealizationsLive(entity.id)
       );
 
       const allResults = await Promise.all(allRealizationsPromises);
       
-      // Combine all realizations and filter by selected period
       const combinedRealizations: BudgetRealization[] = [];
       
       allResults.forEach((result) => {
@@ -156,7 +152,6 @@ const DashboardPage: React.FC = () => {
 
       setRealizations(combinedRealizations);
 
-      // Count total accounts from all entities
       let totalAccs = 0;
       for (const entity of userEntities) {
         const { data: accountsData } = await getLocalAccounts(entity.id);
@@ -180,7 +175,6 @@ const DashboardPage: React.FC = () => {
     }
   };
 
-  // Load available periods when switching to "all" mode
   useEffect(() => {
     if (viewMode === 'all' && userEntities.length > 0) {
       loadAvailablePeriods();
@@ -201,7 +195,6 @@ const DashboardPage: React.FC = () => {
       const periods = Array.from(periodsSet).sort();
       setAvailablePeriods(periods);
       
-      // Set default period (latest)
       if (periods.length > 0 && !selectedPeriod) {
         setSelectedPeriod(periods[periods.length - 1]);
       }
@@ -248,7 +241,6 @@ const DashboardPage: React.FC = () => {
   };
 
   const processChartDataForAllEntities = (data: BudgetRealization[]) => {
-    // Group by entity
     const entityMap = new Map<string, { budget: number; realisasi: number }>();
 
     data.forEach(item => {
@@ -264,7 +256,7 @@ const DashboardPage: React.FC = () => {
 
     const chartPoints: ChartDataPoint[] = Array.from(entityMap.entries())
       .map(([entityName, values]) => ({
-        period: entityName, // Using "period" field for entity name in chart
+        period: entityName,
         budget: values.budget,
         realisasi: values.realisasi,
       }))
@@ -336,7 +328,6 @@ const DashboardPage: React.FC = () => {
     });
   };
 
-  // Custom Tooltip for Recharts
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       return (
@@ -355,7 +346,6 @@ const DashboardPage: React.FC = () => {
     return null;
   };
 
-  // Format Y-axis
   const formatYAxis = (value: number) => {
     if (value >= 1000000000) return `${(value / 1000000000).toFixed(1)}M`;
     if (value >= 1000000) return `${(value / 1000000).toFixed(1)}jt`;
@@ -404,297 +394,279 @@ const DashboardPage: React.FC = () => {
         </div>
       )}
 
-      {/* Main Content */}
-      {userEntities.length > 0 && (
-        <>
-          {/* Mode Tabs */}
-          <div className={styles.modeTabs}>
-            <button
-              onClick={() => setViewMode('single')}
-              className={`${styles.modeTab} ${viewMode === 'single' ? styles.modeTabActive : ''}`}
-            >
-              Single Entity
-            </button>
-            <button
-              onClick={() => setViewMode('all')}
-              className={`${styles.modeTab} ${viewMode === 'all' ? styles.modeTabActive : ''}`}
-            >
-              All Entities by Period
-            </button>
-          </div>
+    {/* Main Content */}
+{userEntities.length > 0 && (
+  <>
+    {/* COMPACT FILTERS & TABS - COMBINED IN ONE CARD */}
+    <div className={styles.filtersCard}>
+      {/* Mode Tabs - Compact */}
+      <div className={styles.modeTabsCompact}>
+        <button
+          onClick={() => setViewMode('single')}
+          className={`${styles.modeTab} ${viewMode === 'single' ? styles.modeTabActive : ''}`}
+        >
+          Single Entity
+        </button>
+        <button
+          onClick={() => setViewMode('all')}
+          className={`${styles.modeTab} ${viewMode === 'all' ? styles.modeTabActive : ''}`}
+        >
+          All Entities
+        </button>
+      </div>
 
-          {/* Filters */}
-          <div className={styles.filtersCard}>
-            {viewMode === 'single' ? (
-              <div className={styles.filterGroup}>
-                <label className={styles.filterLabel}>Pilih Entitas:</label>
-                <select
-                  value={selectedEntityId}
-                  onChange={(e) => setSelectedEntityId(e.target.value)}
-                  className={styles.filterSelect}
-                >
-                  {userEntities.map(entity => (
-                    <option key={entity.id} value={entity.id}>
-                      {entity.entity_name}
-                    </option>
-                  ))}
-                </select>
-                <span className={styles.filterHint}>
-                  Menampilkan semua periode dari entitas yang dipilih
-                </span>
-              </div>
+      {/* Filter Dropdown */}
+      {viewMode === 'single' ? (
+        <div className={styles.filterGroup}>
+          <label className={styles.filterLabel}>Pilih Entitas:</label>
+          <select
+            value={selectedEntityId}
+            onChange={(e) => setSelectedEntityId(e.target.value)}
+            className={styles.filterSelect}
+          >
+            {userEntities.map(entity => (
+              <option key={entity.id} value={entity.id}>
+                {entity.entity_name}
+              </option>
+            ))}
+          </select>
+        </div>
+      ) : (
+        <div className={styles.filterGroup}>
+          <label className={styles.filterLabel}>Pilih Periode:</label>
+          <select
+            value={selectedPeriod}
+            onChange={(e) => setSelectedPeriod(e.target.value)}
+            className={styles.filterSelect}
+            disabled={availablePeriods.length === 0}
+          >
+            {availablePeriods.length === 0 ? (
+              <option>Loading...</option>
             ) : (
-              <div className={styles.filterGroup}>
-                <label className={styles.filterLabel}>Pilih Periode:</label>
-                <select
-                  value={selectedPeriod}
-                  onChange={(e) => setSelectedPeriod(e.target.value)}
-                  className={styles.filterSelect}
-                  disabled={availablePeriods.length === 0}
-                >
-                  {availablePeriods.length === 0 ? (
-                    <option>Loading...</option>
-                  ) : (
-                    availablePeriods.map(period => (
-                      <option key={period} value={period}>
-                        {period}
-                      </option>
-                    ))
-                  )}
-                </select>
-                <span className={styles.filterHint}>
-                  Menampilkan semua entitas pada periode yang dipilih
-                </span>
-              </div>
+              availablePeriods.map(period => (
+                <option key={period} value={period}>
+                  {period}
+                </option>
+              ))
             )}
-          </div>
+          </select>
+        </div>
+      )}
 
-          {/* RECHARTS Section */}
-          <div className={styles.chartCard}>
-            <h3 className={styles.chartTitle}>
-              {getChartTitle()}
-            </h3>
+      {/* Hint Text */}
+      <span className={styles.filterHint}>
+        {viewMode === 'single' 
+          ? 'Menampilkan semua periode dari entitas yang dipilih'
+          : 'Menampilkan semua entitas pada periode yang dipilih'
+        }
+      </span>
+    </div>
 
-            {loading ? (
-              <div className={styles.chartLoading}>
-                Memuat data...
-              </div>
-            ) : chartData.length === 0 ? (
-              <div className={styles.chartEmpty}>
-                Belum ada data budget untuk {viewMode === 'single' ? 'entitas' : 'periode'} yang dipilih
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height={400}>
-                <ComposedChart
-                  data={chartData}
-                  margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e9ecef" />
-                  <XAxis 
-                    dataKey="period" 
-                    tick={{ fontSize: 12, fontWeight: 500 }}
-                    stroke="#495057"
-                    label={{ value: getChartXAxisLabel(), position: 'insideBottom', offset: -10 }}
-                  />
-                  <YAxis 
-                    tickFormatter={formatYAxis}
-                    tick={{ fontSize: 11 }}
-                    stroke="#495057"
-                  />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Legend 
-                    wrapperStyle={{ paddingTop: '20px' }}
-                    iconType="circle"
-                  />
-                  <Bar 
-                    dataKey="budget" 
-                    fill="#007bff" 
-                    name="Budget"
-                    radius={[4, 4, 0, 0]}
-                    opacity={0.8}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="realisasi" 
-                    stroke="#28a745" 
-                    strokeWidth={3}
-                    name="Realisasi"
-                    dot={{ fill: '#28a745', strokeWidth: 2, r: 5 }}
-                    activeDot={{ r: 7 }}
-                  />
-                </ComposedChart>
-              </ResponsiveContainer>
-            )}
-          </div>
 
-          {/* Bottom Section */}
-          <div className={styles.bottomGrid}>
-            {/* Over Budget Warnings */}
-            <div className={styles.overBudgetCard}>
-              <h3 className={styles.overBudgetTitle}>
-                Peringatan Over Budget
-              </h3>
+          {/* NEW LAYOUT GRID */}
+          <div className={styles.mainGrid}>
+            {/* LEFT COLUMN (Chart + Over Budget) */}
+            <div className={styles.leftColumn}>
+              {/* CHART CARD */}
+              <div className={styles.chartCard}>
+                <h3 className={styles.chartTitle}>
+                  {getChartTitle()}
+                </h3>
 
-              {loading ? (
-                <div className={styles.overBudgetLoading}>
-                  Memuat...
-                </div>
-              ) : overBudgetItems.length === 0 ? (
-                <div className={styles.overBudgetEmpty}>
-                  <div className={styles.overBudgetEmptyIcon}>✓</div>
-                  <div className={styles.overBudgetEmptyTitle}>Semua Budget On Track!</div>
-                  <div className={styles.overBudgetEmptyText}>
-                    Tidak ada akun yang melebihi budget
+                {loading ? (
+                  <div className={styles.chartLoading}>
+                    Memuat data...
                   </div>
-                </div>
-              ) : (
-                <div className={styles.overBudgetList}>
-                  {overBudgetItems.map((item, index) => (
-                    <div key={index} className={styles.overBudgetItem}>
-                      <div className={styles.overBudgetItemHeader}>
-                        <span className={styles.overBudgetItemCode}>
-                          {item.account_code}
-                        </span>
-                        <span className={styles.overBudgetItemPeriod}>
-                          {item.period}
-                        </span>
-                      </div>
-                      <div className={styles.overBudgetItemName}>
-                        {item.account_name}
-                      </div>
-                      <div className={styles.overBudgetItemAmounts}>
-                        <div>
-                          <div className={styles.overBudgetItemLabel}>Budget:</div>
-                          <div className={styles.overBudgetItemBudget}>
+                ) : chartData.length === 0 ? (
+                  <div className={styles.chartEmpty}>
+                    Belum ada data budget untuk {viewMode === 'single' ? 'entitas' : 'periode'} yang dipilih
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height={350}>
+                    <BarChart
+                      data={chartData}
+                      margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e9ecef" />
+                      <XAxis 
+                        dataKey="period" 
+                        tick={{ fontSize: 11, fontWeight: 500 }}
+                        stroke="#495057"
+                      />
+                      <YAxis 
+                        tickFormatter={formatYAxis}
+                        tick={{ fontSize: 10 }}
+                        stroke="#495057"
+                      />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Legend 
+                        wrapperStyle={{ paddingTop: '15px' }}
+                        iconType="square"
+                      />
+                      <Bar 
+                        dataKey="budget" 
+                        fill="#93C5FD" 
+                        name="Budget"
+                        radius={[4, 4, 0, 0]}
+                      />
+                      <Bar 
+                        dataKey="realisasi" 
+                        fill="#60A5FA" 
+                        name="Realisasi"
+                        radius={[4, 4, 0, 0]}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+
+              {/* OVER BUDGET TABLE-STYLE */}
+              <div className={styles.overBudgetCard}>
+                <h3 className={styles.overBudgetTitle}>
+                  Peringatan Over Budget
+                </h3>
+
+                {loading ? (
+                  <div className={styles.overBudgetLoading}>
+                    Memuat...
+                  </div>
+                ) : overBudgetItems.length === 0 ? (
+                  <div className={styles.overBudgetEmpty}>
+                    <div className={styles.overBudgetEmptyIcon}>✓</div>
+                    <div className={styles.overBudgetEmptyText}>
+                      Semua Budget On Track!
+                    </div>
+                  </div>
+                ) : (
+                  <div className={styles.overBudgetTable}>
+                    {/* Table Header */}
+                    <div className={styles.overBudgetTableHeader}>
+                      <div className={styles.headerCell}>Account</div>
+                      <div className={styles.headerCell}>Period</div>
+                      <div className={styles.headerCell}>Budget</div>
+                      <div className={styles.headerCell}>Realisasi</div>
+                      <div className={styles.headerCell}>Variance</div>
+                    </div>
+
+                    {/* Table Body */}
+                    <div className={styles.overBudgetTableBody}>
+                      {overBudgetItems.map((item, index) => (
+                        <div key={index} className={styles.overBudgetTableRow}>
+                          <div className={styles.accountCell}>
+                            <div className={styles.accountCode}>{item.account_code}</div>
+                            <div className={styles.accountName}>{item.account_name}</div>
+                          </div>
+                          <div className={styles.periodCell}>
+                            {item.period}
+                          </div>
+                          <div className={styles.budgetCell}>
                             Rp{formatCurrency(item.budget)}
                           </div>
-                        </div>
-                        <div>
-                          <div className={styles.overBudgetItemLabel}>Realisasi:</div>
-                          <div className={styles.overBudgetItemRealisasi}>
+                          <div className={styles.realisasiCell}>
                             Rp{formatCurrency(item.realisasi)}
                           </div>
+                          <div className={styles.varianceCell}>
+                            Rp{formatCurrency(Math.abs(item.variance))}
+                          </div>
                         </div>
-                      </div>
-                      <div className={styles.overBudgetItemVariance}>
-                        Over: Rp{formatCurrency(Math.abs(item.variance))}
-                      </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              )}
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* Insights & Statistics */}
-            <div className={styles.insightsCard}>
-              <h3 className={styles.insightsTitle}>
-                Insight & Statistik
-              </h3>
-
-              {loading ? (
-                <div className={styles.insightsLoading}>
-                  Memuat...
+            {/* RIGHT COLUMN (Stats + Insights) */}
+            <div className={styles.rightColumn}>
+              {/* QUICK STATS CARDS */}
+              <div className={styles.quickStatsGrid}>
+                <div className={styles.statCardPrimary}>
+                  <div className={styles.statLabel}>Total Akun COA</div>
+                  <div className={styles.statValue}>{totalAccounts}</div>
                 </div>
-              ) : (
-                <div className={styles.insightsContent}>
-                  {/* Average Utilization */}
-                  <div>
-                    <div className={styles.utilizationHeader}>
-                      <span className={styles.utilizationLabel}>
-                        Rata-rata Utilisasi per Item
-                      </span>
-                      <span className={`${styles.utilizationPercentage} ${
-                        stats.averageUtilization > 100 
-                          ? styles.utilizationPercentageOver 
-                          : styles.utilizationPercentageNormal
-                      }`}>
-                        {stats.averageUtilization.toFixed(1)}%
-                      </span>
-                    </div>
-                    <div className={styles.utilizationBarContainer}>
-                      <div 
-                        className={`${styles.utilizationBar} ${
+
+                <div className={styles.statCardSuccess}>
+                  <div className={styles.statLabel}>On Track</div>
+                  <div className={styles.statValue}>{stats.onTrackCount}</div>
+                </div>
+
+                <div className={styles.statCardDanger}>
+                  <div className={styles.statLabel}>Over Budget</div>
+                  <div className={styles.statValue}>{stats.overBudgetCount}</div>
+                </div>
+
+                <div className={styles.statCardWarning}>
+                  <div className={styles.statLabel}>Under-utilized</div>
+                  <div className={styles.statValue}>{stats.underUtilizedCount}</div>
+                </div>
+              </div>
+
+              {/* INSIGHTS CARD */}
+              <div className={styles.insightsCard}>
+                <h3 className={styles.insightsTitle}>
+                  Insight & Statistik
+                </h3>
+
+                {loading ? (
+                  <div className={styles.insightsLoading}>
+                    Memuat...
+                  </div>
+                ) : (
+                  <div className={styles.insightsContent}>
+                    {/* Average Utilization */}
+                    <div>
+                      <div className={styles.utilizationHeader}>
+                        <span className={styles.utilizationLabel}>
+                          Rata-rata Utilisasi
+                        </span>
+                        <span className={`${styles.utilizationPercentage} ${
                           stats.averageUtilization > 100 
-                            ? styles.utilizationBarOver 
-                            : stats.averageUtilization > 80 
-                            ? styles.utilizationBarWarning 
-                            : styles.utilizationBarNormal
-                        }`}
-                        style={{ width: `${Math.min(stats.averageUtilization, 100)}%` }}
-                      />
-                    </div>
-                    <div className={styles.utilizationHint}>
-                      {realizations.length} budget items dari {viewMode === 'single' ? '1 entitas' : `${userEntities.length} entitas`}
-                    </div>
-                  </div>
-
-                  {/* Unutilized & Over Budget Amounts */}
-                  <div className={styles.amountsGrid}>
-                    <div className={styles.amountBoxUnutilized}>
-                      <div className={styles.amountLabel}>
-                        Unutilized Budget
+                            ? styles.utilizationPercentageOver 
+                            : styles.utilizationPercentageNormal
+                        }`}>
+                          {stats.averageUtilization.toFixed(1)}%
+                        </span>
                       </div>
-                      <div className={styles.amountValue}>
-                        Rp{formatCurrency(stats.totalUnutilized)}
+                      <div className={styles.utilizationBarContainer}>
+                        <div 
+                          className={`${styles.utilizationBar} ${
+                            stats.averageUtilization > 100 
+                              ? styles.utilizationBarOver 
+                              : stats.averageUtilization > 80 
+                              ? styles.utilizationBarWarning 
+                              : styles.utilizationBarNormal
+                          }`}
+                          style={{ width: `${Math.min(stats.averageUtilization, 100)}%` }}
+                        />
                       </div>
-                      <div className={styles.amountSubtext}>
-                        belum terpakai
+                      <div className={styles.utilizationHint}>
+                        {realizations.length} budget items
                       </div>
                     </div>
 
-                    <div className={styles.amountBoxOver}>
-                      <div className={styles.amountLabel}>
-                        Total Over Budget
+                    {/* Unutilized & Over Budget Amounts */}
+                    <div className={styles.amountsGrid}>
+                      <div className={styles.amountBoxUnutilized}>
+                        <div className={styles.amountLabel}>
+                          Unutilized Budget
+                        </div>
+                        <div className={styles.amountValue}>
+                          Rp{formatCurrency(stats.totalUnutilized)}
+                        </div>
                       </div>
-                      <div className={styles.amountValue}>
-                        Rp{formatCurrency(stats.totalOverBudget)}
-                      </div>
-                      <div className={styles.amountSubtext}>
-                        melebihi budget
-                      </div>
-                    </div>
-                  </div>
 
-                  {/* Distribution Cards */}
-                  <div className={styles.statsGrid}>
-                    <div className={styles.statCard}>
-                      <div className={styles.statLabel}>
-                        Total Akun COA
-                      </div>
-                      <div className={styles.statValue}>
-                        {totalAccounts}
-                      </div>
-                    </div>
-
-                    <div className={styles.statCard}>
-                      <div className={styles.statLabel}>
-                        On Track
-                      </div>
-                      <div className={`${styles.statValue} ${styles.statValueSuccess}`}>
-                        {stats.onTrackCount}
-                      </div>
-                    </div>
-
-                    <div className={styles.statCard}>
-                      <div className={styles.statLabel}>
-                        Over Budget
-                      </div>
-                      <div className={`${styles.statValue} ${styles.statValueDanger}`}>
-                        {stats.overBudgetCount}
-                      </div>
-                    </div>
-
-                    <div className={styles.statCard}>
-                      <div className={styles.statLabel}>
-                        Under-utilized
-                      </div>
-                      <div className={`${styles.statValue} ${styles.statValueWarning}`}>
-                        {stats.underUtilizedCount}
+                      <div className={styles.amountBoxOver}>
+                        <div className={styles.amountLabel}>
+                          Total Over Budget
+                        </div>
+                        <div className={styles.amountValue}>
+                          Rp{formatCurrency(stats.totalOverBudget)}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         </>
