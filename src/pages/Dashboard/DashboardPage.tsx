@@ -361,9 +361,6 @@ const DashboardPage: React.FC = () => {
     return `Budget vs Realisasi - Semua Entitas (${selectedPeriod})`;
   };
 
-  const getChartXAxisLabel = () => {
-    return viewMode === 'single' ? 'Periode' : 'Entitas';
-  };
 
   return (
     <div className={styles.container}>
