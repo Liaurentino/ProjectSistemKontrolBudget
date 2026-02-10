@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Eye, EyeOff, Loader2} from 'lucide-react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import styles from './AuthPage.module.css';
 
 type ViewMode = 'login' | 'register' | 'forgot-password';
-
 
 export default function AuthPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('login');
@@ -59,6 +58,47 @@ export default function AuthPage() {
   };
 
   // ========================================
+  // CHECK EMAIL DUPLICATION
+  // ========================================
+
+  const checkEmailExists = async (email: string): Promise<boolean> => {
+  try {
+    console.log('[CheckEmail] Checking email:', email);
+    
+    const { data, error } = await supabase
+      .rpc('is_email_registered', { email_input: email });
+
+    if (error) {
+      console.error('[CheckEmail] RPC Error:', error);
+      throw error;
+    }
+    
+    let result: boolean;
+    
+    if (Array.isArray(data)) {
+      result = data[0] === true || data[0] === 't';
+    } else if (typeof data === 'object' && data !== null) {
+      result = data.value === true || data.value === 't';
+    } else {
+      result = data === true || data === 't';
+    }
+
+    console.log('[CheckEmail] Final result:', result);
+    return result;
+    
+  } catch (err: any) {
+    console.error('[CheckEmail] Error:', err);
+    
+    // Jika function belum dibuat, return false (fallback)
+    if (err.message?.includes('function') || err.message?.includes('does not exist')) {
+      console.warn('[CheckEmail] Function not found, skipping duplicate check');
+      return false;
+    }
+    
+    throw err;
+  }
+};
+  // ========================================
   // GOOGLE OAUTH
   // ========================================
 
@@ -81,65 +121,6 @@ export default function AuthPage() {
       setLoading(false);
     }
   };
-
-  // ========================================
-  // ACCURATE OAUTH - SIMPLIFIED
-  // ========================================
-
-//   const handleAccurateLogin = async () => {
-//   setError('');
-//   setLoading(true);
-  
-//   try {
-//     // Generate & save CSRF state
-//     const state = generateRandomState();
-//     localStorage.setItem('accurate_oauth_state', state);
-//     localStorage.setItem('accurate_oauth_timestamp', Date.now().toString());
-
-//     const accurateClientId = import.meta.env.VITE_ACCURATE_CLIENT_ID;
-    
-//     if (!accurateClientId) {
-//       throw new Error('Accurate Client ID tidak ditemukan di environment variables');
-//     }
-
-//     // ✅ PERBAIKAN 1: Pastikan redirect URI benar
-//     const redirectUri = `${window.location.origin}/oauth/accurate/callback`;
-
-//     // ✅ PERBAIKAN 2: TAMBAHKAN SCOPE! (INI YANG PALING PENTING)
-//     const oauthParams = new URLSearchParams({
-//       client_id: accurateClientId,
-//       response_type: 'code',
-//       redirect_uri: redirectUri,
-//       scope:  'company_data item_view sales_invoice_view glaccount_view customer_view dashboard_view',      // Akses data perusahaan
-//       state: state
-//     });
-
-//     // ✅ PERBAIKAN 3: Hapus spasi di URL
-//     const oauthUrl = `https://account.accurate.id/oauth/authorize?${oauthParams.toString()}`;
-    
-//     console.log('[AccurateOAuth] Redirecting to Accurate OAuth...');
-//     console.log('[AccurateOAuth] Client ID:', accurateClientId.substring(0, 8) + '...');
-//     console.log('[AccurateOAuth] Redirect URI:', redirectUri);
-//     console.log('[AccurateOAuth] Scopes:',
-//       'company_data',      // Akses data perusahaan
-//       'item_view',         // Lihat item/produk
-//       'sales_invoice_view',// Lihat invoice
-//       'glaccount_view',    // Chart of accounts
-//       'customer_view',     // Lihat customer
-//       'dashboard_view'     // D
-//      );
-//     console.log('[AccurateOAuth] State:', state.substring(0, 8) + '...');
-
-//     // Redirect ke halaman login Accurate
-//     window.location.href = oauthUrl;
-    
-//   } catch (err: any) {
-//     console.error('[AccurateOAuth] Error:', err);
-//     setError(err.message || 'Gagal menghubungkan dengan Accurate');
-//     setLoading(false);
-//   }
-// };
-
 
   // ========================================
   // FORGOT PASSWORD
@@ -204,7 +185,11 @@ export default function AuthPage() {
 
     try {
       if (viewMode === 'login') {
+        // ========================================
         // LOGIN
+        // ========================================
+        console.log('[Login] Starting login for:', email);
+        
         const { error } = await supabase.auth.signInWithPassword({ 
           email, 
           password 
@@ -213,14 +198,32 @@ export default function AuthPage() {
         if (error) throw error;
         
         setMessage('Login berhasil! Mengalihkan...');
+        console.log('[Login] Success');
+        
         setTimeout(() => {
           window.location.href = '/mode-selection';
         }, 800);
         
       } else {
+        // ========================================
         // REGISTER
-        console.log('[Register] Starting registration for:', email);
+        // ========================================
+        console.log('[Register] Starting registration process for:', email);
 
+        // ✅ CEK DUPLIKASI EMAIL
+        console.log('[Register] Checking for duplicate email...');
+        const emailExists = await checkEmailExists(email);
+
+        if (emailExists) {
+          console.log('[Register] Email already registered:', email);
+          setError('Email sudah terdaftar. Silakan login atau gunakan email lain.');
+          setLoading(false);
+          return;
+        }
+
+        console.log('[Register] Email available, proceeding with registration');
+
+        // Lanjut register
         const baseUrl = import.meta.env.VITE_REDIRECT_URL || window.location.origin;
         
         const { data, error } = await supabase.auth.signUp({
@@ -234,7 +237,11 @@ export default function AuthPage() {
           },
         });
 
-        console.log('[Register] Response:', { data, error });
+        console.log('[Register] Supabase response:', { 
+          hasUser: !!data.user, 
+          hasSession: !!data.session,
+          error: error?.message 
+        });
 
         if (error) {
           throw error;
@@ -244,9 +251,16 @@ export default function AuthPage() {
         if (data.user && !data.session) {
           setMessage('Registrasi berhasil! Cek email Anda untuk konfirmasi akun.');
           console.log('[Register] Email confirmation required');
+          
+          // Clear form
+          setEmail('');
+          setPassword('');
+          setFullName('');
+          
         } else if (data.session) {
           setMessage('Registrasi berhasil! Mengalihkan...');
           console.log('[Register] Auto-login successful');
+          
           setTimeout(() => {
             window.location.href = '/mode-selection';
           }, 800);
@@ -264,6 +278,8 @@ export default function AuthPage() {
         errorMessage = 'Email atau password salah.';
       } else if (errorMessage.includes('Email rate limit exceeded')) {
         errorMessage = 'Terlalu banyak percobaan. Silakan coba lagi nanti.';
+      } else if (errorMessage.includes('Password should be at least 6 characters')) {
+        errorMessage = 'Password minimal 6 karakter.';
       }
       
       setError(errorMessage);
@@ -325,6 +341,7 @@ export default function AuthPage() {
                 onBlur={() => handleBlur('fullName')}
                 className={`${styles.input} ${errors.fullName ? styles.inputError : ''}`}
                 disabled={loading}
+                placeholder="Masukkan nama lengkap"
               />
               {errors.fullName && (
                 <span className={styles.errorText}>
@@ -351,6 +368,7 @@ export default function AuthPage() {
               onBlur={() => handleBlur('email')}
               className={`${styles.input} ${errors.email ? styles.inputError : ''}`}
               disabled={loading}
+              placeholder="Masukkan email anda"
             />
             {errors.email && (
               <span className={styles.errorText}>
@@ -378,12 +396,14 @@ export default function AuthPage() {
                   onBlur={() => handleBlur('password')}
                   className={`${styles.passwordInput} ${errors.password ? styles.passwordInputError : ''}`}
                   disabled={loading}
+                  placeholder="Masukkan password anda"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className={styles.togglePasswordButton}
                   disabled={loading}
+                  aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -406,8 +426,10 @@ export default function AuthPage() {
                   setError('');
                   setMessage('');
                   setErrors({});
+                  setPassword('');
                 }}
                 className={styles.forgotPasswordButton}
+                disabled={loading}
               >
                 Lupa password?
               </button>
@@ -434,6 +456,7 @@ export default function AuthPage() {
               setError('');
               setMessage('');
               setErrors({});
+              setEmail('');
             }}
             className={styles.backtoLoginButton}
             disabled={loading}
@@ -457,6 +480,7 @@ export default function AuthPage() {
             onClick={handleGoogleLogin}
             disabled={loading}
             className={styles.googleButton}
+            type="button"
           >
             <svg width="18" height="18" viewBox="0 0 18 18">
               <path
@@ -480,21 +504,6 @@ export default function AuthPage() {
           </button>
         )}
 
-        {/* Accurate OAuth Button
-        {!isForgotPassword && (
-          <button
-            onClick={handleAccurateLogin}
-            disabled={loading}
-            className={styles.accurateButton}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#0066CC"/>
-              <path d="M2 17L12 22L22 17V12L12 17L2 12V17Z" fill="#0099FF"/>
-            </svg>
-            {isLogin ? 'Login' : 'Daftar'} dengan Accurate
-          </button>
-        )} */}
-
         {/* Switch (hide on forgot password) */}
         {!isForgotPassword && (
           <div className={styles.switch}>
@@ -505,9 +514,13 @@ export default function AuthPage() {
                 setError('');
                 setMessage('');
                 setErrors({});
+                setEmail('');
+                setPassword('');
+                setFullName('');
               }}
               className={styles.switchButton}
               disabled={loading}
+              type="button"
             >
               {isLogin ? 'Daftar' : 'Login'}
             </button>
