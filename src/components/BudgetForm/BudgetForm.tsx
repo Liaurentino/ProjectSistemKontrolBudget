@@ -6,7 +6,7 @@ import {
   addBudgetItem,
   deleteBudgetItem,
   getAvailableAccountsForBudget,
-  fetchBSAccountsByPeriod,
+  fetchAllAccountsByPeriod, // ✅ CHANGED: was fetchBSAccountsByPeriod
   type Budget,
   type BudgetItem,
 } from '../../lib/accurate';
@@ -34,10 +34,10 @@ type UnifiedAccount = {
   accountName: string;
   accountType: string;
   amount: number;
-  id?: string; // Only for database accounts
-  entity_id?: string; // Only for database accounts
-  accurate_id?: string; // Only for database accounts
-  account_type_name?: string; // Only for database accounts
+  id?: string;
+  entity_id?: string;
+  accurate_id?: string;
+  account_type_name?: string;
 };
 
 export const BudgetForm: React.FC<BudgetFormProps> = ({
@@ -61,8 +61,8 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
 
   // New item state
   const [selectedAccountNo, setSelectedAccountNo] = useState('');
-  const [itemAmount, setItemAmount] = useState<number | ''>(''); // Budget (manual input)
-  const [realisasiSnapshot, setRealisasiSnapshot] = useState<number>(0); // Realisasi (auto-fill)
+  const [itemAmount, setItemAmount] = useState<number | ''>('');
+  const [realisasiSnapshot, setRealisasiSnapshot] = useState<number>(0);
   const [itemDescription, setItemDescription] = useState('');
   const [showAddItem, setShowAddItem] = useState(false);
 
@@ -107,7 +107,6 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
         setError('Gagal memuat akun dari database');
         setAvailableAccounts([]);
       } else {
-        // Convert to unified format
         const unified: UnifiedAccount[] = (data || []).map(acc => ({
           accountNo: acc.account_code,
           accountName: acc.account_name,
@@ -137,18 +136,20 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
     setError(null);
 
     try {
-      console.log('[DEBUG] Fetching BS accounts from API...');
+      console.log('[DEBUG] Fetching ALL accounts from API (BS + PL)...');
       console.log('[DEBUG] Token:', activeEntity.api_token ? 'EXISTS' : 'MISSING');
       console.log('[DEBUG] Period:', period);
-      
-      const result = await fetchBSAccountsByPeriod(
+
+      // ✅ CHANGED: fetchBSAccountsByPeriod → fetchAllAccountsByPeriod
+      // fetchAllAccountsByPeriod memanggil BS + PL secara paralel lalu merge
+      const result = await fetchAllAccountsByPeriod(
         activeEntity.api_token,
         period
       );
 
       console.log('[DEBUG] Result:', result);
 
-      if (result.error) {
+      if (result.error && !result.accounts?.length) {
         console.error('[DEBUG] Error:', result.error);
         setError(result.error);
         setAvailableAccounts([]);
@@ -158,7 +159,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
         const available = (result.accounts || []).filter(
           acc => !usedAccountNos.has(acc.accountNo)
         );
-        
+
         // Convert to unified format
         const unified: UnifiedAccount[] = available.map(acc => ({
           accountNo: acc.accountNo,
@@ -166,8 +167,8 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
           accountType: acc.accountType,
           amount: acc.amount,
         }));
-        
-        console.log('[DEBUG] Total accounts from API:', result.accounts?.length || 0);
+
+        console.log('[DEBUG] Total accounts from API (BS+PL):', result.accounts?.length || 0);
         console.log('[DEBUG] Used accounts:', usedAccountNos.size);
         console.log('[DEBUG] Available accounts:', unified.length);
         setAvailableAccounts(unified);
@@ -202,8 +203,8 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
     }
     const account = availableAccounts.find(a => a.accountNo === accountNo);
     if (account) {
-      setItemAmount(''); // Budget kosong (user input manual dari 0)
-      setRealisasiSnapshot(account.amount || 0); // Realisasi = amount dari source
+      setItemAmount('');
+      setRealisasiSnapshot(account.amount || 0);
     }
   };
 
@@ -308,8 +309,8 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
       account_code: selectedAccount.accountNo,
       account_name: selectedAccount.accountName,
       account_type: selectedAccount.accountType,
-      allocated_amount: Number(itemAmount), // Budget (manual input)
-      realisasi_snapshot: realisasiSnapshot, // Realisasi (from source)
+      allocated_amount: Number(itemAmount),
+      realisasi_snapshot: realisasiSnapshot,
       description: itemDescription.trim(),
     };
 
@@ -458,49 +459,47 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
             </div>
           </div>
 
-          {/* Account Source Selection */}
-       {/* Account Source Selection - SWITCH TOGGLE */}
-       {/* Account Source Selection - SWITCH TOGGLE */}
-<div className={styles.sourceContainer}>
-  <div className={styles.sourceLeft}>
-    <label className={styles.sourceLabel}>
-      Sumber Data Akun <span className={styles.required}>*</span>
-    </label>
-    <div className={styles.sourceDescription}>
-      {accountSource === 'database' 
-        ? 'Akun dari List COA Excel Atau Manual Input'
-        : 'Akun dari API Accurate (Note : Jika sudah input akun tapi periodenya diubah maka akun yang terpilih tidak akan berubah)'}
-    </div>
-    {!activeEntity?.api_token && accountSource === 'api' && (
-      <div className={styles.sourceWarning}>
-        Token API tidak tersedia 
-      </div>
-    )}
-    {loadingAccounts && (
-      <div className={styles.sourceLoadingText}>
-        Memuat daftar akun...
-      </div>
-    )}
-  </div>
+          {/* Account Source Selection - SWITCH TOGGLE */}
+          <div className={styles.sourceContainer}>
+            <div className={styles.sourceLeft}>
+              <label className={styles.sourceLabel}>
+                Sumber Data Akun <span className={styles.required}>*</span>
+              </label>
+              <div className={styles.sourceDescription}>
+                {accountSource === 'database'
+                  ? 'Akun dari List COA Excel Atau Manual Input'
+                  : 'Akun dari API Accurate — BS (Neraca) + PL (Beban & Pendapatan) (Note: Jika sudah input akun tapi periodenya diubah maka akun yang terpilih tidak akan berubah)'}
+              </div>
+              {!activeEntity?.api_token && accountSource === 'api' && (
+                <div className={styles.sourceWarning}>
+                  Token API tidak tersedia
+                </div>
+              )}
+              {loadingAccounts && (
+                <div className={styles.sourceLoadingText}>
+                  Memuat daftar akun...
+                </div>
+              )}
+            </div>
 
-  <div className={styles.switchContainer}>
-    <span className={`${styles.switchLabel} ${accountSource === 'database' ? styles.switchLabelActive : ''}`}>
-      Manual
-    </span>
-    <label className={styles.switch}>
-      <input
-        type="checkbox"
-        checked={accountSource === 'api'}
-        onChange={(e) => setAccountSource(e.target.checked ? 'api' : 'database')}
-        disabled={loading || !activeEntity?.api_token}
-      />
-      <span className={styles.slider}></span>
-    </label>
-    <span className={`${styles.switchLabel} ${accountSource === 'api' ? styles.switchLabelActive : ''}`}>
-      Accurate
-    </span>
-  </div>
-</div>
+            <div className={styles.switchContainer}>
+              <span className={`${styles.switchLabel} ${accountSource === 'database' ? styles.switchLabelActive : ''}`}>
+                Manual
+              </span>
+              <label className={styles.switch}>
+                <input
+                  type="checkbox"
+                  checked={accountSource === 'api'}
+                  onChange={(e) => setAccountSource(e.target.checked ? 'api' : 'database')}
+                  disabled={loading || !activeEntity?.api_token}
+                />
+                <span className={styles.slider}></span>
+              </label>
+              <span className={`${styles.switchLabel} ${accountSource === 'api' ? styles.switchLabelActive : ''}`}>
+                Accurate
+              </span>
+            </div>
+          </div>
         </div>
 
         {/* Section: Alokasi Budget */}
@@ -520,11 +519,11 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
           </div>
 
           {accountSource === 'api' && !period && (
-  <div className={styles.periodWarning}>
-    <span className={styles.periodWarningText}>
-      Pilih periode terlebih dahulu untuk mengambil akun dari API Accurate
-    </span>
-  </div>
+            <div className={styles.periodWarning}>
+              <span className={styles.periodWarningText}>
+                Pilih periode terlebih dahulu untuk mengambil akun dari API Accurate
+              </span>
+            </div>
           )}
 
           {/* Add Item Form */}
@@ -599,7 +598,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
                     <>
                       {/* Show realisasi snapshot */}
                       <div className={styles.showRealisasi}>
-                        <div style={{ fontSize: '14px', color: '#0369a1', marginBottom: '4px'}}>
+                        <div style={{ fontSize: '14px', color: '#0369a1', marginBottom: '4px' }}>
                           Realisasi ({accountSource === 'database' ? 'Balance COA saat ini' : 'Saldo akun per periode'}):
                         </div>
                         <div style={{ fontSize: '18px', fontWeight: '600', color: '#0c4a6e' }}>
@@ -771,13 +770,13 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
               >
                 Rp {formatCurrency(totalBudget)}
               </div>
-              
+
               {totalRealisasi > 0 && (
                 <div className={styles.totalHint} style={{ marginTop: '8px' }}>
                   <span>Total Realisasi: Rp {formatCurrency(totalRealisasi)}</span>
                 </div>
               )}
-              
+
               <div className={styles.totalHint}>
                 <span>Dihitung otomatis dari {budgetItems.length} akun yang dialokasikan</span>
               </div>

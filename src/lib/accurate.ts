@@ -76,6 +76,26 @@ export interface FetchBSAccountsResult {
   error?: string;
 }
 
+
+export interface FetchPLAccountsResult {
+  success: boolean;
+  accounts?: BSAccount[]; // format sama persis dengan BS
+  total?: number;
+  period?: string;
+  fromDate?: string;
+  toDate?: string;
+  error?: string;
+}
+
+export interface FetchAllAccountsResult {
+  success: boolean;
+  accounts?: BSAccount[];
+  total?: number;
+  period?: string;
+  error?: string;
+}
+
+
 export type { AccurateValidationResult, AccurateDatabase };
 
 // ============================================
@@ -1187,6 +1207,119 @@ export async function fetchBSAccountsByPeriod(
   }
 }
 
+
+export async function fetchPLAccountsByPeriod(
+  apiToken: string,
+  period: string
+): Promise<FetchPLAccountsResult> {
+  try {
+    console.log('[fetchPLAccountsByPeriod] Starting for period:', period);
+
+    if (!apiToken) {
+      return { success: false, error: 'API Token tidak ditemukan' };
+    }
+
+    const secretKey = HMAC_SECRET_KEY;
+    if (!secretKey) {
+      return { success: false, error: 'Secret key tidak dikonfigurasi' };
+    }
+
+    const periodRegex = /^\d{4}-\d{2}$/;
+    if (!periodRegex.test(period)) {
+      return {
+        success: false,
+        error: 'Format periode tidak valid. Gunakan format YYYY-MM (contoh: 2025-09)',
+      };
+    }
+
+    console.log('[fetchPLAccountsByPeriod] Calling Edge Function...');
+
+    const { data, error } = await supabase.functions.invoke('accurate-fetch-pl-accounts', {
+      body: { apiToken, secretKey, period },
+    });
+
+    if (error) {
+      console.error('[fetchPLAccountsByPeriod] Edge error:', error);
+      return { success: false, error: data?.error || error.message };
+    }
+
+    if (!data || !data.success) {
+      return { success: false, error: data?.error || 'Fetch PL failed' };
+    }
+
+    console.log(`[fetchPLAccountsByPeriod] Fetched ${data.total} PL accounts for period ${period}`);
+    console.log(`[fetchPLAccountsByPeriod] Date range: ${data.fromDate} → ${data.toDate}`);
+
+    return {
+      success: true,
+      accounts: data.accounts,
+      total: data.total,
+      period: data.period,
+      fromDate: data.fromDate,
+      toDate: data.toDate,
+    };
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[fetchPLAccountsByPeriod] Error:', error);
+    return { success: false, error: errorMsg };
+  }
+}
+
+/**
+ * Fetch SEMUA akun (BS + PL) sekaligus untuk satu periode
+ * Memanggil dua edge function paralel lalu merge hasilnya
+ * Inilah fungsi yang dipakai BudgetForm — frontend tidak perlu tahu bedanya BS/PL
+ */
+export async function fetchAllAccountsByPeriod(
+  apiToken: string,
+  period: string
+): Promise<FetchAllAccountsResult> {
+  try {
+    console.log('[fetchAllAccountsByPeriod] Starting for period:', period);
+
+    // Panggil BS dan PL secara paralel
+    const [bsResult, plResult] = await Promise.all([
+      fetchBSAccountsByPeriod(apiToken, period),
+      fetchPLAccountsByPeriod(apiToken, period),
+    ]);
+
+    // Kumpulkan error jika ada
+    const errors: string[] = [];
+    if (!bsResult.success) errors.push(`BS: ${bsResult.error}`);
+    if (!plResult.success) errors.push(`PL: ${plResult.error}`);
+
+    // Kalau dua-duanya gagal, return error
+    if (!bsResult.success && !plResult.success) {
+      return {
+        success: false,
+        error: errors.join(' | '),
+      };
+    }
+
+    // Merge accounts dari kedua sumber
+    const bsAccounts = bsResult.accounts || [];
+    const plAccounts = plResult.accounts || [];
+    const merged = [...bsAccounts, ...plAccounts];
+
+    console.log(`[fetchAllAccountsByPeriod] BS: ${bsAccounts.length} | PL: ${plAccounts.length} | Total: ${merged.length}`);
+
+    // Kalau salah satu gagal, tetap return data yang berhasil + warning di console
+    if (errors.length > 0) {
+      console.warn('[fetchAllAccountsByPeriod] Partial error:', errors.join(' | '));
+    }
+
+    return {
+      success: true,
+      accounts: merged,
+      total: merged.length,
+      period,
+    };
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[fetchAllAccountsByPeriod] Error:', error);
+    return { success: false, error: errorMsg };
+  }
+}
 // ============================================
 // TYPE DEFINITIONS
 // ============================================
