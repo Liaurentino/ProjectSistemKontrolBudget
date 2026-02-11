@@ -361,7 +361,7 @@ export default function AuthPage() {
               onBlur={() => handleBlur('email')}
               className={`${styles.input} ${errors.email ? styles.inputError : ''}`}
               disabled={loading}
-              placeholder="Masukkan email anda"
+              placeholder="Masukkan email Accurate anda"
             />
             {errors.email && (
               <span className={styles.errorText}>
