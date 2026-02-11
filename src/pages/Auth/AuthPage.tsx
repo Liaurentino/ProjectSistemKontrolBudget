@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { AuthGuide } from '../../components/AuthGuide/AuthGuide';
 import styles from './AuthPage.module.css';
 
 type ViewMode = 'login' | 'register' | 'forgot-password';
@@ -62,42 +63,42 @@ export default function AuthPage() {
   // ========================================
 
   const checkEmailExists = async (email: string): Promise<boolean> => {
-  try {
-    console.log('[CheckEmail] Checking email:', email);
-    
-    const { data, error } = await supabase
-      .rpc('is_email_registered', { email_input: email });
+    try {
+      console.log('[CheckEmail] Checking email:', email);
+      
+      const { data, error } = await supabase
+        .rpc('is_email_registered', { email_input: email });
 
-    if (error) {
-      console.error('[CheckEmail] RPC Error:', error);
-      throw error;
-    }
-    
-    let result: boolean;
-    
-    if (Array.isArray(data)) {
-      result = data[0] === true || data[0] === 't';
-    } else if (typeof data === 'object' && data !== null) {
-      result = data.value === true || data.value === 't';
-    } else {
-      result = data === true || data === 't';
-    }
+      if (error) {
+        console.error('[CheckEmail] RPC Error:', error);
+        throw error;
+      }
+      
+      let result: boolean;
+      
+      if (Array.isArray(data)) {
+        result = data[0] === true || data[0] === 't';
+      } else if (typeof data === 'object' && data !== null) {
+        result = data.value === true || data.value === 't';
+      } else {
+        result = data === true || data === 't';
+      }
 
-    console.log('[CheckEmail] Final result:', result);
-    return result;
-    
-  } catch (err: any) {
-    console.error('[CheckEmail] Error:', err);
-    
-    // Jika function belum dibuat, return false (fallback)
-    if (err.message?.includes('function') || err.message?.includes('does not exist')) {
-      console.warn('[CheckEmail] Function not found, skipping duplicate check');
-      return false;
+      console.log('[CheckEmail] Final result:', result);
+      return result;
+      
+    } catch (err: any) {
+      console.error('[CheckEmail] Error:', err);
+      
+      if (err.message?.includes('function') || err.message?.includes('does not exist')) {
+        console.warn('[CheckEmail] Function not found, skipping duplicate check');
+        return false;
+      }
+      
+      throw err;
     }
-    
-    throw err;
-  }
-};
+  };
+
   // ========================================
   // GOOGLE OAUTH
   // ========================================
@@ -166,7 +167,6 @@ export default function AuthPage() {
     setError('');
     setMessage('');
     
-    // Validasi semua field
     const newErrors: any = {};
     newErrors.email = validateEmail(email);
     newErrors.password = validatePassword(password);
@@ -185,9 +185,6 @@ export default function AuthPage() {
 
     try {
       if (viewMode === 'login') {
-        // ========================================
-        // LOGIN
-        // ========================================
         console.log('[Login] Starting login for:', email);
         
         const { error } = await supabase.auth.signInWithPassword({ 
@@ -205,12 +202,8 @@ export default function AuthPage() {
         }, 800);
         
       } else {
-        // ========================================
-        // REGISTER
-        // ========================================
         console.log('[Register] Starting registration process for:', email);
 
-        // ✅ CEK DUPLIKASI EMAIL
         console.log('[Register] Checking for duplicate email...');
         const emailExists = await checkEmailExists(email);
 
@@ -223,7 +216,6 @@ export default function AuthPage() {
 
         console.log('[Register] Email available, proceeding with registration');
 
-        // Lanjut register
         const baseUrl = import.meta.env.VITE_REDIRECT_URL || window.location.origin;
         
         const { data, error } = await supabase.auth.signUp({
@@ -243,16 +235,12 @@ export default function AuthPage() {
           error: error?.message 
         });
 
-        if (error) {
-          throw error;
-        }
+        if (error) throw error;
 
-        // Check if email confirmation is required
         if (data.user && !data.session) {
           setMessage('Registrasi berhasil! Cek email Anda untuk konfirmasi akun.');
           console.log('[Register] Email confirmation required');
           
-          // Clear form
           setEmail('');
           setPassword('');
           setFullName('');
@@ -271,7 +259,6 @@ export default function AuthPage() {
       
       let errorMessage = err.message || 'Terjadi kesalahan';
       
-      // Handle specific errors
       if (errorMessage.includes('User already registered')) {
         errorMessage = 'Email sudah terdaftar. Silakan login.';
       } else if (errorMessage.includes('Invalid login credentials')) {
@@ -298,6 +285,12 @@ export default function AuthPage() {
   return (
     <div className={styles.container}>
       <div className={styles.card}>
+
+        {/* ✅ ADDED: Panduan button — pojok kanan atas card */}
+        <div className={styles.guideButtonWrapper}>
+          <AuthGuide />
+        </div>
+
         {/* Header */}
         <div className={styles.header}>
           <h2 className={styles.title}>
@@ -416,7 +409,7 @@ export default function AuthPage() {
             </div>
           )}
 
-          {/* Forgot Password Link (only on login) */}
+          {/* Forgot Password Link */}
           {isLogin && (
             <div className={styles.forgotPasswordWrapper}>
               <button
@@ -448,7 +441,7 @@ export default function AuthPage() {
           </button>
         </form>
 
-        {/* Back Button (for forgot password) */}
+        {/* Back Button */}
         {isForgotPassword && (
           <button
             onClick={() => {
@@ -465,7 +458,7 @@ export default function AuthPage() {
           </button>
         )}
 
-        {/* Divider (hide on forgot password) */}
+        {/* Divider */}
         {!isForgotPassword && (
           <div className={styles.divider}>
             <div className={styles.dividerLine} />
@@ -474,7 +467,7 @@ export default function AuthPage() {
           </div>
         )}
 
-        {/* Google Login Button (hide on forgot password) */}
+        {/* Google Login Button */}
         {!isForgotPassword && (
           <button
             onClick={handleGoogleLogin}
@@ -504,7 +497,7 @@ export default function AuthPage() {
           </button>
         )}
 
-        {/* Switch (hide on forgot password) */}
+        {/* Switch */}
         {!isForgotPassword && (
           <div className={styles.switch}>
             {isLogin ? 'Belum punya akun? ' : 'Sudah punya akun? '}
