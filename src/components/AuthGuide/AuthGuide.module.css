@@ -259,6 +259,29 @@
   font-weight: 600;
 }
 
+/* ===== ACCURATE REQUIREMENT BOX ===== */
+.accurateBox {
+  margin-bottom: 20px;
+  padding: 12px 14px;
+  background-color: #fff3e0;
+  border: 1px solid #ffcc80;
+  border-left: 3px solid #ff9800;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #7c4010;
+  line-height: 1.65;
+}
+
+.accurateLink {
+  color: #0056b3;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.accurateLink:hover {
+  color: #003d80;
+}
+
 /* ===== INFO & WARNING BOXES ===== */
 .infoBox {
   margin-top: 20px;

@@ -70,7 +70,7 @@ export const AuthGuide: React.FC = () => {
         type="button"
         onClick={() => setShowModal(true)}
         className={styles.triggerButton}
-        title="Panduan Login dan Daftar Akun "
+        title="Panduan penggunaan"
       >
         <span className={styles.triggerIcon}>?</span>
         <span className={styles.triggerText}>Panduan</span>
@@ -83,7 +83,7 @@ export const AuthGuide: React.FC = () => {
             {/* Header */}
             <div className={styles.modalHeader}>
               <div>
-                <h2 className={styles.modalTitle}>Panduan Login dan Daftar Akun</h2>
+                <h2 className={styles.modalTitle}>Panduan Penggunaan</h2>
                 <p className={styles.modalSubtitle}>Sistem Manajemen Budget & Realisasi</p>
               </div>
               <button
@@ -178,7 +178,10 @@ export const AuthGuide: React.FC = () => {
                     <div className={`${styles.stepNumber} ${styles.blue}`}>3</div>
                     <div className={styles.stepContent}>
                       <h4>Isi Email & Password</h4>
-                      <p>Gunakan alamat email aktif yang belum terdaftar. Password minimal <strong>6 karakter</strong>.</p>
+                      <p>
+                        Gunakan email yang <strong>sama persis</strong> dengan email akun Accurate Online Anda.
+                        Password minimal <strong>6 karakter</strong> dan bebas ditentukan sendiri.
+                      </p>
                     </div>
                   </div>
 
@@ -190,8 +193,17 @@ export const AuthGuide: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className={styles.warningBox}>
-                    <strong>Penting:</strong> Pastikan email yang digunakan aktif dan dapat menerima email konfirmasi. Cek juga folder <strong>Spam</strong> jika email tidak masuk ke inbox.
+                  <div className={styles.accurateBox}>
+                    <strong>Penting:</strong> Email yang didaftarkan harus <strong>sama persis</strong> dengan email akun Accurate Online Anda.
+                    Belum punya akun Accurate?{' '}
+                    <a
+                      href="https://account.accurate.id/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={styles.accurateLink}
+                    >
+                      Daftar di sini
+                    </a>
                   </div>
                 </div>
               )}
@@ -215,8 +227,11 @@ export const AuthGuide: React.FC = () => {
                   <div className={styles.step}>
                     <div className={`${styles.stepNumber} ${styles.blue}`}>2</div>
                     <div className={styles.stepContent}>
-                      <h4>Pilih Akun Google</h4>
-                      <p>Browser akan membuka popup Google. Pilih atau masukkan akun Google yang ingin digunakan.</p>
+                      <h4>Pilih Akun Google yang Terdaftar di Accurate</h4>
+                      <p>
+                        Browser akan membuka popup Google. Pilih akun Google yang emailnya <strong>sama</strong> dengan
+                        akun Accurate Online Anda.
+                      </p>
                     </div>
                   </div>
 
@@ -228,8 +243,18 @@ export const AuthGuide: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className={styles.infoBox}>
-                    <strong>Tips:</strong> Login dengan Google lebih cepat dan tidak memerlukan password tambahan. Pastikan popup tidak diblokir browser Anda.
+                  <div className={styles.accurateBox}>
+                    <strong>Penting:</strong> Akun Google yang digunakan harus terhubung dengan email yang sama di Accurate Online.
+                    Pastikan email Google Anda sudah terdaftar di{' '}
+                    <a
+                      href="https://account.accurate.id/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={styles.accurateLink}
+                    >
+                      Accurate Online
+                    </a>
+                    {' '}sebelum melanjutkan.
                   </div>
                 </div>
               )}
@@ -270,7 +295,7 @@ export const AuthGuide: React.FC = () => {
                     <div className={`${styles.stepNumber} ${styles.green}`}>4</div>
                     <div className={styles.stepContent}>
                       <h4>Buat Password Baru</h4>
-                      <p>Masukkan password baru Anda, lalu simpan. Setelah itu Anda bisa login dengan password baru.</p>
+                      <p>Masukkan password baru Anda (minimal 6 karakter), lalu simpan. Setelah itu Anda bisa login dengan password baru.</p>
                     </div>
                   </div>
 
