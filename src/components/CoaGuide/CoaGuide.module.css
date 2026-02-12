@@ -1,0 +1,422 @@
+/* CoaGuide.module.css - NO GRADIENT, NO EMOJI */
+
+/* ===== TRIGGER BUTTON ===== */
+.triggerButton {
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 0.875rem;
+  padding: 0;
+  margin-top: 0.5rem;
+  transition: var(--transition);
+}
+
+.triggerButton:hover {
+  color: #4f46e5;
+}
+
+/* ===== MODAL OVERLAY ===== */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 1rem;
+  animation: fadeIn 0.2s ease-out;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+.modalContent {
+  background-color: #ffffff;
+  border-radius: var(--radius);
+  max-width: 800px;
+  width: 100%;
+  max-height: 90vh;
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  animation: slideUp 0.3s ease-out;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== MODAL HEADER ===== */
+.modalHeader {
+  padding: 1.5rem;
+  border-bottom: 2px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--primary-color); /* SOLID COLOR - NO GRADIENT */
+  border-top-left-radius: var(--radius);
+  border-top-right-radius: var(--radius);
+  flex-shrink: 0;
+}
+
+.modalTitle {
+  margin: 0;
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  font-size: 1.8rem;
+  cursor: pointer;
+  color: #fff;
+  line-height: 1;
+  padding: 0.25rem;
+  transition: var(--transition);
+  border-radius: calc(var(--radius) - 6px);
+}
+
+.closeButton:hover {
+  color: #fbbf24;
+  transform: scale(1.1);
+}
+
+/* ===== TABS ===== */
+.tabsContainer {
+  display: flex;
+  border-bottom: 2px solid var(--border-color);
+  background-color: var(--background);
+  flex-shrink: 0;
+}
+
+.tabButton {
+  flex: 1;
+  padding: 1rem 1.5rem;
+  background-color: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  font-size: 0.938rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  transition: var(--transition);
+}
+
+.tabButton:hover {
+  background-color: #f3f4f6;
+  color: var(--text-primary);
+}
+
+.tabButtonActive {
+  color: var(--primary-color);
+  border-bottom-color: var(--primary-color);
+  background-color: #fff;
+}
+
+/* ===== MODAL BODY ===== */
+.modalBody {
+  padding: 2rem;
+  overflow-y: auto;
+  flex: 1;
+  color: var(--text-primary);
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary-color) var(--background);
+}
+
+.modalBody::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modalBody::-webkit-scrollbar-track {
+  background: var(--background);
+  border-radius: calc(var(--radius) - 6px);
+}
+
+.modalBody::-webkit-scrollbar-thumb {
+  background-color: var(--primary-color); /* SOLID COLOR - NO GRADIENT */
+  border-radius: calc(var(--radius) - 6px);
+}
+
+.modalBody::-webkit-scrollbar-thumb:hover {
+  background-color: #4f46e5; /* SOLID COLOR - NO GRADIENT */
+}
+
+/* ===== TAB CONTENT ===== */
+.tabContent {
+  animation: fadeInContent 0.3s ease-out;
+}
+
+.contentTitle {
+  color: var(--text-primary);
+  margin-bottom: 1.5rem;
+  font-size: 1.3rem;
+  font-weight: 600;
+  border-bottom: 3px solid var(--primary-color);
+  padding-bottom: 0.5rem;
+  display: inline-block;
+}
+
+/* ===== STEPS ===== */
+.stepsContainer {
+  margin-bottom: 1.5rem;
+}
+
+.step {
+  margin-bottom: 1.5rem;
+  display: flex;
+  gap: 1rem;
+  animation: slideIn 0.4s ease-out;
+}
+
+.stepNumber {
+  min-width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+  color: #fff;
+  box-shadow: var(--shadow-md);
+  transition: var(--transition);
+}
+
+.step:hover .stepNumber {
+  transform: scale(1.05);
+}
+
+/* Step Number Colors - SOLID COLORS ONLY */
+.stepNumberBlue {
+  background-color: #6366f1; /* SOLID - NO GRADIENT */
+}
+
+.stepNumberOrange {
+  background-color: #f59e0b; /* SOLID - NO GRADIENT */
+}
+
+.stepNumberGreen {
+  background-color: #10b981; /* SOLID - NO GRADIENT */
+}
+
+.stepNumberRed {
+  background-color: #ef4444; /* SOLID - NO GRADIENT */
+  animation: pulseRed 2s ease-in-out infinite;
+}
+
+.stepContent h4 {
+  margin: 0 0 0.5rem 0;
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.stepContent p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+/* ===== EXAMPLE BOXES (FOR EXCEL TAB) ===== */
+.exampleBox {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.exampleWrong {
+  padding: 0.875rem;
+  background-color: #fee2e2; /* SOLID - NO GRADIENT */
+  border: 2px solid #ef4444;
+  border-left: 4px solid #dc2626;
+  border-radius: calc(var(--radius) - 4px);
+  font-size: 0.875rem;
+  color: #991b1b;
+  line-height: 1.5;
+}
+
+.exampleCorrect {
+  padding: 0.875rem;
+  background-color: #d1fae5; /* SOLID - NO GRADIENT */
+  border: 2px solid #10b981;
+  border-left: 4px solid #059669;
+  border-radius: calc(var(--radius) - 4px);
+  font-size: 0.875rem;
+  color: #065f46;
+  line-height: 1.5;
+}
+
+/* ===== WARNING BOX ===== */
+.warningBox {
+  margin-top: 2rem;
+  padding: 1.25rem;
+  background-color: #fef3c7; /* SOLID - NO GRADIENT */
+  border: 2px solid #f59e0b;
+  border-left: 4px solid #d97706;
+  border-radius: calc(var(--radius) - 4px);
+  box-shadow: var(--shadow-sm);
+}
+
+.warningTitle {
+  color: #92400e;
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.warningText {
+  margin: 0;
+  color: #92400e;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+/* ===== FOOTER BUTTON ===== */
+.footerButton {
+  background-color: var(--primary-color); /* SOLID - NO GRADIENT */
+  color: #fff;
+  border: none;
+  padding: 0.75rem 2rem;
+  border-radius: calc(var(--radius) - 6px);
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: var(--transition);
+  box-shadow: var(--shadow-md);
+  margin-top: 1.5rem;
+  margin-left: auto;
+  display: block;
+}
+
+.footerButton:hover {
+  background-color: #4f46e5; /* SOLID - NO GRADIENT */
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeIn {
+  from { 
+    opacity: 0; 
+  }
+  to { 
+    opacity: 1; 
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeInContent {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pulseRed {
+  0%, 100% {
+    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
+  }
+  50% {
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.5);
+  }
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .modalContent {
+    max-width: 100%;
+  }
+
+  .modalHeader {
+    padding: 1.25rem;
+  }
+
+  .modalTitle {
+    font-size: 1.25rem;
+  }
+
+  .tabButton {
+    padding: 0.875rem 1rem;
+    font-size: 0.875rem;
+  }
+
+  .modalBody {
+    padding: 1.5rem;
+  }
+
+  .step {
+    gap: 0.75rem;
+  }
+
+  .stepNumber {
+    min-width: 40px;
+    height: 40px;
+    font-size: 1.1rem;
+  }
+
+  .stepContent h4 {
+    font-size: 1rem;
+  }
+
+  .stepContent p {
+    font-size: 0.875rem;
+  }
+
+  .footerButton {
+    width: 100%;
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .modalContent {
+    max-height: 100vh;
+    border-radius: 0;
+  }
+
+  .modalHeader {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+  }
+
+  .exampleBox {
+    gap: 0.5rem;
+  }
+
+  .exampleWrong,
+  .exampleCorrect {
+    padding: 0.75rem;
+    font-size: 0.813rem;
+  }
+}

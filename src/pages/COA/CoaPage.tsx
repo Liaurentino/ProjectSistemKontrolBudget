@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useCoaForm } from '../../components/CoaForm';
 import { ImportExcel } from '../../components/Export&Import/ImportExcel';
 import styles from './CoaPage.module.css';
+import { CoaGuide } from '../../components/CoaGuide/CoaGuide';
 
 const CoaPage: React.FC = () => {
   const {
@@ -91,10 +92,15 @@ const CoaPage: React.FC = () => {
       {/* Header */}
       <div className={styles.header}>
         <div className={styles.headerContent}>
-          <h1 className={styles.headerTitle}>Chart of Accounts</h1>
-          <p className={styles.headerSubtitle}>
-            Kelola Chart of Accounts dari Accurate Online atau Import dari Excel
-          </p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div>
+              <h1 className={styles.headerTitle}>Chart of Accounts</h1>
+              <p className={styles.headerSubtitle}>
+                Kelola Chart of Accounts dari Accurate Online atau Import dari Excel
+              </p>
+            </div>
+            <CoaGuide />
+          </div>
         </div>
       </div>
 
