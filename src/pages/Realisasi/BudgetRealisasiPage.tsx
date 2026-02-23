@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useEntity } from '../../contexts/EntityContext';
 import {
   getBudgetRealizationsLive,
@@ -37,6 +38,7 @@ interface GroupedBudgetRealization {
 
 const BudgetRealizationPage: React.FC = () => {
   const { activeEntity } = useEntity();
+  const [searchParams] = useSearchParams();
 
   // State
   const [_realizations, setRealizations] = useState<BudgetRealization[]>([]);
@@ -49,7 +51,10 @@ const BudgetRealizationPage: React.FC = () => {
   const [selectedGroup, setSelectedGroup] = useState<GroupedBudgetRealization | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
 
-  // Filters - CHANGED: Period is now required, no default 'all'
+  // Track if auto-open from dashboard has been triggered
+  const [autoOpenTriggered, setAutoOpenTriggered] = useState(false);
+
+  // Filters
   const [selectedPeriod, setSelectedPeriod] = useState<string>('');
   const [selectedAccountType, setSelectedAccountType] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -58,8 +63,13 @@ const BudgetRealizationPage: React.FC = () => {
   const [availablePeriods, setAvailablePeriods] = useState<string[]>([]);
   const [availableTypes, setAvailableTypes] = useState<string[]>([]);
 
-  // NEW: Track if data has been loaded (user has selected period)
+  // Track if period has been selected
   const [hasSelectedPeriod, setHasSelectedPeriod] = useState(false);
+
+  // Baca query params dari dashboard
+  const filterParam = searchParams.get('filter');       // 'over_budget'
+  const periodParam = searchParams.get('period');       // e.g. '2024-01'
+  const budgetNameParam = searchParams.get('budget_name'); // e.g. 'Budget Operasional'
 
   // Load available periods on mount
   useEffect(() => {
@@ -68,9 +78,15 @@ const BudgetRealizationPage: React.FC = () => {
     }
   }, [activeEntity?.id]);
 
+  // Jika ada period dari query param, set otomatis
+  useEffect(() => {
+    if (periodParam && availablePeriods.length > 0) {
+      setSelectedPeriod(periodParam);
+    }
+  }, [periodParam, availablePeriods]);
+
   const loadAvailablePeriods = async () => {
     if (!activeEntity) return;
-
     const { data: periods } = await getAvailableRealizationPeriods(activeEntity.id);
     setAvailablePeriods(periods || []);
   };
@@ -84,18 +100,16 @@ const BudgetRealizationPage: React.FC = () => {
 
   const loadAvailableAccountTypes = async () => {
     if (!activeEntity || !selectedPeriod) return;
-
     const { data: types } = await getAvailableAccountTypes(activeEntity.id, selectedPeriod);
     setAvailableTypes(types || []);
   };
 
-  // Load data ONLY when period is selected
+  // Load data only when period is selected
   useEffect(() => {
     if (activeEntity?.id && selectedPeriod) {
       loadData();
       setHasSelectedPeriod(true);
     } else {
-      // Reset data when no period selected
       setRealizations([]);
       setGroupedData([]);
       setSummary(null);
@@ -105,30 +119,22 @@ const BudgetRealizationPage: React.FC = () => {
 
   const loadData = async () => {
     if (!activeEntity || !selectedPeriod) return;
-
     setLoading(true);
     setError(null);
-
     try {
       const accountType = selectedAccountType === 'all' ? undefined : selectedAccountType;
-
       const { data: realizationsData, error: realizationsError } = await getBudgetRealizationsLive(
         activeEntity.id,
         selectedPeriod,
         accountType,
-        undefined // budgetName removed
+        undefined
       );
-
       if (realizationsError) throw realizationsError;
-
       setRealizations(realizationsData || []);
       const grouped = groupRealizationsByBudgetGroup(realizationsData || []);
       setGroupedData(grouped);
       const summaryData = calculateSummary(realizationsData || [], activeEntity, selectedPeriod);
       setSummary(summaryData);
-
-      console.log('[BudgetRealizationPage] Loaded', realizationsData?.length || 0, 'realizations');
-      console.log('[BudgetRealizationPage] Grouped into', grouped.length, 'budget groups');
     } catch (err: any) {
       console.error('[BudgetRealizationPage] Error loading data:', err);
       setError('Gagal memuat data realisasi: ' + err.message);
@@ -137,29 +143,49 @@ const BudgetRealizationPage: React.FC = () => {
     }
   };
 
+  // Auto-open modal setelah data selesai dimuat, hanya sekali
+  useEffect(() => {
+    if (
+      filterParam === 'over_budget' &&
+      budgetNameParam &&
+      groupedData.length > 0 &&
+      !autoOpenTriggered &&
+      !loading
+    ) {
+      // Cari group yang namanya cocok dengan budget_name dari dashboard
+      const matchedGroup = groupedData.find(
+        g => g.budget_group_name === budgetNameParam && g.status === 'OVER_BUDGET'
+      );
+
+      // Kalau tidak ketemu exact match, fallback ke over budget pertama
+      const targetGroup = matchedGroup || groupedData.find(g => g.status === 'OVER_BUDGET');
+
+      if (targetGroup) {
+        setSelectedGroup(targetGroup);
+        setShowDetailModal(true);
+        setAutoOpenTriggered(true);
+      }
+    }
+  }, [groupedData, loading, filterParam, budgetNameParam, autoOpenTriggered]);
+
   // Group realizations by budget name and period
   const groupRealizationsByBudgetGroup = (data: BudgetRealization[]): GroupedBudgetRealization[] => {
     const groupMap = new Map<string, BudgetRealization[]>();
-
     data.forEach(item => {
       const budgetName = item.budgets?.name || 'Unknown Budget';
       const key = `${budgetName}|||${item.period}`;
-      if (!groupMap.has(key)) {
-        groupMap.set(key, []);
-      }
+      if (!groupMap.has(key)) groupMap.set(key, []);
       groupMap.get(key)!.push(item);
     });
 
     const grouped: GroupedBudgetRealization[] = [];
     groupMap.forEach((accounts, key) => {
       const [budgetGroupName, period] = key.split('|||');
-      
       const totalBudget = accounts.reduce((sum, acc) => sum + acc.budget_allocated, 0);
       const totalRealisasi = accounts.reduce((sum, acc) => sum + acc.realisasi, 0);
       const totalVariance = totalBudget - totalRealisasi;
       const variancePercentage = totalBudget > 0 ? (totalVariance / totalBudget) * 100 : 0;
       const status = totalRealisasi <= totalBudget ? 'ON_TRACK' : 'OVER_BUDGET';
-
       grouped.push({
         budget_group_name: budgetGroupName,
         period,
@@ -171,18 +197,16 @@ const BudgetRealizationPage: React.FC = () => {
         accounts,
       });
     });
-
     return grouped;
   };
 
   // Calculate summary
   const calculateSummary = (
-    data: BudgetRealization[], 
-    entity: any, 
+    data: BudgetRealization[],
+    entity: any,
     period: string
   ): BudgetRealizationSummary | null => {
     if (!data || data.length === 0) return null;
-
     const totalBudget = data.reduce((sum, item) => sum + item.budget_allocated, 0);
     const totalRealisasi = data.reduce((sum, item) => sum + item.realisasi, 0);
     const totalVariance = totalBudget - totalRealisasi;
@@ -190,11 +214,10 @@ const BudgetRealizationPage: React.FC = () => {
     const overallStatus = totalRealisasi <= totalBudget ? 'ON_TRACK' : 'OVER_BUDGET';
     const onTrackCount = data.filter(item => item.status === 'ON_TRACK').length;
     const overBudgetCount = data.filter(item => item.status === 'OVER_BUDGET').length;
-
     return {
       entity_id: entity.id,
       entity_name: entity.entity_name || entity.name,
-      period: period,
+      period,
       total_accounts: data.length,
       total_budgets: [...new Set(data.map(item => item.budget_id))].length,
       total_budget: totalBudget,
@@ -208,14 +231,12 @@ const BudgetRealizationPage: React.FC = () => {
     };
   };
 
-  // Setup real-time subscription
+  // Real-time subscription
   useEffect(() => {
     if (!activeEntity?.id || !selectedPeriod) return;
-
     const subscription = subscribeBudgetItems(activeEntity.id, () => {
       loadData();
     });
-
     return () => {
       subscription.unsubscribe();
     };
@@ -224,17 +245,14 @@ const BudgetRealizationPage: React.FC = () => {
   // Filter by search
   const filteredGroupedData = groupedData.filter((item) => {
     if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
-    return item.budget_group_name.toLowerCase().includes(query);
+    return item.budget_group_name.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
-  // Open detail modal
   const handleOpenDetail = (group: GroupedBudgetRealization) => {
     setSelectedGroup(group);
     setShowDetailModal(true);
   };
 
-  // Close detail modal
   const handleCloseDetail = () => {
     setShowDetailModal(false);
     setSelectedGroup(null);
@@ -265,16 +283,14 @@ const BudgetRealizationPage: React.FC = () => {
         </button>
       </div>
 
-       {/* No Active Entity Warning */}
+      {/* No Active Entity Warning */}
       {!activeEntity && (
         <div className={styles.noEntityWarning}>
           <h3>Belum Ada Entitas Aktif</h3>
           <p>
             Silakan pilih entitas terlebih dahulu di halaman <strong>Manajemen Entitas</strong>
           </p>
-          <a href="/entitas">
-            Ke Halaman Entitas →
-          </a>
+          <a href="/entitas">Ke Halaman Entitas →</a>
         </div>
       )}
 
@@ -285,7 +301,7 @@ const BudgetRealizationPage: React.FC = () => {
         </div>
       )}
 
-      {/* Filters - UPDATED: Period is required */}
+      {/* Filters */}
       {activeEntity && (
         <div className={styles.filterSection}>
           <div className={styles.filterHeader}>
@@ -298,7 +314,7 @@ const BudgetRealizationPage: React.FC = () => {
           </div>
 
           <div className={styles.filterGrid}>
-            {/* Periode - REQUIRED */}
+            {/* Periode */}
             <div>
               <label className={styles.filterLabel}>
                 Periode <span style={{ color: '#dc3545' }}>*</span>
@@ -354,12 +370,12 @@ const BudgetRealizationPage: React.FC = () => {
         </div>
       )}
 
-      {/* Summary Cards - ONLY show if period is selected */}
+      {/* Summary Cards */}
       {activeEntity && summary && selectedPeriod && (
         <div className={styles.summaryCards}>
           <div className={`${styles.summaryCard} ${styles.blue}`}>
             <div className={styles.summaryCardLabel}>Total Budget</div>
-            <div 
+            <div
               className={styles.summaryCardValue}
               style={{ fontSize: `${getAdaptiveFontSize(summary.total_budget)}px` }}
             >
@@ -369,7 +385,7 @@ const BudgetRealizationPage: React.FC = () => {
 
           <div className={`${styles.summaryCard} ${styles.green}`}>
             <div className={styles.summaryCardLabel}>Total Realisasi</div>
-            <div 
+            <div
               className={styles.summaryCardValue}
               style={{ fontSize: `${getAdaptiveFontSize(summary.total_realisasi)}px` }}
             >
@@ -381,7 +397,7 @@ const BudgetRealizationPage: React.FC = () => {
             summary.overall_status === 'OVER_BUDGET' ? styles.red : styles.cyan
           }`}>
             <div className={styles.summaryCardLabel}>Variance</div>
-            <div 
+            <div
               className={styles.summaryCardValue}
               style={{ fontSize: `${getAdaptiveFontSize(Math.abs(summary.total_variance))}px` }}
             >
@@ -404,7 +420,7 @@ const BudgetRealizationPage: React.FC = () => {
         </div>
       )}
 
-      {/* Grouped Data Table - ONLY show if period is selected */}
+      {/* Grouped Data Table */}
       {activeEntity && selectedPeriod && (
         <div className={styles.dataTableContainer}>
           {loading && groupedData.length === 0 ? (
@@ -418,7 +434,7 @@ const BudgetRealizationPage: React.FC = () => {
               {searchQuery ? (
                 <>Tidak ada data yang cocok dengan pencarian "<strong>{searchQuery}</strong>"</>
               ) : (
-                <>Belum ada data realisasi untuk periode ini. Pastikan sudah ada budget dan akun accurate tersedia.</>
+                <>Belum ada data realisasi untuk periode ini.</>
               )}
             </div>
           ) : (
@@ -445,17 +461,11 @@ const BudgetRealizationPage: React.FC = () => {
                         <code className={styles.periodBadge}>{group.period}</code>
                       </td>
                       <td>
-                        <div className={styles.budgetGroupName}>
-                          {group.budget_group_name}
-                        </div>
-                        <div className={styles.budgetGroupMeta}>
-                          {group.accounts.length} akun
-                        </div>
+                        <div className={styles.budgetGroupName}>{group.budget_group_name}</div>
+                        <div className={styles.budgetGroupMeta}>{group.accounts.length} akun</div>
                       </td>
                       <td>
-                        <strong style={{
-                          fontSize: `${getAdaptiveFontSize(group.total_budget)}px`,
-                        }}>
+                        <strong style={{ fontSize: `${getAdaptiveFontSize(group.total_budget)}px` }}>
                           Rp{formatCurrency(group.total_budget)}
                         </strong>
                       </td>
@@ -507,7 +517,7 @@ const BudgetRealizationPage: React.FC = () => {
         </div>
       )}
 
-      {/* No Period Selected Message */}
+      {/* No Period Selected */}
       {activeEntity && !selectedPeriod && (
         <div className={styles.dataTableContainer}>
           <div className={styles.emptyState}>
@@ -530,7 +540,7 @@ const BudgetRealizationPage: React.FC = () => {
                   Periode: {selectedGroup.period} • {selectedGroup.accounts.length} akun
                 </p>
               </div>
-              
+
               <div className={styles.modalHeaderActions}>
                 <ExportFile
                   group={{
@@ -545,11 +555,8 @@ const BudgetRealizationPage: React.FC = () => {
                   }}
                   entityName={activeEntity?.entity_name || activeEntity?.name || 'Unknown'}
                 />
-                
-                <button
-                  onClick={handleCloseDetail}
-                  className={styles.modalCloseButton}
-                >
+
+                <button onClick={handleCloseDetail} className={styles.modalCloseButton}>
                   ✕
                 </button>
               </div>
@@ -608,14 +615,10 @@ const BudgetRealizationPage: React.FC = () => {
                     {selectedGroup.accounts.map((account) => (
                       <tr key={account.id}>
                         <td>
-                          <code className={styles.accountCode}>
-                            {account.account_code}
-                          </code>
+                          <code className={styles.accountCode}>{account.account_code}</code>
                         </td>
                         <td>
-                          <div className={styles.accountName}>
-                            {account.account_name}
-                          </div>
+                          <div className={styles.accountName}>{account.account_name}</div>
                         </td>
                         <td>
                           <span className={styles.accountTypeBadge}>
@@ -623,9 +626,7 @@ const BudgetRealizationPage: React.FC = () => {
                           </span>
                         </td>
                         <td>
-                          <strong style={{
-                            fontSize: `${getAdaptiveFontSize(account.budget_allocated)}px`,
-                          }}>
+                          <strong style={{ fontSize: `${getAdaptiveFontSize(account.budget_allocated)}px` }}>
                             Rp{formatCurrency(account.budget_allocated)}
                           </strong>
                         </td>
@@ -668,10 +669,7 @@ const BudgetRealizationPage: React.FC = () => {
             </div>
 
             <div className={styles.modalFooter}>
-              <button
-                onClick={handleCloseDetail}
-                className={styles.modalFooterButton}
-              >
+              <button onClick={handleCloseDetail} className={styles.modalFooterButton}>
                 Tutup
               </button>
             </div>
